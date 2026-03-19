@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { saveConfig, deleteConfig, loadConfig, getConfigPath } from '../lib/config.js';
-import { apiRequest } from '../lib/api-client.js';
-import { printJson, printError } from '../lib/output.js';
+import { saveConfig, deleteConfig, loadConfig, getConfigPath } from '@/lib/config';
+import { apiRequest } from '@/lib/api-client';
+import { printJson, printError } from '@/lib/output';
+import type {WhoAmIResponse} from "@/types/auth";
 
 export function registerAuthCommands(program: Command): void {
     const auth = program.command('auth').description('Manage authentication');
@@ -53,18 +54,20 @@ export function registerAuthCommands(program: Command): void {
                     process.exit(1);
                 }
 
-                const info = await apiRequest('GET', 'whoami', { apiKey: config.apiKey, baseUrl: config.baseUrl });
-                printJson(info);
+                const info = await apiRequest<WhoAmIResponse>(
+                    'GET',
+                    'whoami',
+                    { apiKey: config.apiKey, baseUrl: config.baseUrl }
+                );
 
                 const masked = config.apiKey.length > 8
                     ? config.apiKey.substring(0, 4) + '****' + config.apiKey.substring(config.apiKey.length - 4)
                     : '****';
 
                 printJson({
-                    authenticated: true,
+                    ...info,
                     apiKey: masked,
                     baseUrl: config.baseUrl,
-                    configPath: getConfigPath(),
                 });
             } catch (error) {
                 printError(error);

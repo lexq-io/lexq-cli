@@ -1,21 +1,5 @@
 import { loadConfig } from './config.js';
-
-export interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    errorCode: string | null;
-    message: string | null;
-}
-
-export interface PageResponse<T> {
-    content: T[];
-    page: number;
-    size: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
-}
+import type {ApiResponse} from "@/types/api";
 
 export interface ApiClientOptions {
     apiKey?: string;
@@ -109,7 +93,7 @@ export async function apiRequest<T>(
 
     const json = (await response.json()) as ApiResponse<T>;
 
-    if (!response.ok || !json.success) {
+    if (!response.ok || json.result !== 'SUCCESS') {
         throw new ApiError(
             response.status,
             json.errorCode,

@@ -12,7 +12,7 @@ const CONFIG_DIR = join(homedir(), '.lexq');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 const DEFAULT_CONFIG: LexqConfig = {
-    baseUrl: 'https://api.lexq.io/v1/partners',
+    baseUrl: 'https://api.lexq.io/api/v1/partners',
     format: 'json',
 };
 

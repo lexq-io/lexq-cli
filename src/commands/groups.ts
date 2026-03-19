@@ -1,18 +1,8 @@
 import { Command } from 'commander';
-import { apiRequest, type PageResponse } from '../lib/api-client.js';
-import { printJson, printTable, printError, type OutputFormat } from '../lib/output.js';
-
-interface PolicyGroupSummary {
-    id: string;
-    name: string;
-    description: string | null;
-    status: string;
-    priority: number;
-    activationMode: string;
-    liveVersionNo: number | null;
-    createdAt: string;
-    updatedAt: string;
-}
+import { apiRequest} from '@/lib/api-client';
+import type {PageResponse} from "@/types/api";
+import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
+import type {PolicyGroupSummary} from "@/types/groups";
 
 export function registerGroupCommands(program: Command): void {
     const groups = program.command('groups').description('Manage policy groups');
@@ -53,7 +43,7 @@ export function registerGroupCommands(program: Command): void {
                         ]),
                         { truncate: 24 }
                     );
-                    console.log(`\n${data.totalElements} total · page ${data.page + 1}/${data.totalPages}`);
+                    console.log(`\n${data.totalElements} total · page ${data.pageNo + 1}/${data.totalPages}`);
                 } else {
                     printJson(data);
                 }
