@@ -1,0 +1,29 @@
+import { Command } from 'commander';
+import { loadConfig } from '../lib/config.js';
+import { printJson, printError } from '../lib/output.js';
+
+export function registerStatusCommand(program: Command): void {
+    program
+        .command('status')
+        .description('Check LexQ API server status')
+        .action(async () => {
+            const config = loadConfig();
+            const baseUrl = config.baseUrl.replace(/\/v1\/partners\/?$/, '');
+
+            try {
+                const start = Date.now();
+                const response = await fetch(`${baseUrl}/health`);
+                const latency = Date.now() - start;
+
+                printJson({
+                    status: response.ok ? 'ok' : 'degraded',
+                    httpStatus: response.status,
+                    latencyMs: latency,
+                    endpoint: `${baseUrl}/health`,
+                });
+            } catch (error) {
+                printError(new Error(`Cannot reach LexQ API at ${baseUrl}/health`));
+                process.exit(1);
+            }
+        });
+}
