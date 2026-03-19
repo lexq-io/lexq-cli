@@ -1,0 +1,58 @@
+{
+  "name": "@lexq/cli",
+  "version": "0.1.0",
+  "description": "LexQ CLI — manage policies, simulate rules, and deploy from the terminal. Built for humans and AI agents.",
+  "type": "module",
+  "bin": {
+    "lexq": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "skills",
+    "AGENTS.md",
+    "CONTEXT.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "lexq",
+    "rule-engine",
+    "policy-engine",
+    "cli",
+    "ai-agent",
+    "agent-skills",
+    "simulation",
+    "business-rules"
+  ],
+  "author": "LexQ, LLC",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lexq-io/lexq-cli.git"
+  },
+  "homepage": "https://lexq.io",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "dependencies": {
+    "commander": "^13.1.0",
+    "ora": "^8.2.0",
+    "cli-table3": "^0.6.5"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.12.0",
+    "eslint": "^9.20.0",
+    "@eslint/js": "^9.20.0",
+    "typescript-eslint": "^8.24.0"
+  }
+}
