@@ -1,5 +1,5 @@
-import { loadConfig } from './config.js';
-import type {ApiResponse} from "@/types/api";
+import { loadConfig } from './config';
+import type { ApiResponse } from '@/types/api';
 
 export interface ApiClientOptions {
     apiKey?: string;
@@ -89,6 +89,11 @@ export async function apiRequest<T>(
     const contentType = response.headers.get('content-type') ?? '';
     if (contentType.includes('text/csv') || contentType.includes('application/octet-stream')) {
         return response as unknown as T;
+    }
+
+    // No-content responses (DELETE 204 등)
+    if (response.status === 204 || contentType === '') {
+        return undefined as T;
     }
 
     const json = (await response.json()) as ApiResponse<T>;

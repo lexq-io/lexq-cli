@@ -1,5 +1,5 @@
-import { createCli } from './cli.js';
-import { printError } from './lib/output.js';
+import { createCli } from './cli';
+import { printError } from './lib/output';
 
 async function main(): Promise<void> {
     const program = createCli();

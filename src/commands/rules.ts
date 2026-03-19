@@ -2,15 +2,17 @@ import { Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { PolicyGroupSummary } from '@/types/groups';
+import type { PolicyRuleSummary, PolicyRuleDetail } from '@/types/rules';
 
-export function registerGroupCommands(program: Command): void {
-    const groups = program.command('groups').description('Manage policy groups');
+export function registerRuleCommands(program: Command): void {
+    const rules = program.command('rules').description('Manage policy rules');
 
     // ── list ──
-    groups
+    rules
         .command('list')
-        .description('List all policy groups')
+        .description('List rules for a policy version')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
         .option('--page <number>', 'Page number', '0')
         .option('--size <number>', 'Page size', '20')
         .action(async (opts) => {
@@ -18,9 +20,9 @@ export function registerGroupCommands(program: Command): void {
                 const globalOpts = program.opts();
                 const format: OutputFormat = globalOpts.format ?? 'json';
 
-                const data = await apiRequest<PageResponse<PolicyGroupSummary>>(
+                const data = await apiRequest<PageResponse<PolicyRuleSummary>>(
                     'GET',
-                    'policy-groups',
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -32,14 +34,14 @@ export function registerGroupCommands(program: Command): void {
 
                 if (format === 'table') {
                     printTable(
-                        ['ID', 'Name', 'Status', 'Priority', 'Live', 'Updated'],
-                        data.content.map((g) => [
-                            g.id,
-                            g.name,
-                            g.status,
-                            String(g.priority),
-                            g.liveVersionNo != null ? `v${g.liveVersionNo}` : '–',
-                            g.updatedAt.substring(0, 10),
+                        ['ID', 'Name', 'Priority', 'Conditions', 'Actions', 'Enabled'],
+                        data.content.map((r) => [
+                            r.id,
+                            r.name,
+                            String(r.priority),
+                            String(r.totalConditionCount),
+                            String(r.totalActionCount),
+                            r.isEnabled ? '✓' : '✗',
                         ]),
                         { truncate: 24 }
                     );
@@ -54,16 +56,18 @@ export function registerGroupCommands(program: Command): void {
         });
 
     // ── get ──
-    groups
+    rules
         .command('get')
-        .description('Get a policy group by ID')
-        .requiredOption('--id <groupId>', 'Policy group ID')
+        .description('Get a rule by ID')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
+        .requiredOption('--id <ruleId>', 'Rule ID')
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const data = await apiRequest<PolicyGroupSummary>(
+                const data = await apiRequest<PolicyRuleDetail>(
                     'GET',
-                    `policy-groups/${opts.id}`,
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -79,17 +83,19 @@ export function registerGroupCommands(program: Command): void {
         });
 
     // ── create ──
-    groups
+    rules
         .command('create')
-        .description('Create a new policy group')
+        .description('Create a new rule')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
         .requiredOption('--json <body>', 'Request body as JSON string')
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
                 const body = JSON.parse(opts.json);
-                const data = await apiRequest<PolicyGroupSummary>(
+                const data = await apiRequest<PolicyRuleDetail>(
                     'POST',
-                    'policy-groups',
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -106,18 +112,20 @@ export function registerGroupCommands(program: Command): void {
         });
 
     // ── update ──
-    groups
+    rules
         .command('update')
-        .description('Update a policy group')
-        .requiredOption('--id <groupId>', 'Policy group ID')
+        .description('Update a rule')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
+        .requiredOption('--id <ruleId>', 'Rule ID')
         .requiredOption('--json <body>', 'Request body as JSON string')
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
                 const body = JSON.parse(opts.json);
-                const data = await apiRequest<PolicyGroupSummary>(
+                const data = await apiRequest<PolicyRuleDetail>(
                     'PUT',
-                    `policy-groups/${opts.id}`,
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -134,10 +142,12 @@ export function registerGroupCommands(program: Command): void {
         });
 
     // ── delete ──
-    groups
+    rules
         .command('delete')
-        .description('Delete a policy group')
-        .requiredOption('--id <groupId>', 'Policy group ID')
+        .description('Delete a rule')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
+        .requiredOption('--id <ruleId>', 'Rule ID')
         .option('--force', 'Skip confirmation prompt')
         .action(async (opts) => {
             try {
@@ -146,7 +156,7 @@ export function registerGroupCommands(program: Command): void {
                 if (!opts.force) {
                     const { createInterface } = await import('node:readline/promises');
                     const rl = createInterface({ input: process.stdin, output: process.stdout });
-                    const answer = await rl.question(`Delete group ${opts.id}? [y/N] `);
+                    const answer = await rl.question(`Delete rule ${opts.id}? [y/N] `);
                     rl.close();
                     if (answer.toLowerCase() !== 'y') {
                         console.log('Cancelled.');
@@ -154,79 +164,9 @@ export function registerGroupCommands(program: Command): void {
                     }
                 }
 
-                await apiRequest<void>('DELETE', `policy-groups/${opts.id}`, {
-                    apiKey: globalOpts.apiKey,
-                    baseUrl: globalOpts.baseUrl,
-                    dryRun: globalOpts.dryRun,
-                    verbose: globalOpts.verbose,
-                });
-                console.log(`✓ Group ${opts.id} deleted.`);
-            } catch (error) {
-                printError(error);
-                process.exit(1);
-            }
-        });
-
-    // ══════════════════════════════════════════════════
-    // A/B Test
-    // ══════════════════════════════════════════════════
-    const abTest = groups.command('ab-test').description('Manage A/B tests');
-
-    // ── start ──
-    abTest
-        .command('start')
-        .description('Start an A/B test')
-        .requiredOption('--group-id <groupId>', 'Policy group ID')
-        .requiredOption('--version-id <versionId>', 'Challenger version ID')
-        .requiredOption('--traffic-rate <rate>', 'Traffic rate for challenger (1-99)')
-        .action(async (opts) => {
-            try {
-                const globalOpts = program.opts();
-                const data = await apiRequest<unknown>(
-                    'POST',
-                    `policy-groups/${opts.groupId}/ab-test`,
-                    {
-                        apiKey: globalOpts.apiKey,
-                        baseUrl: globalOpts.baseUrl,
-                        dryRun: globalOpts.dryRun,
-                        verbose: globalOpts.verbose,
-                        body: {
-                            testVersionId: opts.versionId,
-                            trafficRate: Number(opts.trafficRate),
-                        },
-                    }
-                );
-                printJson(data);
-            } catch (error) {
-                printError(error);
-                process.exit(1);
-            }
-        });
-
-    // ── stop ──
-    abTest
-        .command('stop')
-        .description('Stop an A/B test')
-        .requiredOption('--group-id <groupId>', 'Policy group ID')
-        .option('--force', 'Skip confirmation prompt')
-        .action(async (opts) => {
-            try {
-                const globalOpts = program.opts();
-
-                if (!opts.force) {
-                    const { createInterface } = await import('node:readline/promises');
-                    const rl = createInterface({ input: process.stdin, output: process.stdout });
-                    const answer = await rl.question(`Stop A/B test for group ${opts.groupId}? [y/N] `);
-                    rl.close();
-                    if (answer.toLowerCase() !== 'y') {
-                        console.log('Cancelled.');
-                        return;
-                    }
-                }
-
-                const data = await apiRequest<unknown>(
+                await apiRequest<void>(
                     'DELETE',
-                    `policy-groups/${opts.groupId}/ab-test`,
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -234,34 +174,68 @@ export function registerGroupCommands(program: Command): void {
                         verbose: globalOpts.verbose,
                     }
                 );
-                printJson(data);
+                console.log(`✓ Rule ${opts.id} deleted.`);
             } catch (error) {
                 printError(error);
                 process.exit(1);
             }
         });
 
-    // ── adjust ──
-    abTest
-        .command('adjust')
-        .description('Adjust A/B test traffic rate')
+    // ── reorder ──
+    rules
+        .command('reorder')
+        .description('Reorder rules by priority (drag & drop equivalent)')
         .requiredOption('--group-id <groupId>', 'Policy group ID')
-        .requiredOption('--traffic-rate <rate>', 'New traffic rate (1-99)')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
+        .requiredOption('--rule-ids <ids>', 'Comma-separated rule IDs in desired order')
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const data = await apiRequest<unknown>(
+                const ruleIds = (opts.ruleIds as string).split(',').map((id: string) => id.trim());
+
+                await apiRequest<void>(
                     'PATCH',
-                    `policy-groups/${opts.groupId}/ab-test/traffic-rate`,
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/reorder`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
                         dryRun: globalOpts.dryRun,
                         verbose: globalOpts.verbose,
-                        body: { trafficRate: Number(opts.trafficRate) },
+                        body: { ruleIds },
                     }
                 );
-                printJson(data);
+                console.log(`✓ ${ruleIds.length} rules reordered.`);
+            } catch (error) {
+                printError(error);
+                process.exit(1);
+            }
+        });
+
+    // ── toggle ──
+    rules
+        .command('toggle')
+        .description('Enable or disable a rule')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
+        .requiredOption('--id <ruleId>', 'Rule ID')
+        .requiredOption('--enabled <boolean>', 'true or false')
+        .action(async (opts) => {
+            try {
+                const globalOpts = program.opts();
+                const isEnabled = opts.enabled === 'true';
+
+                await apiRequest<void>(
+                    'PATCH',
+                    `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}/enabled`,
+                    {
+                        apiKey: globalOpts.apiKey,
+                        baseUrl: globalOpts.baseUrl,
+                        dryRun: globalOpts.dryRun,
+                        verbose: globalOpts.verbose,
+                        body: { isEnabled },
+                    }
+                );
+                console.log(`✓ Rule ${opts.id} ${isEnabled ? 'enabled' : 'disabled'}.`);
             } catch (error) {
                 printError(error);
                 process.exit(1);

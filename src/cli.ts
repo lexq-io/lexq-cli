@@ -2,9 +2,17 @@ import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { registerAuthCommands } from './commands/auth.js';
-import { registerStatusCommand } from './commands/status.js';
-import { registerGroupCommands } from './commands/groups.js';
+import { registerAuthCommands } from './commands/auth';
+import { registerStatusCommand } from './commands/status';
+import { registerGroupCommands } from './commands/groups';
+import { registerVersionCommands } from './commands/versions';
+import { registerRuleCommands } from './commands/rules';
+import { registerFactCommands } from './commands/facts';
+import { registerDeployCommands } from './commands/deploy';
+import { registerAnalyticsCommands } from './commands/analytics';
+import { registerHistoryCommands } from './commands/history';
+import { registerIntegrationCommands } from './commands/integrations';
+import { registerLogCommands } from './commands/logs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -31,10 +39,26 @@ export function createCli(): Command {
         .option('--verbose', 'Show request/response details')
         .option('--no-color', 'Disable colored output');
 
-    // Register command groups
+    // M1: Auth & Infrastructure
     registerAuthCommands(program);
     registerStatusCommand(program);
+
+    // M1+: Policy Groups (CRUD + A/B Test)
     registerGroupCommands(program);
+
+    // M2: Versions, Rules, Facts
+    registerVersionCommands(program);
+    registerRuleCommands(program);
+    registerFactCommands(program);
+
+    // M3: Deployment & Analytics
+    registerDeployCommands(program);
+    registerAnalyticsCommands(program);
+
+    // M3+: Execution History, Integrations, Failure Logs
+    registerHistoryCommands(program);
+    registerIntegrationCommands(program);
+    registerLogCommands(program);
 
     return program;
 }

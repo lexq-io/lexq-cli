@@ -4,7 +4,7 @@ import { stdin, stdout } from 'node:process';
 import { saveConfig, deleteConfig, loadConfig, getConfigPath } from '@/lib/config';
 import { apiRequest } from '@/lib/api-client';
 import { printJson, printError } from '@/lib/output';
-import type {WhoAmIResponse} from "@/types/auth";
+import type { WhoAmIResponse } from '@/types/auth';
 
 export function registerAuthCommands(program: Command): void {
     const auth = program.command('auth').description('Manage authentication');

@@ -1,4 +1,4 @@
-import type { ConflictResolutionMode, ConflictResolutionStrategy, PolicyGroupStatus } from './enums.js';
+import type { ConflictResolutionMode, ConflictResolutionStrategy, PolicyGroupStatus } from './enums';
 
 // ── Response ──
 export interface PolicyGroupSummary {

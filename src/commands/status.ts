@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { loadConfig } from '../lib/config.js';
-import { printJson, printError } from '../lib/output.js';
+import { loadConfig } from '@/lib/config';
+import { printJson, printError } from '@/lib/output';
 
 export function registerStatusCommand(program: Command): void {
     program

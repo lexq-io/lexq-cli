@@ -56,6 +56,20 @@ export const DecisionStatus = [
 ] as const;
 export type DecisionStatus = (typeof DecisionStatus)[number];
 
+export const DecisionReasonCode = [
+    'FINAL_WINNER',
+    'VERSION_MISMATCH',
+    'EFFECTIVE_DATE_INVALID',
+    'CONDITION_MISMATCH',
+    'MUTEX_PRIORITY_LOST',
+    'MUTEX_LIMIT_REACHED',
+    'GROUP_LIMIT_REACHED',
+    'TOTAL_LIMIT_REACHED',
+    'ACTION_ERROR',
+    'ENGINE_ERROR',
+] as const
+export type DecisionReasonCode = (typeof DecisionReasonCode)[number]
+
 // ── Integration ──
 export const IntegrationType = ['COUPON', 'POINT', 'NOTIFICATION', 'CRM', 'MESSENGER', 'WEBHOOK'] as const;
 export type IntegrationType = (typeof IntegrationType)[number];
@@ -63,3 +77,18 @@ export type IntegrationType = (typeof IntegrationType)[number];
 // ── Auth ──
 export const Role = ['ADMIN', 'USER', 'VIEWER', 'API_CLIENT'] as const;
 export type Role = (typeof Role)[number];
+
+// ── Failure Log ──
+export const FailureStatus = ['PENDING', 'RESOLVED', 'IGNORED'] as const;
+export type FailureStatus = (typeof FailureStatus)[number];
+
+export const FailureAction = ['RETRY', 'IGNORE', 'RESOLVE'] as const;
+export type FailureAction = (typeof FailureAction)[number];
+
+export const TaskCategory = ['INTEGRATION', 'INTERNAL'] as const;
+export type TaskCategory = (typeof TaskCategory)[number];
+
+export const TaskType = [
+    'COUPON_ISSUE', 'POINT_EARN', 'NOTIFICATION_SEND', 'WEBHOOK_EXECUTE',
+] as const;
+export type TaskType = (typeof TaskType)[number];
