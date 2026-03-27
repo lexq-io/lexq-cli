@@ -1,6 +1,41 @@
-import type { ConflictResolutionMode, ConflictResolutionStrategy } from './enums';
+import type {
+    ConditionOperator,
+    ConflictResolutionMode,
+    ConflictResolutionStrategy,
+    LogicalOperator,
+    ActionType,
+    ValueType,
+} from './enums';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Shared Structures (ConditionNode, ActionDefinition)
+// ══════════════════════════════════════════
+
+export interface SingleConditionNode {
+    type: 'SINGLE';
+    field: string;
+    operator: ConditionOperator;
+    value: unknown;
+    valueType: ValueType;
+}
+
+export interface GroupConditionNode {
+    type: 'GROUP';
+    operator: LogicalOperator;
+    children: ConditionNode[];
+}
+
+export type ConditionNode = SingleConditionNode | GroupConditionNode;
+
+export interface ActionDefinition {
+    type: ActionType;
+    parameters: Record<string, unknown>;
+}
+
+// ══════════════════════════════════════════
+// Response
+// ══════════════════════════════════════════
+
 export interface PolicyRuleSummary {
     id: string;
     name: string;
@@ -22,8 +57,8 @@ export interface PolicyRuleDetail {
     policyVersionId: string;
     name: string;
     priority: number;
-    condition: Record<string, unknown>;
-    actions: Record<string, unknown>[];
+    condition: ConditionNode;
+    actions: ActionDefinition[];
     mutexGroup: string | null;
     mutexMode: ConflictResolutionMode;
     mutexStrategy: ConflictResolutionStrategy;
@@ -33,9 +68,41 @@ export interface PolicyRuleDetail {
     updatedAt: string;
 }
 
-// ── Request ──
+// ══════════════════════════════════════════
+// Request
+// ══════════════════════════════════════════
+
+export interface CreateRuleRequest {
+    name: string;
+    priority: number;
+    condition: ConditionNode;
+    actions: ActionDefinition[];
+    mutexGroup?: string;
+    mutexMode?: ConflictResolutionMode;
+    mutexStrategy?: ConflictResolutionStrategy;
+    mutexLimit?: number;
+    isEnabled?: boolean;
+}
+
+export interface UpdateRuleRequest {
+    name?: string;
+    priority?: number;
+    condition?: ConditionNode;
+    actions?: ActionDefinition[];
+    mutexGroup?: string;
+    mutexMode?: ConflictResolutionMode;
+    mutexStrategy?: ConflictResolutionStrategy;
+    mutexLimit?: number;
+    isEnabled?: boolean;
+}
+
 export interface ReorderRulesRequest {
-    ruleIds: string[];
+    rules: RulePriority[];
+}
+
+export interface RulePriority {
+    ruleId: string;
+    priority: number;
 }
 
 export interface ToggleRuleRequest {

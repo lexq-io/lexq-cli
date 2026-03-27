@@ -2,7 +2,13 @@ import { Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { PolicyRuleSummary, PolicyRuleDetail } from '@/types/rules';
+import type {
+    PolicyRuleSummary,
+    PolicyRuleDetail,
+    CreateRuleRequest,
+    UpdateRuleRequest,
+    ReorderRulesRequest,
+} from '@/types/rules';
 
 export function registerRuleCommands(program: Command): void {
     const rules = program.command('rules').description('Manage policy rules');
@@ -92,7 +98,7 @@ export function registerRuleCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const body = JSON.parse(opts.json);
+                const body = JSON.parse(opts.json) as CreateRuleRequest;
                 const data = await apiRequest<PolicyRuleDetail>(
                     'POST',
                     `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules`,
@@ -122,7 +128,7 @@ export function registerRuleCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const body = JSON.parse(opts.json);
+                const body = JSON.parse(opts.json) as UpdateRuleRequest;
                 const data = await apiRequest<PolicyRuleDetail>(
                     'PUT',
                     `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}`,
@@ -193,6 +199,13 @@ export function registerRuleCommands(program: Command): void {
                 const globalOpts = program.opts();
                 const ruleIds = (opts.ruleIds as string).split(',').map((id: string) => id.trim());
 
+                const body: ReorderRulesRequest = {
+                    rules: ruleIds.map((ruleId, index) => ({
+                        ruleId,
+                        priority: index,
+                    })),
+                };
+
                 await apiRequest<void>(
                     'PATCH',
                     `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/reorder`,
@@ -201,7 +214,7 @@ export function registerRuleCommands(program: Command): void {
                         baseUrl: globalOpts.baseUrl,
                         dryRun: globalOpts.dryRun,
                         verbose: globalOpts.verbose,
-                        body: { ruleIds },
+                        body,
                     }
                 );
                 console.log(`✓ ${ruleIds.length} rules reordered.`);

@@ -1,6 +1,28 @@
 import type { PolicyVersionStatus } from './enums';
+import type { ConditionNode, ActionDefinition } from './rules';
+import type { ConflictResolutionMode, ConflictResolutionStrategy } from './enums';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Compiled Rule (스냅샷 내 룰)
+// ══════════════════════════════════════════
+
+export interface CompiledRule {
+    ruleId: string;
+    name: string;
+    priority: number;
+    createdAt: string;
+    condition: ConditionNode;
+    actions: ActionDefinition[];
+    mutexGroup: string | null;
+    mutexMode: ConflictResolutionMode;
+    mutexStrategy: ConflictResolutionStrategy;
+    mutexLimit: number | null;
+}
+
+// ══════════════════════════════════════════
+// Response
+// ══════════════════════════════════════════
+
 export interface PolicyVersionSummary {
     id: string;
     groupId: string;
@@ -16,7 +38,14 @@ export interface PolicyVersionSummary {
     publishedAt: string | null;
 }
 
-// ── Request ──
+export interface PolicyVersionDetail extends PolicyVersionSummary {
+    rulesSnapshot: CompiledRule[];
+}
+
+// ══════════════════════════════════════════
+// Request
+// ══════════════════════════════════════════
+
 export interface CreateVersionRequest {
     commitMessage?: string;
     effectiveFrom?: string;

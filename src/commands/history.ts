@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { ExecutionHistorySummary, ExecutionHistoryDetail } from '@/types/history';
+import type { ExecutionHistorySummary, ExecutionHistoryDetail, ExecutionStatsResponse } from '@/types/history';
 
 export function registerHistoryCommands(program: Command): void {
     const history = program.command('history').description('Execution history');
@@ -37,7 +37,7 @@ export function registerHistoryCommands(program: Command): void {
 
                 const data = await apiRequest<PageResponse<ExecutionHistorySummary>>(
                     'GET',
-                    'execution-history',
+                    'execution/history',
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -52,7 +52,7 @@ export function registerHistoryCommands(program: Command): void {
                         ['Trace', 'Group', 'Version', 'Status', 'Matched', 'Latency', 'At'],
                         data.content.map((h) => [
                             h.traceId.substring(0, 12),
-                            h.policyGroupName,
+                            h.policyGroupName ?? '–',
                             h.policyVersionNo != null ? `v${h.policyVersionNo}` : '–',
                             h.status,
                             h.isMatched ? '✓' : '✗',
@@ -74,14 +74,14 @@ export function registerHistoryCommands(program: Command): void {
     // ── get ──
     history
         .command('get')
-        .description('Get execution detail by trace ID')
-        .requiredOption('--trace-id <traceId>', 'Trace ID')
+        .description('Get execution detail')
+        .requiredOption('--id <executionId>', 'Execution history ID')
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
                 const data = await apiRequest<ExecutionHistoryDetail>(
                     'GET',
-                    `execution-history/${opts.traceId}`,
+                    `execution/history/${opts.id}`,
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -96,29 +96,26 @@ export function registerHistoryCommands(program: Command): void {
             }
         });
 
-    // ── export ──
+    // ── stats ──
     history
-        .command('export')
-        .description('Export execution history as CSV')
+        .command('stats')
+        .description('Get execution statistics')
         .option('--group-id <groupId>', 'Filter by policy group')
-        .option('--version-id <versionId>', 'Filter by version')
-        .option('--status <status>', 'Filter by status')
         .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
         .option('--end-date <date>', 'End date (yyyy-MM-dd)')
-        .option('--output <path>', 'Output file path')
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
+                const format: OutputFormat = globalOpts.format ?? 'json';
+
                 const params: Record<string, string> = {};
                 if (opts.groupId) params.policyGroupId = opts.groupId;
-                if (opts.versionId) params.versionId = opts.versionId;
-                if (opts.status) params.status = opts.status;
                 if (opts.startDate) params.startDate = opts.startDate;
                 if (opts.endDate) params.endDate = opts.endDate;
 
-                const response = await apiRequest<unknown>(
+                const data = await apiRequest<ExecutionStatsResponse>(
                     'GET',
-                    'execution-history/export',
+                    'execution/history/stats',
                     {
                         apiKey: globalOpts.apiKey,
                         baseUrl: globalOpts.baseUrl,
@@ -128,15 +125,20 @@ export function registerHistoryCommands(program: Command): void {
                     }
                 );
 
-                if (opts.output) {
-                    const { writeFileSync } = await import('node:fs');
-                    const text = typeof response === 'string'
-                        ? response
-                        : JSON.stringify(response, null, 2);
-                    writeFileSync(opts.output, text, 'utf-8');
-                    console.log(`✓ Exported to ${opts.output}`);
+                if (format === 'table') {
+                    printTable(
+                        ['Total', 'Success', 'No Match', 'Failures', 'Success Rate', 'Avg Latency'],
+                        [[
+                            String(data.totalExecutions),
+                            String(data.successCount),
+                            String(data.noMatchCount),
+                            String(data.failureCount),
+                            `${data.successRate}%`,
+                            `${data.avgLatencyMs}ms`,
+                        ]]
+                    );
                 } else {
-                    printJson(response);
+                    printJson(data);
                 }
             } catch (error) {
                 printError(error);

@@ -1,6 +1,9 @@
 import type { FailureAction, FailureStatus, TaskCategory, TaskType } from './enums';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Response
+// ══════════════════════════════════════════
+
 export interface FailureLogResponse {
     id: string;
     tenantId: string;
@@ -17,7 +20,10 @@ export interface FailureLogResponse {
     updatedAt: string;
 }
 
-// ── Request ──
+// ══════════════════════════════════════════
+// Request
+// ══════════════════════════════════════════
+
 export interface FailureLogSearchRequest {
     category?: TaskCategory;
     taskType?: TaskType;
@@ -31,6 +37,10 @@ export interface BulkActionRequest {
     logIds: string[];
     action: FailureAction;
 }
+
+// ══════════════════════════════════════════
+// Response — Bulk
+// ══════════════════════════════════════════
 
 export interface BulkActionResponse {
     processedCount: number;

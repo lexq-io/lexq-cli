@@ -1,11 +1,15 @@
-import type {ApiExecutionStatus, ApiExecutionType, DecisionReasonCode, DecisionStatus} from './enums';
+import type { ApiExecutionStatus, ApiExecutionType } from './enums';
+import type { ExecutionTrace, DecisionTrace } from './analytics';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Response — Summary
+// ══════════════════════════════════════════
+
 export interface ExecutionHistorySummary {
     id: string;
     traceId: string;
     policyGroupId: string;
-    policyGroupName: string;
+    policyGroupName: string | null;
     policyVersionId: string;
     policyVersionNo: number | null;
     executionType: ApiExecutionType;
@@ -17,6 +21,10 @@ export interface ExecutionHistorySummary {
     createdAt: string;
 }
 
+// ══════════════════════════════════════════
+// Response — Detail
+// ══════════════════════════════════════════
+
 export interface ExecutionHistoryDetail extends ExecutionHistorySummary {
     idempotencyKey: string | null;
     requestFacts: Record<string, unknown>;
@@ -25,24 +33,9 @@ export interface ExecutionHistoryDetail extends ExecutionHistorySummary {
     decisionTraces: DecisionTrace[];
 }
 
-export interface ExecutionTrace {
-    traceId: string;
-    ruleId: string;
-    ruleName: string;
-    executedAt: string;
-    matched: boolean;
-    matchExpression: string;
-}
-
-export interface DecisionTrace {
-    ruleId: string;
-    ruleName: string;
-    policyGroupId: string;
-    policyVersionId: string;
-    status: DecisionStatus;
-    reasonCode: DecisionReasonCode;
-    reasonDetail: string;
-}
+// ══════════════════════════════════════════
+// Response — Stats
+// ══════════════════════════════════════════
 
 export interface ExecutionStatsResponse {
     totalExecutions: number;

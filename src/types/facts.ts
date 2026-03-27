@@ -1,6 +1,9 @@
 import type { ValueType } from './enums';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Response
+// ══════════════════════════════════════════
+
 export interface FactSchemaResponse {
     id: string;
     key: string;
@@ -11,7 +14,10 @@ export interface FactSchemaResponse {
     isRequired: boolean;
 }
 
-// ── Request ──
+// ══════════════════════════════════════════
+// Request
+// ══════════════════════════════════════════
+
 export interface CreateFactRequest {
     key: string;
     name: string;

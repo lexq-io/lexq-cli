@@ -2,7 +2,14 @@ import { Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { PolicyGroupSummary } from '@/types/groups';
+import type {
+    PolicyGroupSummary,
+    PolicyGroupDetail,
+    CreatePolicyGroupRequest,
+    UpdatePolicyGroupRequest,
+    StartAbTestRequest,
+    AdjustTrafficRateRequest,
+} from '@/types/groups';
 
 export function registerGroupCommands(program: Command): void {
     const groups = program.command('groups').description('Manage policy groups');
@@ -32,13 +39,13 @@ export function registerGroupCommands(program: Command): void {
 
                 if (format === 'table') {
                     printTable(
-                        ['ID', 'Name', 'Status', 'Priority', 'Live', 'Updated'],
+                        ['ID', 'Name', 'Status', 'Priority', 'Version', 'Updated'],
                         data.content.map((g) => [
                             g.id,
                             g.name,
                             g.status,
                             String(g.priority),
-                            g.liveVersionNo != null ? `v${g.liveVersionNo}` : '–',
+                            g.currentVersionName ?? '–',
                             g.updatedAt.substring(0, 10),
                         ]),
                         { truncate: 24 }
@@ -61,7 +68,7 @@ export function registerGroupCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const data = await apiRequest<PolicyGroupSummary>(
+                const data = await apiRequest<PolicyGroupDetail>(
                     'GET',
                     `policy-groups/${opts.id}`,
                     {
@@ -86,8 +93,8 @@ export function registerGroupCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const body = JSON.parse(opts.json);
-                const data = await apiRequest<PolicyGroupSummary>(
+                const body = JSON.parse(opts.json) as CreatePolicyGroupRequest;
+                const data = await apiRequest<PolicyGroupDetail>(
                     'POST',
                     'policy-groups',
                     {
@@ -114,8 +121,8 @@ export function registerGroupCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const body = JSON.parse(opts.json);
-                const data = await apiRequest<PolicyGroupSummary>(
+                const body = JSON.parse(opts.json) as UpdatePolicyGroupRequest;
+                const data = await apiRequest<PolicyGroupDetail>(
                     'PUT',
                     `policy-groups/${opts.id}`,
                     {
@@ -154,12 +161,16 @@ export function registerGroupCommands(program: Command): void {
                     }
                 }
 
-                await apiRequest<void>('DELETE', `policy-groups/${opts.id}`, {
-                    apiKey: globalOpts.apiKey,
-                    baseUrl: globalOpts.baseUrl,
-                    dryRun: globalOpts.dryRun,
-                    verbose: globalOpts.verbose,
-                });
+                await apiRequest<void>(
+                    'DELETE',
+                    `policy-groups/${opts.id}`,
+                    {
+                        apiKey: globalOpts.apiKey,
+                        baseUrl: globalOpts.baseUrl,
+                        dryRun: globalOpts.dryRun,
+                        verbose: globalOpts.verbose,
+                    }
+                );
                 console.log(`✓ Group ${opts.id} deleted.`);
             } catch (error) {
                 printError(error);
@@ -170,7 +181,8 @@ export function registerGroupCommands(program: Command): void {
     // ══════════════════════════════════════════════════
     // A/B Test
     // ══════════════════════════════════════════════════
-    const abTest = groups.command('ab-test').description('Manage A/B tests');
+
+    const abTest = groups.command('ab-test').description('A/B test management');
 
     // ── start ──
     abTest
@@ -182,7 +194,11 @@ export function registerGroupCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
-                const data = await apiRequest<unknown>(
+                const body: StartAbTestRequest = {
+                    testVersionId: opts.versionId,
+                    trafficRate: Number(opts.trafficRate),
+                };
+                const data = await apiRequest<PolicyGroupDetail>(
                     'POST',
                     `policy-groups/${opts.groupId}/ab-test`,
                     {
@@ -190,10 +206,7 @@ export function registerGroupCommands(program: Command): void {
                         baseUrl: globalOpts.baseUrl,
                         dryRun: globalOpts.dryRun,
                         verbose: globalOpts.verbose,
-                        body: {
-                            testVersionId: opts.versionId,
-                            trafficRate: Number(opts.trafficRate),
-                        },
+                        body,
                     }
                 );
                 printJson(data);
@@ -250,6 +263,9 @@ export function registerGroupCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
+                const body: AdjustTrafficRateRequest = {
+                    trafficRate: Number(opts.trafficRate),
+                };
                 const data = await apiRequest<unknown>(
                     'PATCH',
                     `policy-groups/${opts.groupId}/ab-test/traffic-rate`,
@@ -258,7 +274,7 @@ export function registerGroupCommands(program: Command): void {
                         baseUrl: globalOpts.baseUrl,
                         dryRun: globalOpts.dryRun,
                         verbose: globalOpts.verbose,
-                        body: { trafficRate: Number(opts.trafficRate) },
+                        body,
                     }
                 );
                 printJson(data);

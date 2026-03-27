@@ -1,45 +1,76 @@
 import type { ConflictResolutionMode, ConflictResolutionStrategy, PolicyGroupStatus } from './enums';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Response
+// ══════════════════════════════════════════
+
 export interface PolicyGroupSummary {
     id: string;
     name: string;
     description: string | null;
-    status: PolicyGroupStatus;
     priority: number;
-    activationMode: string;
-    liveVersionNo: number | null;
+    activationGroup: string | null;
+    currentVersionId: string | null;
+    currentVersionName: string | null;
+    status: PolicyGroupStatus;
+    isAbTestActive: boolean;
+    trafficRate: number;
+    updatedAt: string;
+}
+
+export interface PolicyGroupDetail {
+    id: string;
+    name: string;
+    description: string | null;
+    priority: number;
+    activationGroup: string | null;
+    activationMode: ConflictResolutionMode;
+    activationStrategy: ConflictResolutionStrategy;
+    executionLimit: number | null;
+    currentVersionId: string | null;
+    currentVersionName: string | null;
+    status: PolicyGroupStatus;
+    canRollback: boolean;
+    isAbTestActive: boolean;
+    testVersionId: string | null;
+    testVersionName: string | null;
+    trafficRate: number;
     createdAt: string;
     updatedAt: string;
 }
 
-export interface PolicyGroupDetail extends PolicyGroupSummary {
-    mutexMode: ConflictResolutionMode;
-    mutexStrategy: ConflictResolutionStrategy;
-    activationGroup: string | null;
-    maxSelection: number | null;
-    isAbTestActive: boolean;
-    currentVersionId: string | null;
-    testVersionId: string | null;
-    trafficRate: number | null;
-}
+// ══════════════════════════════════════════
+// Request
+// ══════════════════════════════════════════
 
-// ── Request ──
 export interface CreatePolicyGroupRequest {
     name: string;
     description?: string;
-    priority?: number;
+    priority: number;
+    activationGroup?: string;
+    activationMode?: ConflictResolutionMode;
+    activationStrategy?: ConflictResolutionStrategy;
+    executionLimit?: number;
+    status?: PolicyGroupStatus;
 }
 
 export interface UpdatePolicyGroupRequest {
     name?: string;
     description?: string;
     priority?: number;
+    activationGroup?: string;
+    activationMode?: ConflictResolutionMode;
+    activationStrategy?: ConflictResolutionStrategy;
+    executionLimit?: number;
     status?: PolicyGroupStatus;
 }
 
+// ══════════════════════════════════════════
+// A/B Test
+// ══════════════════════════════════════════
+
 export interface StartAbTestRequest {
-    challengerVersionId: string;
+    testVersionId: string;
     trafficRate: number;
 }
 

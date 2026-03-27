@@ -1,6 +1,9 @@
 import type { IntegrationType } from './enums';
 
-// ── Response ──
+// ══════════════════════════════════════════
+// Response
+// ══════════════════════════════════════════
+
 export interface IntegrationResponse {
     id: string;
     type: IntegrationType;
@@ -11,7 +14,10 @@ export interface IntegrationResponse {
     hasCredential: boolean;
 }
 
-// ── Request ──
+// ══════════════════════════════════════════
+// Request
+// ══════════════════════════════════════════
+
 export interface IntegrationUpsertRequest {
     id?: string;
     type: IntegrationType;
@@ -22,7 +28,11 @@ export interface IntegrationUpsertRequest {
     isActive?: boolean;
 }
 
-// ── Config Spec ──
+// ══════════════════════════════════════════
+// Config Spec (IntegrationConfigMetadata.ConfigFieldSpec)
+// ⚠️ Java 원본 클래스 미확인 — messageKey vs label/description 차이 존재 가능
+// ══════════════════════════════════════════
+
 export interface ConfigFieldSpec {
     key: string;
     type: 'STRING' | 'SELECT';

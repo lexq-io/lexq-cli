@@ -184,10 +184,10 @@ export function registerDeployCommands(program: Command): void {
                         ['ID', 'Type', 'Group', 'Version', 'By', 'At'],
                         data.content.map((d) => [
                             d.id.substring(0, 8),
-                            d.type,
-                            d.groupName,
-                            `v${d.versionNo}`,
-                            d.deployedByName ?? d.deployedBy.substring(0, 8),
+                            d.deploymentType,
+                            d.policyGroupName,
+                            d.versionNo != null ? `v${d.versionNo}` : '–',
+                            d.deployedByName,
                             d.deployedAt.substring(0, 16),
                         ]),
                         { truncate: 20 }
@@ -249,12 +249,13 @@ export function registerDeployCommands(program: Command): void {
 
                 if (format === 'table') {
                     printTable(
-                        ['Group', 'Name', 'Deployed', 'Current Version'],
+                        ['Group', 'Name', 'Status', 'Current Version', 'Last Deploy'],
                         data.map((d) => [
                             d.groupId.substring(0, 8),
                             d.groupName,
-                            d.isDeployed ? '✓' : '✗',
-                            d.currentVersionNo != null ? `v${d.currentVersionNo}` : '–',
+                            d.groupStatus,
+                            d.currentVersionName ?? '–',
+                            d.lastDeployedAt?.substring(0, 16) ?? '–',
                         ])
                     );
                 } else {
