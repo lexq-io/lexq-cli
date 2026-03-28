@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { type Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';

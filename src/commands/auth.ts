@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { type Command } from 'commander';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { saveConfig, deleteConfig, loadConfig, getConfigPath } from '@/lib/config';

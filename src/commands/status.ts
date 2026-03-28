@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { type Command } from 'commander';
 import { loadConfig } from '@/lib/config';
 import { printJson, printError } from '@/lib/output';
 
@@ -21,7 +21,7 @@ export function registerStatusCommand(program: Command): void {
                     latencyMs: latency,
                     endpoint: `${baseUrl}/health`,
                 });
-            } catch (error) {
+            } catch {
                 printError(new Error(`Cannot reach LexQ API at ${baseUrl}/health`));
                 process.exit(1);
             }
