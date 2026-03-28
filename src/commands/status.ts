@@ -1,5 +1,4 @@
-// src/commands/status.ts
-import { Command } from 'commander';
+import { type Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import { printJson, printError } from '@/lib/output';
 import type { WhoAmIResponse } from '@/types/auth';
