@@ -13,6 +13,9 @@
     "AGENTS.md",
     "CONTEXT.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
@@ -35,7 +38,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lexq-io/lexq-cli.git"
+    "url": "https://github.com/sanghyunp-dev/lexq-cli.git"
   },
   "homepage": "https://lexq.io",
   "engines": {
