@@ -13,6 +13,7 @@ import { registerAnalyticsCommands } from './commands/analytics';
 import { registerHistoryCommands } from './commands/history';
 import { registerIntegrationCommands } from './commands/integrations';
 import { registerLogCommands } from './commands/logs';
+import {registerServeCommand} from './commands/serve';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -59,6 +60,9 @@ export function createCli(): Command {
     registerHistoryCommands(program);
     registerIntegrationCommands(program);
     registerLogCommands(program);
+
+    // // M7: MCP Server
+    registerServeCommand(program);
 
     return program;
 }

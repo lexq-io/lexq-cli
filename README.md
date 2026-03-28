@@ -148,6 +148,64 @@ pnpm lint          # ESLint
 bash tests/e2e.sh  # E2E tests (requires API key)
 ```
 
+## MCP Server Mode
+
+Run LexQ CLI as an MCP (Model Context Protocol) server for seamless AI agent integration:
+
+```bash
+lexq serve --mcp
+```
+
+This starts a stdio MCP server exposing 53 tools — the full LexQ API — to any MCP-compatible client.
+
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers":{
+    "lexq":{
+      "command":"npx",
+      "args":[
+        "-y",
+        "@lexq/cli",
+        "serve",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+### Claude.ai (Web)
+
+Settings → MCP Servers → Add:
+- Command: `npx`
+- Args: `-y @lexq/cli serve --mcp`
+
+### VS Code / Cursor
+
+`.vscode/mcp.json`:
+
+```json
+{
+  "servers":{
+    "lexq":{
+      "command":"npx",
+      "args":[
+        "-y",
+        "@lexq/cli",
+        "serve",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+> **Prerequisite:** `lexq auth login` must have been run once to store an API key in `~/.lexq/config.json`.
+
 ## License
 
 [Apache-2.0](LICENSE)

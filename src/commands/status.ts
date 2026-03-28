@@ -1,28 +1,29 @@
-import { type Command } from 'commander';
-import { loadConfig } from '@/lib/config';
+// src/commands/status.ts
+import { Command } from 'commander';
+import { apiRequest } from '@/lib/api-client';
 import { printJson, printError } from '@/lib/output';
+import type { WhoAmIResponse } from '@/types/auth';
 
 export function registerStatusCommand(program: Command): void {
     program
         .command('status')
-        .description('Check LexQ API server status')
+        .description('Check API connectivity and authentication')
         .action(async () => {
-            const config = loadConfig();
-            const baseUrl = config.baseUrl.replace(/\/v1\/partners\/?$/, '');
-
+            const globalOpts = program.opts();
+            const startTime = Date.now();
             try {
-                const start = Date.now();
-                const response = await fetch(`${baseUrl}/health`);
-                const latency = Date.now() - start;
-
-                printJson({
-                    status: response.ok ? 'ok' : 'degraded',
-                    httpStatus: response.status,
-                    latencyMs: latency,
-                    endpoint: `${baseUrl}/health`,
+                const info = await apiRequest<WhoAmIResponse>('GET', 'whoami', {
+                    apiKey: globalOpts.apiKey,
+                    baseUrl: globalOpts.baseUrl,
                 });
-            } catch {
-                printError(new Error(`Cannot reach LexQ API at ${baseUrl}/health`));
+                printJson({
+                    status: 'ok',
+                    latencyMs: Date.now() - startTime,
+                    tenantId: info.tenantId,
+                    role: info.role,
+                });
+            } catch (error) {
+                printError(error);
                 process.exit(1);
             }
         });
