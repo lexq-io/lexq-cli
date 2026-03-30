@@ -98,6 +98,13 @@ export const TaskCategory = ['INTEGRATION', 'INTERNAL'] as const;
 export type TaskCategory = (typeof TaskCategory)[number];
 
 export const TaskType = [
-    'COUPON_ISSUE', 'POINT_EARN', 'NOTIFICATION_SEND', 'WEBHOOK_EXECUTE',
+    // Integration
+    'COUPON_ISSUE', 'COUPON_CANCEL',
+    'POINT_EARN', 'POINT_USE', 'POINT_REFUND',
+    'NOTIFICATION_SEND',
+    'CRM_SYNC_USER', 'CRM_ADD_TAG',
+    'WEBHOOK_EXECUTE',
+    // Internal
+    'IMAGE_PROCESSING', 'DAILY_SETTLEMENT',
 ] as const;
 export type TaskType = (typeof TaskType)[number];

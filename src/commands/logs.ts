@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { FailureLogResponse, BulkActionResponse } from '@/types/logs';
+import {TaskType} from '@/types/enums'
 
 export function registerLogCommands(program: Command): void {
     const logs = program.command('logs').description('Failure logs');
@@ -12,7 +13,7 @@ export function registerLogCommands(program: Command): void {
         .command('list')
         .description('List failure logs')
         .option('--category <category>', 'Filter by category (INTEGRATION, INTERNAL)')
-        .option('--task-type <taskType>', 'Filter by task type (COUPON_ISSUE, POINT_EARN, NOTIFICATION_SEND, WEBHOOK_EXECUTE)')
+        .option('--task-type <taskType>', `Filter by task type (${TaskType.join(', ')})`)
         .option('--status <status>', 'Filter by status (PENDING, RESOLVED, IGNORED)')
         .option('--keyword <keyword>', 'Search keyword')
         .option('--start-date <date>', 'Start date (yyyy-MM-dd)')

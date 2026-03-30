@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi, paginationParams } from './_shared';
+import {FailureAction, FailureStatus, TaskCategory, TaskType} from '@/types/enums'
 
 export function registerLogTools(server: McpServer): void {
     server.registerTool(
@@ -13,20 +14,15 @@ export function registerLogTools(server: McpServer): void {
                 page: z.number().int().min(0).default(0).describe('Page number'),
                 size: z.number().int().min(1).max(100).default(20).describe('Page size'),
                 category: z
-                    .enum(['INTEGRATION', 'INTERNAL'])
+                    .enum(TaskCategory)
                     .optional()
                     .describe('Task category'),
                 taskType: z
-                    .enum([
-                        'COUPON_ISSUE',
-                        'POINT_EARN',
-                        'NOTIFICATION_SEND',
-                        'WEBHOOK_EXECUTE',
-                    ])
+                    .enum(TaskType)
                     .optional()
                     .describe('Task type'),
                 status: z
-                    .enum(['PENDING', 'RESOLVED', 'IGNORED'])
+                    .enum(FailureStatus)
                     .optional()
                     .describe('Log status'),
                 keyword: z
@@ -69,7 +65,7 @@ export function registerLogTools(server: McpServer): void {
             inputSchema: {
                 logId: z.string().uuid().describe('Failure log ID'),
                 action: z
-                    .enum(['RETRY', 'RESOLVE', 'IGNORE'])
+                    .enum(FailureAction)
                     .describe('Action to take'),
             },
         },
@@ -90,7 +86,7 @@ export function registerLogTools(server: McpServer): void {
                     .array(z.string().uuid())
                     .describe('Array of failure log IDs'),
                 action: z
-                    .enum(['RETRY', 'RESOLVE', 'IGNORE'])
+                    .enum(FailureAction)
                     .describe('Action to apply to all logs'),
             },
         },
