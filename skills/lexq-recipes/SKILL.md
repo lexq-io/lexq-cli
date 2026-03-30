@@ -36,7 +36,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   },
   "actions": [{
     "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 20, "referenceFactKey": "payment_amount" }
+    "parameters": { "method": "PERCENTAGE", "rate": 20, "refVar": "payment_amount" }
   }]
 }'
 
@@ -53,7 +53,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   },
   "actions": [{
     "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 10, "referenceFactKey": "payment_amount" }
+    "parameters": { "method": "PERCENTAGE", "rate": 10, "refVar": "payment_amount" }
   }]
 }'
 
@@ -69,7 +69,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   },
   "actions": [{
     "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 5, "referenceFactKey": "payment_amount" }
+    "parameters": { "method": "PERCENTAGE", "rate": 5, "refVar": "payment_amount" }
   }]
 }'
 
@@ -161,7 +161,7 @@ lexq versions clone --group-id <gid> --version-id <v1id>
 lexq rules update --group-id <gid> --version-id <v2id> --id <ruleId> --json '{
   "actions": [{
     "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 15, "referenceFactKey": "payment_amount" }
+    "parameters": { "method": "PERCENTAGE", "rate": 15, "refVar": "payment_amount" }
   }]
 }'
 
@@ -289,7 +289,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "condition": {
     "type": "SINGLE", "field": "customer_tier", "operator": "EQUALS", "value": "VIP", "valueType": "STRING"
   },
-  "actions": [{ "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 20, "referenceFactKey": "payment_amount" } }]
+  "actions": [{ "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 20, "refVar": "payment_amount" } }]
 }'
 
 lexq rules create --group-id <gid> --version-id <vid> --json '{
@@ -301,7 +301,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "condition": {
     "type": "SINGLE", "field": "payment_amount", "operator": "GREATER_THAN_OR_EQUAL", "value": 50000, "valueType": "NUMBER"
   },
-  "actions": [{ "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 15, "referenceFactKey": "payment_amount" } }]
+  "actions": [{ "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 15, "refVar": "payment_amount" } }]
 }'
 
 # If a VIP customer pays 50000+, only the 20% VIP discount fires (priority 0 wins).

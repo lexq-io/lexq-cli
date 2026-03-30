@@ -11,7 +11,7 @@ LexQ is a **policy execution engine**. Customers define business rules (conditio
 ```bash
 # Store your API key (persisted at ~/.lexq/config.json)
 lexq auth login
-# Enter your API Key: lxk_xxxxxxxxxxxxx
+# Enter your API Key: sk_live_xxxxxxxxxxxxx
 
 # Verify authentication
 lexq auth whoami

@@ -117,7 +117,7 @@ Each rule can have multiple actions. Actions fire sequentially.
 
 | Type | Description | Key Parameters |
 |---|---|---|
-| `DISCOUNT` | Apply a discount | `method` (PERCENTAGE/FIXED), `rate`, `referenceFactKey` |
+| `DISCOUNT` | Apply a discount | `method` (PERCENTAGE/FIXED), `rate`, `refVar` |
 | `POINT` | Award points | `amount`, `pointType` |
 | `COUPON_ISSUE` | Issue a coupon | `couponId`, `expiryDays` |
 | `BLOCK` | Block the transaction | `reason`, `code` |
@@ -134,7 +134,7 @@ Each rule can have multiple actions. Actions fire sequentially.
   "parameters": {
     "method": "PERCENTAGE",
     "rate": 10,
-    "referenceFactKey": "payment_amount"
+    "refVar": "payment_amount"
   }
 }
 ```
@@ -184,7 +184,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "actions": [
     {
       "type": "DISCOUNT",
-      "parameters": { "method": "PERCENTAGE", "rate": 10, "referenceFactKey": "payment_amount" }
+      "parameters": { "method": "PERCENTAGE", "rate": 10, "refVar": "payment_amount" }
     }
   ],
   "isEnabled": true
@@ -199,7 +199,7 @@ lexq rules update --group-id <gid> --version-id <vid> --id <ruleId> --json '{
   "actions": [
     {
       "type": "DISCOUNT",
-      "parameters": { "method": "PERCENTAGE", "rate": 15, "referenceFactKey": "payment_amount" }
+      "parameters": { "method": "PERCENTAGE", "rate": 15, "refVar": "payment_amount" }
     }
   ]
 }'

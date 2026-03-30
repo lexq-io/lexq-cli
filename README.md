@@ -48,7 +48,7 @@ lexq rules create --group-id <GROUP_ID> --version-id <VERSION_ID> --json '{
   },
   "actions": [{
     "type": "DISCOUNT",
-    "parameters": {"method":"PERCENTAGE","rate":10,"referenceFactKey":"payment_amount"}
+    "parameters": {"method":"PERCENTAGE","rate":10,"refVar":"payment_amount"}
   }]
 }'
 
@@ -126,7 +126,7 @@ Config is stored at `~/.lexq/config.json`:
 
 ```json
 {
-  "apiKey": "lxk_xxxxxxxxxxxxx",
+  "apiKey": "sk_live_xxxxxxxxxxxxx",
   "baseUrl": "https://api.lexq.io/api/v1/partners",
   "format": "json"
 }
