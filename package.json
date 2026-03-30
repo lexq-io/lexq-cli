@@ -1,6 +1,6 @@
 {
   "name": "@lexq/cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "LexQ CLI — manage policies, simulate rules, and deploy from the terminal. Built for humans and AI agents.",
   "type": "module",
   "bin": {
