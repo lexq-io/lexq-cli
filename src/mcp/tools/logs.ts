@@ -1,9 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { callApi, paginationParams } from './_shared';
+import type { CallApi } from './_shared';
+import { paginationParams } from './_shared';
 import {FailureAction, FailureStatus, TaskCategory, TaskType} from '@/types/enums'
 
-export function registerLogTools(server: McpServer): void {
+export function registerLogTools(server: McpServer, callApi: CallApi): void {
     server.registerTool(
         'lexq_logs_list',
         {

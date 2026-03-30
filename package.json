@@ -6,6 +6,13 @@
   "bin": {
     "lexq": "./dist/index.js"
   },
+  "exports": {
+    ".": "./dist/index.js",
+    "./mcp": {
+      "types": "./dist/mcp/register.d.ts",
+      "import": "./dist/mcp/register.js"
+    }
+  },
   "files": [
     "dist",
     "schemas",

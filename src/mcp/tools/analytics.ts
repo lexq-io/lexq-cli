@@ -1,8 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { callApi, paginationParams } from './_shared';
+import type { CallApi } from './_shared';
+import { paginationParams } from './_shared';
 
-export function registerAnalyticsTools(server: McpServer): void {
+export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
     // ── Dry Run ──
 
     server.registerTool(

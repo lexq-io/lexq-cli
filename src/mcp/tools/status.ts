@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { callApi } from './_shared';
+import type { CallApi } from './_shared';
 
-export function registerStatusTools(server: McpServer): void {
+export function registerStatusTools(server: McpServer, callApi: CallApi): void {
     server.registerTool(
         'lexq_whoami',
         {

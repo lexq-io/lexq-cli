@@ -1,8 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { callApi, paginationParams } from './_shared';
+import type { CallApi } from './_shared';
+import { paginationParams } from './_shared';
 
-export function registerVersionTools(server: McpServer): void {
+export function registerVersionTools(server: McpServer, callApi: CallApi): void {
     server.registerTool(
         'lexq_versions_list',
         {

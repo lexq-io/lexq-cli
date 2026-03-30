@@ -7,41 +7,52 @@ export interface McpToolResult {
     isError?: boolean;
 }
 
-export function getMcpClientOptions(): ApiClientOptions {
-    const config = loadConfig();
-    return {
-        apiKey: config.apiKey,
-        baseUrl: config.baseUrl,
-    };
-}
-
-export async function callApi<T>(
+/**
+ * Function signature for making API calls.
+ * Injected into tool registration functions for testability and reuse.
+ *
+ * - lexq-cli (stdio): uses createCallApiFromConfig() — reads ~/.lexq/config.json
+ * - lexq-mcp (HTTP):  uses createApiCaller(apiKey) — Bearer token from request
+ */
+export type CallApi = (
     method: string,
     path: string,
-    opts?: { body?: unknown; params?: Record<string, string> }
-): Promise<McpToolResult> {
-    try {
-        const clientOpts = getMcpClientOptions();
-        const data = await apiRequest<T>(method, path, {
-            ...clientOpts,
-            body: opts?.body,
-            params: opts?.params,
-        });
-        return {
-            content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-        };
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return {
-            content: [{ type: 'text', text: JSON.stringify({ error: message }) }],
-            isError: true,
-        };
-    }
+    opts?: { body?: unknown; params?: Record<string, string> },
+) => Promise<McpToolResult>;
+
+/**
+ * Creates a CallApi bound to the local config file (~/.lexq/config.json).
+ * Used by the CLI's stdio MCP server.
+ */
+export function createCallApiFromConfig(): CallApi {
+    return async (method, path, opts) => {
+        try {
+            const config = loadConfig();
+            const clientOpts: ApiClientOptions = {
+                apiKey: config.apiKey,
+                baseUrl: config.baseUrl,
+            };
+            const data = await apiRequest(method, path, {
+                ...clientOpts,
+                body: opts?.body,
+                params: opts?.params,
+            });
+            return {
+                content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return {
+                content: [{ type: 'text', text: JSON.stringify({ error: message }) }],
+                isError: true,
+            };
+        }
+    };
 }
 
 export function paginationParams(
     page?: number,
-    size?: number
+    size?: number,
 ): Record<string, string> {
     const params: Record<string, string> = {};
     if (page !== undefined) params.page = String(page);
