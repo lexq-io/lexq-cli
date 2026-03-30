@@ -182,6 +182,8 @@ export function registerAnalyticsCommands(program: Command): void {
         .action(async (opts) => {
             try {
                 const globalOpts = program.opts();
+                const format: OutputFormat = globalOpts.format ?? 'json';
+
                 const data = await apiRequest<SimulationResponse>(
                     'GET',
                     `analytics/simulations/${opts.id}`,
@@ -192,7 +194,51 @@ export function registerAnalyticsCommands(program: Command): void {
                         verbose: globalOpts.verbose,
                     }
                 );
-                printJson(data);
+
+                if (format === 'table') {
+                    console.log(`Status:     ${data.status}`);
+                    console.log(`Progress:   ${data.progress}%`);
+
+                    if (data.summary) {
+                        console.log(`\n── Summary ──`);
+                        console.log(`Records:    ${data.summary.totalRecords.toLocaleString()}`);
+                        console.log(`Matched:    ${data.summary.matchedRecords.toLocaleString()}`);
+                        console.log(`Match Rate: ${data.summary.matchRate.toFixed(1)}%`);
+                        console.log(`Time:       ${data.summary.executionTimeMs.toLocaleString()}ms`);
+                    }
+
+                    if (data.metricSummary) {
+                        console.log(`\n── Metric: ${data.metricSummary.targetVariable} (${data.metricSummary.aggregationType}) ──`);
+                        console.log(`Baseline:   ${data.metricSummary.baselineValue.toLocaleString()}`);
+                        console.log(`Simulated:  ${data.metricSummary.simulatedValue.toLocaleString()}`);
+                        console.log(`Delta:      ${data.metricSummary.delta > 0 ? '+' : ''}${data.metricSummary.delta.toLocaleString()}`);
+                        console.log(`Change:     ${data.metricSummary.deltaPercentage > 0 ? '+' : ''}${data.metricSummary.deltaPercentage.toFixed(1)}%`);
+                    }
+
+                    if (data.policyImpact?.comparison) {
+                        const diff = data.policyImpact.comparison.difference;
+                        console.log(`\n── Impact ──`);
+                        console.log(`Matched Δ:  ${diff.matchedCountDelta > 0 ? '+' : ''}${diff.matchedCountDelta}`);
+                        console.log(`Rate Δ:     ${diff.matchedRateDelta > 0 ? '+' : ''}${diff.matchedRateDelta.toFixed(1)}%`);
+                        console.log(`Metric Δ:   ${diff.metricValueDelta > 0 ? '+' : ''}${diff.metricValueDelta.toLocaleString()}`);
+                    }
+
+                    if (data.ruleStats?.length) {
+                        console.log('');
+                        printTable(
+                            ['Rule', 'Matched', 'Metric'],
+                            data.ruleStats.map((r) => [
+                                r.ruleName,
+                                r.matchedCount.toLocaleString(),
+                                r.metricValue.toLocaleString(),
+                            ]),
+                            { truncate: 30 }
+                        );
+                    }
+                } else {
+                    printJson(data);
+                }
+
             } catch (error) {
                 printError(error);
                 process.exit(1);
@@ -241,7 +287,7 @@ export function registerAnalyticsCommands(program: Command): void {
                             s.policyGroupName,
                             s.targetVersionName ?? '–',
                             s.status,
-                            `${(s.matchRate * 100).toFixed(1)}%`,
+                            `${s.matchRate.toFixed(1)}%`,
                             String(s.totalRecords),
                             s.createdAt.substring(0, 16),
                         ]),
