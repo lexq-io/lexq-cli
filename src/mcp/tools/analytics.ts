@@ -179,4 +179,60 @@ Example body:
                 params: { format },
             })
     );
+
+    // ── Dataset Upload ──
+
+    server.registerTool(
+        'lexq_dataset_upload',
+        {
+            title: 'Upload Dataset',
+            description: `Upload inline CSV or JSON content as a simulation dataset.
+The content is uploaded to S3 and a path is returned.
+Use this path in simulation start with dataset type UPLOADED.
+
+CSV example:
+user_id,payment_amount
+user_001,150000
+user_002,50000
+
+JSON example:
+[{"user_id":"user_001","payment_amount":150000}, {"user_id":"user_002","payment_amount":50000}]`,
+            inputSchema: {
+                content: z.string().describe('CSV or JSON content as string'),
+                filename: z
+                    .string()
+                    .default('dataset.csv')
+                    .describe('Filename with extension (.csv or .json)'),
+            },
+        },
+        async ({ content, filename }) =>
+            callApi('POST', 'analytics/datasets/upload', {
+                upload: { content, filename, fieldName: 'file' },
+            })
+    );
+
+    // ── Dataset Template ──
+
+    server.registerTool(
+        'lexq_dataset_template',
+        {
+            title: 'Download Dataset Template',
+            description:
+                'Generate a sample CSV or JSON template based on the required facts of a version. Use this to understand the expected data format before uploading a dataset.',
+            inputSchema: {
+                groupId: z.string().uuid().describe('Policy group ID'),
+                versionId: z.string().uuid().describe('Version ID'),
+                format: z
+                    .enum(['csv', 'json'])
+                    .default('csv')
+                    .describe('Template format'),
+            },
+        },
+        async ({ groupId, versionId, format }) =>
+            callApi(
+                'GET',
+                `analytics/groups/${groupId}/versions/${versionId}/dataset-template`,
+                { params: { format } }
+            )
+    );
 }

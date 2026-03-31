@@ -46,7 +46,7 @@ Detailed documentation lives in the `skills/` directory. **Read the relevant ski
 6. **Copy full UUIDs from output.** Never guess or truncate IDs.
 7. **Handle errors gracefully.** Check the error code and follow the action table in `lexq-shared/SKILL.md`.
 
-## Complete Command Inventory (61 commands)
+## Complete Command Inventory (63 commands)
 
 ```
 lexq auth login|logout|whoami
@@ -59,6 +59,7 @@ lexq facts list|create|update|delete
 lexq deploy publish|live|rollback|undeploy|history|detail|overview
 lexq analytics dry-run|dry-run-compare|requirements
 lexq analytics simulation start|status|list|cancel|export
+lexq analytics dataset upload|template
 lexq history list|get|stats
 lexq integrations list|get|save|delete|config-spec
 lexq logs list|get|action|bulk-action

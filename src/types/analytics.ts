@@ -169,3 +169,10 @@ export interface OutputValueChange {
     before: unknown;
     after: unknown;
 }
+
+export interface DatasetUploadResponse {
+    path: string;
+    filename: string;
+    size: number;
+    contentType: string;
+}

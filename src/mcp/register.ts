@@ -13,7 +13,7 @@ import { registerIntegrationTools } from './tools/integrations';
 import { registerLogTools } from './tools/logs';
 
 /**
- * Registers all 53 MCP tools on the given server.
+ * Registers all 55 MCP tools on the given server.
  *
  * @param server - McpServer instance
  * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)

@@ -74,6 +74,7 @@ lexq facts           list | create | update | delete
 lexq deploy          publish | live | rollback | undeploy | history | detail | overview
 lexq analytics       dry-run | dry-run-compare | requirements
 lexq analytics simulation  start | status | list | cancel | export
+lexq analytics dataset     upload | template
 lexq history         list | get | stats
 lexq integrations    list | get | save | delete | config-spec
 lexq logs            list | get | action | bulk-action
@@ -156,7 +157,7 @@ Run LexQ CLI as an MCP (Model Context Protocol) server for seamless AI agent int
 lexq serve --mcp
 ```
 
-This starts a stdio MCP server exposing 53 tools — the full LexQ API — to any MCP-compatible client.
+This starts a stdio MCP server exposing 55 tools — the full LexQ API — to any MCP-compatible client.
 
 ### Claude Desktop
 

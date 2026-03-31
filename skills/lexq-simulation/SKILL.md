@@ -172,6 +172,28 @@ lexq analytics simulation start --json '{
 | `MANUAL` | `REQUEST_BODY` | Provide `manualData` array in the request |
 | `UPLOADED` | `S3_BUCKET` | Reference an uploaded dataset by `path` |
 
+### File Upload Dataset
+```bash
+# 1. Download template (optional)
+lexq analytics dataset template \
+  --group-id  --version-id  --format csv --output template.csv
+
+# 2. Upload dataset
+lexq analytics dataset upload --file ./my-data.csv
+# → path: datasets//a1b2c3d4e5f6.csv
+
+# 3. Start simulation with uploaded path
+lexq analytics simulation start --json '{
+  "policyVersionId": "",
+  "dataset": {
+    "type": "UPLOADED",
+    "source": "S3_BUCKET",
+    "path": "datasets//a1b2c3d4e5f6.csv"
+  },
+  "options": { "includeRuleStats": true, "maxRecords": 10000 }
+}'
+```
+
 ### Check Status (Poll)
 
 ```bash

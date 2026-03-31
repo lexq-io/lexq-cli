@@ -1,14 +1,17 @@
-import { readFileSync } from 'node:fs';
+import {readFileSync, writeFileSync} from 'node:fs';
 import { type Command } from 'commander';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
+    DatasetUploadResponse,
+    DryRunCompareResponse,
     DryRunResponse,
     RequirementsResponse,
     SimulationHistoryResponse,
     SimulationResponse,
 } from '@/types/analytics';
+import {loadConfig} from "@/lib/config";
 
 export function registerAnalyticsCommands(program: Command): void {
     const analytics = program.command('analytics').description('Dry run, simulation, and requirements');
@@ -73,7 +76,7 @@ export function registerAnalyticsCommands(program: Command): void {
                     throw new Error('Request body must include "facts", "versionIdA", "versionIdB". Use --json or --file.');
                 }
 
-                const data = await apiRequest<unknown>(
+                const data = await apiRequest<DryRunCompareResponse>(
                     'POST',
                     'analytics/dry-run/compare',
                     {
@@ -366,7 +369,6 @@ export function registerAnalyticsCommands(program: Command): void {
                 );
 
                 if (opts.output) {
-                    const { writeFileSync } = await import('node:fs');
                     const text = typeof response === 'string'
                         ? response
                         : JSON.stringify(response, null, 2);
@@ -374,6 +376,120 @@ export function registerAnalyticsCommands(program: Command): void {
                     console.log(`✓ Exported to ${opts.output}`);
                 } else {
                     printJson(response);
+                }
+            } catch (error) {
+                printError(error);
+                process.exit(1);
+            }
+        });
+
+    // ══════════════════════════════════════════════════
+    // Dataset
+    // ══════════════════════════════════════════════════
+
+    const dataset = analytics.command('dataset').description('Upload datasets and download templates');
+
+    // ── upload ──
+    dataset
+        .command('upload')
+        .description('Upload a CSV or JSON file as a simulation dataset')
+        .requiredOption('--file <path>', 'Path to CSV or JSON file')
+        .action(async (opts) => {
+            try {
+                const globalOpts = program.opts();
+                const config = loadConfig();
+                const baseUrl = globalOpts.baseUrl ?? config.baseUrl;
+                const apiKey = globalOpts.apiKey ?? config.apiKey;
+
+                if (!apiKey) {
+                    throw new Error('Not authenticated. Run "lexq auth login" first.');
+                }
+
+                const filePath = opts.file as string;
+                const fileBuffer = readFileSync(filePath);
+                const fileName = filePath.split('/').pop() ?? 'dataset';
+
+                // Content-Type 추론
+                const ext = fileName.split('.').pop()?.toLowerCase();
+                let contentType = 'application/octet-stream';
+                if (ext === 'csv') contentType = 'text/csv';
+                else if (ext === 'json') contentType = 'application/json';
+
+                // Node.js 18+ native FormData + Blob
+                const blob = new Blob([fileBuffer], { type: contentType });
+                const formData = new FormData();
+                formData.append('file', blob, fileName);
+
+                const url = new URL('analytics/datasets/upload', baseUrl.endsWith('/') ? baseUrl : baseUrl + '/');
+
+                if (globalOpts.verbose) {
+                    console.error(`→ POST ${url.toString()}`);
+                    console.error(`  File: ${filePath} (${fileBuffer.length} bytes)`);
+                }
+
+                const response = await fetch(url.toString(), {
+                    method: 'POST',
+                    headers: { 'X-API-KEY': apiKey },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed (${response.status}): ${errorText}`);
+                }
+
+                const envelope = await response.json() as { data: DatasetUploadResponse };
+                const result = envelope.data;
+                console.log(`✓ Dataset uploaded: ${result.path}`);
+                console.log(`  File: ${result.filename} (${result.size} bytes)`);
+                printJson(result);
+            } catch (error) {
+                printError(error);
+                process.exit(1);
+            }
+        });
+
+    // ── template ──
+    dataset
+        .command('template')
+        .description('Download a dataset template based on version requirements')
+        .requiredOption('--group-id <groupId>', 'Policy group ID')
+        .requiredOption('--version-id <versionId>', 'Policy version ID')
+        .option('--format <fmt>', 'Template format: csv or json', 'csv')
+        .option('--output <path>', 'Output file path')
+        .action(async (opts) => {
+            try {
+                const globalOpts = program.opts();
+                const config = loadConfig();
+                const baseUrl = globalOpts.baseUrl ?? config.baseUrl;
+                const apiKey = globalOpts.apiKey ?? config.apiKey;
+
+                if (!apiKey) {
+                    throw new Error('Not authenticated. Run "lexq auth login" first.');
+                }
+
+                const fmt = opts.format === 'json' ? 'json' : 'csv';
+                const url = new URL(
+                    `analytics/groups/${opts.groupId}/versions/${opts.versionId}/dataset-template`,
+                    baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
+                );
+                url.searchParams.set('format', fmt);
+
+                const response = await fetch(url.toString(), {
+                    headers: { 'X-API-KEY': apiKey, Accept: '*/*' },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Template download failed (${response.status})`);
+                }
+
+                const text = await response.text();
+
+                if (opts.output) {
+                    writeFileSync(opts.output as string, text, 'utf-8');
+                    console.log(`✓ Template saved to ${opts.output}`);
+                } else {
+                    console.log(text);
                 }
             } catch (error) {
                 printError(error);
