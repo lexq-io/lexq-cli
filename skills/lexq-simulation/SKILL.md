@@ -194,6 +194,16 @@ lexq analytics simulation start --json '{
 }'
 ```
 
+**CSV format:** Header row with fact keys, data rows with values. Types auto-detected.
+**JSON format:** Array of objects `[{"key": "value"}, ...]`
+
+### MCP — Dataset Tools
+
+```
+lexq_dataset_template  → Get sample CSV/JSON based on version's required facts
+lexq_dataset_upload    → Upload inline CSV/JSON content to S3, returns path
+```
+
 ### Check Status (Poll)
 
 ```bash
