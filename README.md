@@ -153,8 +153,18 @@ bash tests/e2e.sh  # E2E tests (requires API key)
 
 ## MCP Server Mode
 
-Run LexQ CLI as an MCP (Model Context Protocol) server for seamless AI agent integration:
+LexQ exposes 55 policy engine tools via MCP. Two connection methods:
 
+### Claude.ai (Cloud — no install)
+
+1. Go to **Settings → Connectors → Add Custom Integration**
+2. Enter: `https://mcp.lexq.io`
+3. Sign in with your LexQ account and select an API key
+4. Done — 55 tools available in every conversation
+
+### Local (stdio)
+
+Run LexQ CLI as a local MCP server:
 ```bash
 lexq serve --mcp
 ```
@@ -180,12 +190,6 @@ Add to `claude_desktop_config.json`:
   }
 }
 ```
-
-### Claude.ai (Web)
-
-Settings → MCP Servers → Add:
-- Command: `npx`
-- Args: `-y @lexq/cli serve --mcp`
 
 ### VS Code / Cursor
 
