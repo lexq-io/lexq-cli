@@ -31,6 +31,6 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
     registerLogTools(server, callApi);
 }
 
-// Re-exports for external consumers (lexq-mcp)
+// Re-exports for external consumers. (lexq-mcp)
 export type { CallApi, McpToolResult } from './tools/_shared';
 export { paginationParams } from './tools/_shared';
