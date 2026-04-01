@@ -1,5 +1,6 @@
 # LexQ CLI
 
+> CLI and MCP server for [LexQ](https://lexq.io) — a rule engine with built-in simulation.
 > Manage policies, simulate rules, and deploy from the terminal. Built for humans and AI agents.
 
 **[Website](https://lexq.io)** · **[Docs](https://docs.lexq.io)** · **[Console](https://console.lexq.io)**

@@ -9,47 +9,17 @@ LexQ is a **B2B SaaS policy execution engine**. Customers define business rules 
 - A/B testing for rule versions
 - Git-style versioning with full audit trail
 
-## Platform Components
-
+## Architecture
 ```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│  lexq-web   │     │ lexq-console │     │   lexq-cli   │
-│  (Next.js)  │     │  (React 18)  │     │ (TypeScript) │
-│  Marketing  │     │   Admin UI   │     │  Agent Tool  │
-└──────┬──────┘     └──────┬───────┘     └──────┬───────┘
-       │                   │                    │
-       │           ┌───────▼────────┐           │
-       │           │  lexq-engine   │◄──────────┘
-       │           │ (Spring Boot)  │
-       │           ├────────────────┤
-       │           │ module-admin   │ :8081 ── Console API (JWT)
-       │           │ module-partner │ :8080 ── Partner API (API Key) ◄── CLI
-       │           │ module-engine  │ :8082 ── Execution API (API Key)
-       │           │ module-batch   │ :8083 ── Background Jobs
-       │           │ module-core    │        ── Shared domain
-       │           └───────┬────────┘
-       │                   │
-       │           ┌───────▼────────┐
-       │           │   PostgreSQL   │   Aurora Serverless v2
-       │           │     Redis      │   ElastiCache Serverless
-       │           └────────────────┘
-       │
-┌──────▼──────┐
-│  lexq-docs  │
-│ (Mintlify)  │
-└─────────────┘
+LexQ CLI ──► api.lexq.io/api/v1/partners (API Key auth)
+                     │
+                     ▼
+              LexQ Policy Engine
 ```
 
-## CLI ↔ Engine Relationship
-
-The CLI exclusively calls `module-partner-api` (port 8080) via API Key authentication.
+The CLI exclusively calls the Partner API via API Key authentication.
 
 **Base URL:** `https://api.lexq.io/api/v1/partners`
-
-The CLI does NOT call:
-- `module-admin-api` (JWT auth, console only)
-- `module-engine-api` (runtime execution, application code only)
-- `module-batch` (internal scheduler)
 
 ## Domain Model
 
@@ -133,26 +103,3 @@ Tenant
 | **Decision Trace** | Final disposition of a rule after conflict resolution (SELECTED, BLOCKED_MUTEX, etc.). |
 | **Snapshot Hash** | SHA-256 hash of a version's rule snapshot at deployment time. Used to verify integrity. |
 | **Traffic Rate** | Percentage (0–100) of traffic routed to the A/B test version. |
-
-## Infrastructure
-
-| Component | Service | Region |
-|---|---|---|
-| Compute | AWS ECS Fargate | us-east-1 |
-| Database | Aurora PostgreSQL Serverless v2 | us-east-1 |
-| Cache | ElastiCache Redis Serverless | us-east-1 |
-| CDN | CloudFront + S3 | Global |
-| DNS | Cloudflare | — |
-| Email | AWS SES | us-east-1 |
-| Docs | Mintlify | — |
-| IaC | Terraform | — |
-| CI/CD | GitHub Actions (OIDC) | — |
-
-## Domains
-
-| Domain | Target |
-|---|---|
-| `lexq.io` | Vercel (marketing site) |
-| `console.lexq.io` | CloudFront → S3 (React SPA) |
-| `api.lexq.io` | ALB → ECS (all backend modules) |
-| `docs.lexq.io` | Mintlify |
