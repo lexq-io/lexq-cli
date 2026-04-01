@@ -2,6 +2,8 @@
 
 > Manage policies, simulate rules, and deploy from the terminal. Built for humans and AI agents.
 
+**[Website](https://lexq.io)** · **[Docs](https://docs.lexq.io)** · **[Console](https://console.lexq.io)**
+
 [![npm](https://img.shields.io/npm/v/@lexq/cli)](https://www.npmjs.com/package/@lexq/cli)
 [![License](https://img.shields.io/github/license/lexq-io/lexq-cli)](LICENSE)
 
@@ -136,7 +138,7 @@ Config is stored at `~/.lexq/config.json`:
 ## Development
 
 ```bash
-git clone https://github.com/sanghyunp-dev/lexq-cli.git
+git clone https://github.com/lexq-io/lexq-cli.git
 cd lexq-cli
 pnpm install
 pnpm build
