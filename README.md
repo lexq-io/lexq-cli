@@ -163,6 +163,21 @@ LexQ exposes 55 policy engine tools via MCP. Two connection methods:
 3. Sign in with your LexQ account and select an API key
 4. Done — 55 tools available in every conversation
 
+### Remote (Streamable HTTP)
+
+For any MCP client that supports remote servers:
+```json
+{
+  "mcpServers": {
+    "lexq": {
+      "url": "https://mcp.lexq.io"
+    }
+  }
+}
+```
+
+OAuth 2.1 authentication is required. Your AI client will handle authorization automatically.
+
 ### Local (stdio)
 
 Run LexQ CLI as a local MCP server:
