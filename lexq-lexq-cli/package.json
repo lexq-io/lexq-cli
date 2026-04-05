@@ -1,0 +1,11 @@
+{
+  "name": "lexq-cli",
+  "version": "0.0.1",
+  "description": "Reserved — official package is @lexq/cli",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lexq-io/lexq-cli"
+  },
+  "homepage": "https://www.npmjs.com/package/@lexq/cli"
+}

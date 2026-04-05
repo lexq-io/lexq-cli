@@ -9,7 +9,7 @@ export default defineConfig([
         outDir: 'dist',
         clean: true,
         splitting: false,
-        sourcemap: true,
+        sourcemap: false,
         dts: false,
         banner: {
             js: '#!/usr/bin/env node',
@@ -26,7 +26,7 @@ export default defineConfig([
         outDir: 'dist',
         clean: false, // Don't wipe the CLI output
         splitting: false,
-        sourcemap: true,
+        sourcemap: false,
         dts: true,
         esbuildOptions(options) {
             options.alias = { '@': './src' };
