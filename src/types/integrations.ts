@@ -5,13 +5,13 @@ import type { IntegrationType } from './enums';
 // ══════════════════════════════════════════
 
 export interface IntegrationResponse {
-    id: string;
-    type: IntegrationType;
-    name: string;
-    baseUrl: string;
-    additionalConfig: Record<string, unknown> | null;
-    isActive: boolean;
-    hasCredential: boolean;
+  id: string;
+  type: IntegrationType;
+  name: string;
+  baseUrl: string;
+  additionalConfig: Record<string, unknown> | null;
+  isActive: boolean;
+  hasCredential: boolean;
 }
 
 // ══════════════════════════════════════════
@@ -19,13 +19,13 @@ export interface IntegrationResponse {
 // ══════════════════════════════════════════
 
 export interface IntegrationUpsertRequest {
-    id?: string;
-    type: IntegrationType;
-    name: string;
-    baseUrl: string;
-    credential?: string;
-    additionalConfig?: Record<string, unknown>;
-    isActive?: boolean;
+  id?: string;
+  type: IntegrationType;
+  name: string;
+  baseUrl: string;
+  credential?: string;
+  additionalConfig?: Record<string, unknown>;
+  isActive?: boolean;
 }
 
 // ══════════════════════════════════════════
@@ -34,12 +34,12 @@ export interface IntegrationUpsertRequest {
 // ══════════════════════════════════════════
 
 export interface ConfigFieldSpec {
-    key: string;
-    type: 'STRING' | 'SELECT';
-    required: boolean;
-    defaultValue: string | null;
-    options: string[] | null;
-    messageKey: string;
+  key: string;
+  type: 'STRING' | 'SELECT';
+  required: boolean;
+  defaultValue: string | null;
+  options: string[] | null;
+  messageKey: string;
 }
 
 export type IntegrationConfigSpecs = Record<string, ConfigFieldSpec[]>;

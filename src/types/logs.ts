@@ -5,19 +5,19 @@ import type { FailureAction, FailureStatus, TaskCategory, TaskType } from './enu
 // ══════════════════════════════════════════
 
 export interface FailureLogResponse {
-    id: string;
-    tenantId: string;
-    category: TaskCategory;
-    taskType: TaskType;
-    refId: string | null;
-    refSubId: string | null;
-    errorCode: string | null;
-    errorMessage: string | null;
-    payload: Record<string, unknown> | null;
-    retryCount: number;
-    status: FailureStatus;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  tenantId: string;
+  category: TaskCategory;
+  taskType: TaskType;
+  refId: string | null;
+  refSubId: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  payload: Record<string, unknown> | null;
+  retryCount: number;
+  status: FailureStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ══════════════════════════════════════════
@@ -25,17 +25,17 @@ export interface FailureLogResponse {
 // ══════════════════════════════════════════
 
 export interface FailureLogSearchRequest {
-    category?: TaskCategory;
-    taskType?: TaskType;
-    status?: FailureStatus;
-    searchKeyword?: string;
-    startDate?: string;
-    endDate?: string;
+  category?: TaskCategory;
+  taskType?: TaskType;
+  status?: FailureStatus;
+  searchKeyword?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface BulkActionRequest {
-    logIds: string[];
-    action: FailureAction;
+  logIds: string[];
+  action: FailureAction;
 }
 
 // ══════════════════════════════════════════
@@ -43,6 +43,6 @@ export interface BulkActionRequest {
 // ══════════════════════════════════════════
 
 export interface BulkActionResponse {
-    processedCount: number;
-    totalCount: number;
+  processedCount: number;
+  totalCount: number;
 }

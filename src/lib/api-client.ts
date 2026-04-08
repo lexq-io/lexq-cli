@@ -2,109 +2,110 @@ import { loadConfig } from './config';
 import type { ApiResponse } from '@/types/api';
 
 export interface ApiClientOptions {
-    apiKey?: string;
-    baseUrl?: string;
-    dryRun?: boolean;
-    verbose?: boolean;
+  apiKey?: string;
+  baseUrl?: string;
+  dryRun?: boolean;
+  verbose?: boolean;
 }
 
 export class ApiError extends Error {
-    constructor(
-        public readonly statusCode: number,
-        public readonly errorCode: string | null,
-        message: string
-    ) {
-        super(message);
-        this.name = 'ApiError';
-    }
+  constructor(
+    public readonly statusCode: number,
+    public readonly errorCode: string | null,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
 export async function apiRequest<T>(
-    method: string,
-    path: string,
-    options: ApiClientOptions & { body?: unknown; params?: Record<string, string> } = {}
+  method: string,
+  path: string,
+  options: ApiClientOptions & { body?: unknown; params?: Record<string, string> } = {},
 ): Promise<T> {
-    const config = loadConfig();
-    const baseUrl = options.baseUrl ?? config.baseUrl;
-    const apiKey = options.apiKey ?? config.apiKey;
+  const config = loadConfig();
+  const baseUrl = options.baseUrl ?? config.baseUrl;
+  const apiKey = options.apiKey ?? config.apiKey;
 
-    if (!apiKey) {
-        throw new ApiError(401, 'AUTH', 'Not authenticated. Run "lexq auth login" first.');
+  if (!apiKey) {
+    throw new ApiError(401, 'AUTH', 'Not authenticated. Run "lexq auth login" first.');
+  }
+
+  // Build URL with query params
+  const url = new URL(path, baseUrl.endsWith('/') ? baseUrl : baseUrl + '/');
+  if (options.params) {
+    for (const [key, value] of Object.entries(options.params)) {
+      if (value !== undefined && value !== '') {
+        url.searchParams.set(key, value);
+      }
     }
+  }
 
-    // Build URL with query params
-    const url = new URL(path, baseUrl.endsWith('/') ? baseUrl : baseUrl + '/');
-    if (options.params) {
-        for (const [key, value] of Object.entries(options.params)) {
-            if (value !== undefined && value !== '') {
-                url.searchParams.set(key, value);
-            }
-        }
-    }
+  const headers: Record<string, string> = {
+    'X-API-KEY': apiKey,
+    Accept: 'application/json',
+  };
 
-    const headers: Record<string, string> = {
-        'X-API-KEY': apiKey,
-        'Accept': 'application/json',
-    };
+  if (options.body) {
+    headers['Content-Type'] = 'application/json';
+  }
 
+  // Dry-run: print request and exit
+  if (options.dryRun) {
+    const masked =
+      apiKey.length > 8
+        ? apiKey.substring(0, 4) + '****' + apiKey.substring(apiKey.length - 4)
+        : '****';
+
+    console.log(`${method} ${url.toString()}`);
+    console.log('Headers:');
+    console.log(`  X-API-KEY: ${masked}`);
+    console.log(`  Content-Type: application/json`);
     if (options.body) {
-        headers['Content-Type'] = 'application/json';
+      console.log('Body:');
+      console.log(`  ${JSON.stringify(options.body, null, 2)}`);
     }
+    console.log('\n(Use without --dry-run to execute)');
+    process.exit(0);
+  }
 
-    // Dry-run: print request and exit
-    if (options.dryRun) {
-        const masked = apiKey.length > 8
-            ? apiKey.substring(0, 4) + '****' + apiKey.substring(apiKey.length - 4)
-            : '****';
+  if (options.verbose) {
+    console.error(`→ ${method} ${url.toString()}`);
+  }
 
-        console.log(`${method} ${url.toString()}`);
-        console.log('Headers:');
-        console.log(`  X-API-KEY: ${masked}`);
-        console.log(`  Content-Type: application/json`);
-        if (options.body) {
-            console.log('Body:');
-            console.log(`  ${JSON.stringify(options.body, null, 2)}`);
-        }
-        console.log('\n(Use without --dry-run to execute)');
-        process.exit(0);
-    }
+  const startTime = Date.now();
 
-    if (options.verbose) {
-        console.error(`→ ${method} ${url.toString()}`);
-    }
+  const response = await fetch(url.toString(), {
+    method,
+    headers,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
 
-    const startTime = Date.now();
+  if (options.verbose) {
+    console.error(`← ${response.status} ${response.statusText} (${Date.now() - startTime}ms)`);
+  }
 
-    const response = await fetch(url.toString(), {
-        method,
-        headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+  // Handle blob responses (export endpoints)
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('text/csv') || contentType.includes('application/octet-stream')) {
+    return response as unknown as T;
+  }
 
-    if (options.verbose) {
-        console.error(`← ${response.status} ${response.statusText} (${Date.now() - startTime}ms)`);
-    }
+  // No-content responses (DELETE 204 등)
+  if (response.status === 204 || contentType === '') {
+    return undefined as T;
+  }
 
-    // Handle blob responses (export endpoints)
-    const contentType = response.headers.get('content-type') ?? '';
-    if (contentType.includes('text/csv') || contentType.includes('application/octet-stream')) {
-        return response as unknown as T;
-    }
+  const json = (await response.json()) as ApiResponse<T>;
 
-    // No-content responses (DELETE 204 등)
-    if (response.status === 204 || contentType === '') {
-        return undefined as T;
-    }
+  if (!response.ok || json.result !== 'SUCCESS') {
+    throw new ApiError(
+      response.status,
+      json.errorCode,
+      json.message ?? `Request failed with status ${response.status}`,
+    );
+  }
 
-    const json = (await response.json()) as ApiResponse<T>;
-
-    if (!response.ok || json.result !== 'SUCCESS') {
-        throw new ApiError(
-            response.status,
-            json.errorCode,
-            json.message ?? `Request failed with status ${response.status}`
-        );
-    }
-
-    return json.data;
+  return json.data;
 }

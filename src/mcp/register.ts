@@ -19,16 +19,16 @@ import { registerLogTools } from './tools/logs';
  * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)
  */
 export function registerAllTools(server: McpServer, callApi: CallApi): void {
-    registerStatusTools(server, callApi);
-    registerGroupTools(server, callApi);
-    registerVersionTools(server, callApi);
-    registerRuleTools(server, callApi);
-    registerFactTools(server, callApi);
-    registerDeployTools(server, callApi);
-    registerAnalyticsTools(server, callApi);
-    registerHistoryTools(server, callApi);
-    registerIntegrationTools(server, callApi);
-    registerLogTools(server, callApi);
+  registerStatusTools(server, callApi);
+  registerGroupTools(server, callApi);
+  registerVersionTools(server, callApi);
+  registerRuleTools(server, callApi);
+  registerFactTools(server, callApi);
+  registerDeployTools(server, callApi);
+  registerAnalyticsTools(server, callApi);
+  registerHistoryTools(server, callApi);
+  registerIntegrationTools(server, callApi);
+  registerLogTools(server, callApi);
 }
 
 // Re-exports for external consumers (lexq-mcp)

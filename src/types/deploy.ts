@@ -5,18 +5,18 @@ import type { DeploymentType, PolicyGroupStatus, PolicyVersionStatus } from './e
 // ══════════════════════════════════════════
 
 export interface DeploymentSummary {
-    id: string;
-    policyGroupId: string;
-    policyGroupName: string;
-    versionId: string;
-    versionNo: number | null;
-    previousVersionId: string | null;
-    deployedBy: string;
-    deployedByName: string;
-    memo: string | null;
-    snapshotHash: string;
-    deploymentType: DeploymentType;
-    deployedAt: string;
+  id: string;
+  policyGroupId: string;
+  policyGroupName: string;
+  versionId: string;
+  versionNo: number | null;
+  previousVersionId: string | null;
+  deployedBy: string;
+  deployedByName: string;
+  memo: string | null;
+  snapshotHash: string;
+  deploymentType: DeploymentType;
+  deployedAt: string;
 }
 
 // ══════════════════════════════════════════
@@ -24,30 +24,30 @@ export interface DeploymentSummary {
 // ══════════════════════════════════════════
 
 export interface DeploymentDetail {
-    id: string;
-    policyGroupId: string;
-    policyGroupName: string;
-    versionId: string;
-    versionNo: number;
-    previousVersionId: string | null;
-    deploymentType: DeploymentType;
-    memo: string | null;
-    deployedAt: string;
+  id: string;
+  policyGroupId: string;
+  policyGroupName: string;
+  versionId: string;
+  versionNo: number;
+  previousVersionId: string | null;
+  deploymentType: DeploymentType;
+  memo: string | null;
+  deployedAt: string;
 
-    // 배포자
-    deployedBy: string;
-    deployedByName: string;
+  // 배포자
+  deployedBy: string;
+  deployedByName: string;
 
-    // 스냅샷 무결성
-    snapshotHash: string;
-    hashValid: boolean;
+  // 스냅샷 무결성
+  snapshotHash: string;
+  hashValid: boolean;
 
-    // 현재 버전 상태 (삭제되었을 수 있음)
-    currentVersionStatus: PolicyVersionStatus | null;
+  // 현재 버전 상태 (삭제되었을 수 있음)
+  currentVersionStatus: PolicyVersionStatus | null;
 
-    // 이전 버전 정보 (최초 배포면 null)
-    previousVersionNo: number | null;
-    previousVersionStatus: PolicyVersionStatus | null;
+  // 이전 버전 정보 (최초 배포면 null)
+  previousVersionNo: number | null;
+  previousVersionStatus: PolicyVersionStatus | null;
 }
 
 // ══════════════════════════════════════════
@@ -55,18 +55,18 @@ export interface DeploymentDetail {
 // ══════════════════════════════════════════
 
 export interface DeploymentStatus {
-    groupId: string;
-    groupName: string;
-    priority: number;
-    groupStatus: PolicyGroupStatus;
+  groupId: string;
+  groupName: string;
+  priority: number;
+  groupStatus: PolicyGroupStatus;
 
-    currentVersionId: string | null;
-    currentVersionName: string | null;
+  currentVersionId: string | null;
+  currentVersionName: string | null;
 
-    lastDeploymentType: DeploymentType | null;
-    lastDeployedBy: string | null;
-    lastDeployedByName: string | null;
-    lastDeployedAt: string | null;
+  lastDeploymentType: DeploymentType | null;
+  lastDeployedBy: string | null;
+  lastDeployedByName: string | null;
+  lastDeployedAt: string | null;
 }
 
 // ══════════════════════════════════════════
@@ -74,18 +74,18 @@ export interface DeploymentStatus {
 // ══════════════════════════════════════════
 
 export interface PublishRequest {
-    memo: string;
+  memo: string;
 }
 
 export interface DeployRequest {
-    versionId: string;
-    memo: string;
+  versionId: string;
+  memo: string;
 }
 
 export interface RollbackRequest {
-    memo: string;
+  memo: string;
 }
 
 export interface UndeployRequest {
-    memo: string;
+  memo: string;
 }

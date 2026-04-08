@@ -5,13 +5,13 @@ import type { ValueType } from './enums';
 // ══════════════════════════════════════════
 
 export interface FactSchemaResponse {
-    id: string;
-    key: string;
-    name: string;
-    type: ValueType;
-    description: string | null;
-    isSystem: boolean;
-    isRequired: boolean;
+  id: string;
+  key: string;
+  name: string;
+  type: ValueType;
+  description: string | null;
+  isSystem: boolean;
+  isRequired: boolean;
 }
 
 // ══════════════════════════════════════════
@@ -19,15 +19,15 @@ export interface FactSchemaResponse {
 // ══════════════════════════════════════════
 
 export interface CreateFactRequest {
-    key: string;
-    name: string;
-    type: ValueType;
-    description?: string;
-    isRequired: boolean;
+  key: string;
+  name: string;
+  type: ValueType;
+  description?: string;
+  isRequired: boolean;
 }
 
 export interface UpdateFactRequest {
-    name: string;
-    description?: string;
-    isRequired: boolean;
+  name: string;
+  description?: string;
+  isRequired: boolean;
 }
