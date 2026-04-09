@@ -47,7 +47,10 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       title: 'Create Rule',
       description: `Create a rule in a DRAFT version. Requires name, priority, condition tree, and actions array.
 
-      Note: Rules can reference fact keys that are not yet registered in Fact Definitions. The engine allows this for flexibility. However, registering facts via lexq_facts_create is recommended — it enables type validation, the Console UI autocomplete, and the dry-run requirements analyzer.
+      Before creating rules with new fact keys, call lexq_facts_list to check existing facts.
+      If a required key is missing, ask the user to confirm the type, isRequired, and description
+      before calling lexq_facts_create — registering facts enables type validation, Console UI
+      autocomplete, and the dry-run requirements analyzer.
 
       Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
       Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
