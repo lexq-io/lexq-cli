@@ -44,21 +44,21 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         name: z.string().describe('Group name (unique among non-ARCHIVED)'),
         priority: z.number().int().min(0).describe('Execution priority (lower = higher)'),
         description: z.string().optional().describe('Group description'),
-        conflictResolutionMode: z
+        activationMode: z
           .enum(['NONE', 'EXCLUSIVE', 'MAX_N'])
           .optional()
           .describe('Conflict resolution mode'),
-        conflictResolutionStrategy: z
+        activationStrategy: z
           .enum(['FIRST_MATCH', 'HIGHEST_PRIORITY', 'MAX_BENEFIT'])
           .optional()
           .describe('Strategy when mode is EXCLUSIVE or MAX_N'),
-        maxSelections: z
+        executionLimit: z
           .number()
           .int()
           .min(1)
           .optional()
-          .describe('Max selections (required when mode is MAX_N)'),
-        activationGroupId: z.string().uuid().optional().describe('Activation group ID'),
+          .describe('Max rule executions (required when mode is MAX_N)'),
+        activationGroup: z.string().optional().describe('Activation group name'),
       },
     },
     async (args) => {
@@ -67,12 +67,10 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         priority: args.priority,
       };
       if (args.description !== undefined) body.description = args.description;
-      if (args.conflictResolutionMode !== undefined)
-        body.conflictResolutionMode = args.conflictResolutionMode;
-      if (args.conflictResolutionStrategy !== undefined)
-        body.conflictResolutionStrategy = args.conflictResolutionStrategy;
-      if (args.maxSelections !== undefined) body.maxSelections = args.maxSelections;
-      if (args.activationGroupId !== undefined) body.activationGroupId = args.activationGroupId;
+      if (args.activationMode !== undefined) body.activationMode = args.activationMode;
+      if (args.activationStrategy !== undefined) body.activationStrategy = args.activationStrategy;
+      if (args.executionLimit !== undefined) body.executionLimit = args.executionLimit;
+      if (args.activationGroup !== undefined) body.activationGroup = args.activationGroup;
       return callApi('POST', 'policy-groups', { body });
     },
   );
@@ -81,7 +79,8 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_update',
     {
       title: 'Update Policy Group',
-      description: 'Update an existing policy group. Only provided fields are updated.',
+      description:
+        'Update a policy group. This is a full replacement — omitted optional fields will be set to null on the server.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         name: z.string().optional().describe('New name'),
@@ -91,15 +90,15 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
           .enum(['ACTIVE', 'DISABLED'])
           .optional()
           .describe('Status (DISABLED = emergency stop)'),
-        conflictResolutionMode: z
+        activationMode: z
           .enum(['NONE', 'EXCLUSIVE', 'MAX_N'])
           .optional()
           .describe('Conflict resolution mode'),
-        conflictResolutionStrategy: z
+        activationStrategy: z
           .enum(['FIRST_MATCH', 'HIGHEST_PRIORITY', 'MAX_BENEFIT'])
           .optional()
           .describe('Strategy'),
-        maxSelections: z.number().int().min(1).optional().describe('Max selections'),
+        executionLimit: z.number().int().min(1).optional().describe('Max rule executions'),
       },
     },
     async ({ groupId, ...body }) => callApi('PUT', `policy-groups/${groupId}`, { body }),

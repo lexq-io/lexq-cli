@@ -45,17 +45,21 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_create',
     {
       title: 'Create Rule',
-      description: `Create a rule in a DRAFT version. Requires name, priority, condition tree, and actions array. 
+      description: `Create a rule in a DRAFT version. Requires name, priority, condition tree, and actions array.
+
+      Note: Rules can reference fact keys that are not yet registered in Fact Definitions. The engine allows this for flexibility. However, registering facts via lexq_facts_create is recommended — it enables type validation, the Console UI autocomplete, and the dry-run requirements analyzer.
+
       Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
-      Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN 
+      Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
       Value types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
-      
+
       Actions: [{ type, parameters }]
-      
+
       Action parameter schemas:
       - DISCOUNT: { refVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT) }
       - POINT: { refVar: string, targetVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), integrationId: uuid }
-      - COUPON_ISSUE: { couponId: string, integrationId: uuid }- BLOCK: { reason: string }
+      - COUPON_ISSUE: { couponId: string, integrationId: uuid }
+      - BLOCK: { reason: string }
       - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH"|"KAKAO", targetVar: string, templateId: string, integrationId: uuid }
       - WEBHOOK: { url: string, method: "POST" }
       - SET_FACT: { key: string, value: string|number|boolean }

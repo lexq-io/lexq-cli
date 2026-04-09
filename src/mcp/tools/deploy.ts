@@ -13,7 +13,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to publish'),
-        memo: z.string().default('').describe('Deployment memo'),
+        memo: z.string().min(1).describe('Publish Deployment memo (required)'),
       },
     },
     async ({ groupId, versionId, memo }) =>
@@ -29,7 +29,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to deploy'),
-        memo: z.string().default('').describe('Deployment memo'),
+        memo: z.string().min(1).describe('Live Deployment memo (required)'),
       },
     },
     async ({ groupId, versionId, memo }) =>

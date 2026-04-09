@@ -43,10 +43,10 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
       description:
         'Get full execution detail including request facts, result traces, and decision traces.',
       inputSchema: {
-        executionId: z.string().uuid().describe('Execution history ID'),
+        traceId: z.string().describe('Trace ID from execution history'),
       },
     },
-    async ({ executionId }) => callApi('GET', `execution/history/${executionId}`),
+    async ({ traceId }) => callApi('GET', `execution/history/${traceId}`),
   );
 
   server.registerTool(

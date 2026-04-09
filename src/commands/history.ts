@@ -79,7 +79,7 @@ export function registerHistoryCommands(program: Command): void {
   history
     .command('get')
     .description('Get execution detail')
-    .requiredOption('--id <executionId>', 'Execution history ID')
+    .requiredOption('--id <traceId>', 'Trace ID')
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

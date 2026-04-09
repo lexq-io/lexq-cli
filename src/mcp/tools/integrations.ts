@@ -42,21 +42,29 @@ export function registerIntegrationTools(server: McpServer, callApi: CallApi): v
     {
       title: 'Save Integration',
       description:
-        'Create or update an integration. Types: COUPON, POINT, NOTIFICATION, CRM, MESSENGER, WEBHOOK.',
+        'Create or update an integration. Provide id to update an existing one; omit id to create new. Types: COUPON, POINT, NOTIFICATION, CRM, MESSENGER, WEBHOOK.',
       inputSchema: {
+        id: z
+          .string()
+          .uuid()
+          .optional()
+          .describe('Integration ID (omit to create, provide to update)'),
         type: z
           .enum(['COUPON', 'POINT', 'NOTIFICATION', 'CRM', 'MESSENGER', 'WEBHOOK'])
           .describe('Integration type'),
         name: z.string().describe('Integration name'),
         baseUrl: z.string().describe('Base URL of the external service'),
-        apiKey: z.string().optional().describe('API key or token for the service'),
+        credential: z.string().optional().describe('API key or token for the service'),
+        additionalConfig: z
+          .string()
+          .optional()
+          .describe('JSON string of additional config key-value pairs'),
         isActive: z.boolean().default(true).describe('Whether the integration is active'),
-        config: z.string().optional().describe('JSON string of additional config key-value pairs'),
       },
     },
-    async ({ config, ...rest }) => {
+    async ({ additionalConfig, ...rest }) => {
       const body: Record<string, unknown> = { ...rest };
-      if (config) body.config = JSON.parse(config);
+      if (additionalConfig) body.additionalConfig = JSON.parse(additionalConfig);
       return callApi('POST', 'integrations', { body });
     },
   );

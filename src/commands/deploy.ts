@@ -13,7 +13,7 @@ export function registerDeployCommands(program: Command): void {
     .description('Publish a DRAFT version (DRAFT → ACTIVE)')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Version ID to publish')
-    .option('--memo <memo>', 'Deployment memo')
+    .requiredOption('--memo <memo>', 'Publish Deployment memo')
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -25,7 +25,7 @@ export function registerDeployCommands(program: Command): void {
             baseUrl: globalOpts.baseUrl,
             dryRun: globalOpts.dryRun,
             verbose: globalOpts.verbose,
-            body: { memo: opts.memo ?? '' },
+            body: { memo: opts.memo },
           },
         );
         console.log(`✓ Version ${opts.versionId} published.`);
@@ -41,7 +41,7 @@ export function registerDeployCommands(program: Command): void {
     .description('Deploy an ACTIVE version to live traffic')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Version ID to deploy')
-    .option('--memo <memo>', 'Deployment memo')
+    .requiredOption('--memo <memo>', 'Live Deployment memo')
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -50,7 +50,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { versionId: opts.versionId, memo: opts.memo ?? '' },
+          body: { versionId: opts.versionId, memo: opts.memo },
         });
         console.log(`✓ Version ${opts.versionId} deployed to live.`);
       } catch (error) {
@@ -64,7 +64,7 @@ export function registerDeployCommands(program: Command): void {
     .command('rollback')
     .description('Rollback to the previous deployed version')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
-    .option('--memo <memo>', 'Rollback reason')
+    .requiredOption('--memo <memo>', 'Rollback reason')
     .option('--force', 'Skip confirmation prompt')
     .action(async (opts) => {
       try {
@@ -86,7 +86,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { memo: opts.memo ?? '' },
+          body: { memo: opts.memo },
         });
         console.log(`✓ Group ${opts.groupId} rolled back.`);
       } catch (error) {
@@ -100,7 +100,7 @@ export function registerDeployCommands(program: Command): void {
     .command('undeploy')
     .description('Remove the live version from a group')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
-    .option('--memo <memo>', 'Undeploy reason')
+    .requiredOption('--memo <memo>', 'Undeploy reason')
     .option('--force', 'Skip confirmation prompt')
     .action(async (opts) => {
       try {
@@ -122,7 +122,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { memo: opts.memo ?? '' },
+          body: { memo: opts.memo },
         });
         console.log(`✓ Group ${opts.groupId} undeployed.`);
       } catch (error) {
