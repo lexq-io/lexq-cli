@@ -65,7 +65,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       },
     },
     async ({ groupId, versionId, ...body }) =>
-      callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}`, { body }),
+      callApi('PUT', `policy-groups/${groupId}/versions/${versionId}`, { body }),
   );
 
   server.registerTool(
@@ -91,14 +91,11 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Source version ID to clone'),
-        commitMessage: z.string().optional().describe('Commit message for the cloned version'),
       },
     },
-    async ({ groupId, versionId, commitMessage }) => {
-      const body: Record<string, unknown> = {};
-      if (commitMessage !== undefined) body.commitMessage = commitMessage;
+    async ({ groupId, versionId }) => {
       return callApi('POST', `policy-groups/${groupId}/versions/${versionId}/clone`, {
-        body,
+        body: {},
       });
     },
   );

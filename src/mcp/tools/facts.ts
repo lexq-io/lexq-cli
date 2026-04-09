@@ -61,7 +61,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
         isRequired: z.boolean().describe('Required flag'),
       },
     },
-    async ({ factId, ...body }) => callApi('PATCH', `schema/facts/${factId}`, { body }),
+    async ({ factId, ...body }) => callApi('PUT', `schema/facts/${factId}`, { body }),
   );
 
   server.registerTool(

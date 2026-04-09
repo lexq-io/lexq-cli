@@ -53,7 +53,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       Actions: [{ type, parameters }]
       
       Action parameter schemas:
-      - DISCOUNT: { refVar: string, method: "PERCENTAGE"|"AMOUNT", rate: number }
+      - DISCOUNT: { refVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT) }
       - POINT: { refVar: string, targetVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), integrationId: uuid }
       - COUPON_ISSUE: { couponId: string, integrationId: uuid }- BLOCK: { reason: string }
       - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH"|"KAKAO", targetVar: string, templateId: string, integrationId: uuid }
@@ -94,7 +94,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     },
     async ({ groupId, versionId, ruleId, rule }) => {
       const body: unknown = JSON.parse(rule);
-      return callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}`, {
+      return callApi('PUT', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}`, {
         body,
       });
     },
@@ -141,7 +141,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         ruleId,
         priority: index,
       }));
-      return callApi('PUT', `policy-groups/${groupId}/versions/${versionId}/rules/reorder`, {
+      return callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}/rules/reorder`, {
         body: { rules },
       });
     },
@@ -160,7 +160,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       },
     },
     async ({ groupId, versionId, ruleId, isEnabled }) =>
-      callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}/toggle`, {
+      callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}/enabled`, {
         body: { isEnabled },
       }),
   );

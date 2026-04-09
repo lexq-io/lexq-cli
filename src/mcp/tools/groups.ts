@@ -10,19 +10,14 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_list',
     {
       title: 'List Policy Groups',
-      description:
-        'List all policy groups. Supports pagination and optional status/keyword filters.',
+      description: 'List all policy groups with pagination.',
       inputSchema: {
         page: z.number().int().min(0).default(0).describe('Page number (0-indexed)'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
-        status: z.enum(['ACTIVE', 'DISABLED', 'ARCHIVED']).optional().describe('Filter by status'),
-        keyword: z.string().optional().describe('Search keyword'),
       },
     },
-    async ({ page, size, status, keyword }) => {
+    async ({ page, size }) => {
       const params: Record<string, string> = paginationParams(page, size);
-      if (status) params.status = status;
-      if (keyword) params.keyword = keyword;
       return callApi('GET', 'policy-groups', { params });
     },
   );
@@ -107,7 +102,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         maxSelections: z.number().int().min(1).optional().describe('Max selections'),
       },
     },
-    async ({ groupId, ...body }) => callApi('PATCH', `policy-groups/${groupId}`, { body }),
+    async ({ groupId, ...body }) => callApi('PUT', `policy-groups/${groupId}`, { body }),
   );
 
   server.registerTool(
@@ -130,48 +125,50 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Start A/B Test',
       description:
-        'Start an A/B test on a policy group. Requires a challenger version ID and traffic split percentages.',
+        'Start an A/B test on a policy group. Requires a challenger version ID and traffic rate.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
-        challengerVersionId: z.string().uuid().describe('Challenger version ID'),
-        controlWeight: z.number().int().min(1).max(99).describe('Control traffic weight (%)'),
-        challengerWeight: z.number().int().min(1).max(99).describe('Challenger traffic weight (%)'),
-        identityKey: z
-          .string()
-          .optional()
-          .describe('Fact key for sticky assignment (e.g. customer_id)'),
+        testVersionId: z.string().uuid().describe('Challenger version ID to test'),
+        trafficRate: z
+          .number()
+          .int()
+          .min(1)
+          .max(99)
+          .describe('Traffic percentage routed to challenger (1-99)'),
       },
     },
-    async ({ groupId, ...body }) =>
-      callApi('POST', `policy-groups/${groupId}/ab-test/start`, { body }),
+    async ({ groupId, ...body }) => callApi('POST', `policy-groups/${groupId}/ab-test`, { body }),
   );
 
   server.registerTool(
     'lexq_ab_test_stop',
     {
       title: 'Stop A/B Test',
-      description: 'Stop a running A/B test. Specify which version to keep.',
+      description:
+        'Stop a running A/B test. All traffic is restored to the control (current) version.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
-        winnerVersionId: z.string().uuid().describe('Version ID to keep as live'),
       },
     },
-    async ({ groupId, ...body }) =>
-      callApi('POST', `policy-groups/${groupId}/ab-test/stop`, { body }),
+    async ({ groupId }) => callApi('DELETE', `policy-groups/${groupId}/ab-test`),
   );
 
   server.registerTool(
     'lexq_ab_test_adjust',
     {
       title: 'Adjust A/B Test',
-      description: 'Adjust traffic weights of a running A/B test.',
+      description: 'Adjust traffic rate of a running A/B test.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
-        controlWeight: z.number().int().min(1).max(99).describe('New control weight (%)'),
-        challengerWeight: z.number().int().min(1).max(99).describe('New challenger weight (%)'),
+        trafficRate: z
+          .number()
+          .int()
+          .min(1)
+          .max(99)
+          .describe('New traffic percentage for challenger (1-99)'),
       },
     },
     async ({ groupId, ...body }) =>
-      callApi('POST', `policy-groups/${groupId}/ab-test/adjust`, { body }),
+      callApi('PATCH', `policy-groups/${groupId}/ab-test/traffic-rate`, { body }),
   );
 }
