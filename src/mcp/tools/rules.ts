@@ -63,7 +63,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       - POINT: { refVar: string, targetVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), integrationId: uuid }
       - COUPON_ISSUE: { couponId: string, integrationId: uuid }
       - BLOCK: { reason: string }
-      - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH"|"KAKAO", targetVar: string, templateId: string, integrationId: uuid }
+      - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH", targetVar: string, templateId: string, integrationId: uuid }
       - WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
         Platform examples:
           Slack: { "text": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
