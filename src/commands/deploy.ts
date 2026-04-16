@@ -1,11 +1,34 @@
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { DeploymentSummary, DeploymentDetail, DeploymentStatus } from '@/types/deploy';
 
 export function registerDeployCommands(program: Command): void {
-  const deploy = program.command('deploy').description('Deployment lifecycle and history');
+  const deploy = program
+    .command('deploy')
+    .description('Deployment lifecycle and history')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Lifecycle: Publish (DRAFT→ACTIVE) → Deploy (ACTIVE→LIVE) → Rollback / Undeploy
+
+        Commands:
+          publish     Lock a DRAFT version (DRAFT → ACTIVE)
+          live        Push an ACTIVE version to production traffic
+          rollback    Revert to the previous deployed version
+          undeploy    Remove the live version (stops all traffic)
+          history     List deployment history with filters
+          detail      Get deployment detail with integrity check
+          overview    Show all groups' deployment status at a glance
+          deployable  List ACTIVE versions available for deployment
+          diff        Compare rule snapshots between two versions
+
+        Always dry-run before publishing. Cannot deploy a DRAFT — publish first.
+      `,
+    );
 
   // ── publish ──
   deploy
@@ -14,6 +37,17 @@ export function registerDeployCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Version ID to publish')
     .requiredOption('--memo <memo>', 'Publish Deployment memo')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Locks the version permanently. Rules cannot be modified after publishing.
+        A snapshot hash is generated for integrity verification.
+
+        Example:
+          $ lexq deploy publish --group-id <gid> --version-id <vid> --memo "Validated via dry-run"
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -42,6 +76,16 @@ export function registerDeployCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Version ID to deploy')
     .requiredOption('--memo <memo>', 'Live Deployment memo')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Takes effect immediately. The version starts receiving production traffic.
+
+        Example:
+          $ lexq deploy live --group-id <gid> --version-id <vid> --memo "Go live — v3"
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -66,6 +110,17 @@ export function registerDeployCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--memo <memo>', 'Rollback reason')
     .option('--force', 'Skip confirmation prompt')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Reverts to the version that was live before the current one.
+        Only available if the previous version is still ACTIVE.
+
+        Example:
+          $ lexq deploy rollback --group-id <gid> --memo "High error rate" --force
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -102,6 +157,16 @@ export function registerDeployCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--memo <memo>', 'Undeploy reason')
     .option('--force', 'Skip confirmation prompt')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Stops all traffic processing for this group until a new version is deployed.
+
+        Example:
+          $ lexq deploy undeploy --group-id <gid> --memo "Maintenance window" --force
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -144,15 +209,20 @@ export function registerDeployCommands(program: Command): void {
     .option('--end-date <date>', 'End date (yyyy-MM-dd)')
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq deploy history --group-id <gid> --types DEPLOY,ROLLBACK --format table
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const params: Record<string, string> = {
-          page: opts.page,
-          size: opts.size,
-        };
+        const params: Record<string, string> = { page: opts.page, size: opts.size };
         if (opts.groupId) params.groupId = opts.groupId;
         if (opts.types) params.types = opts.types;
         if (opts.startDate) params.startDate = opts.startDate;
@@ -194,6 +264,13 @@ export function registerDeployCommands(program: Command): void {
     .command('detail')
     .description('Get deployment detail')
     .requiredOption('--id <deploymentId>', 'Deployment ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Includes snapshot hash and integrity check (hashValid field).
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -214,6 +291,16 @@ export function registerDeployCommands(program: Command): void {
   deploy
     .command('overview')
     .description('Show deployment status overview for all groups')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Shows which version is live for each group, who deployed it, and when.
+
+        Example:
+          $ lexq deploy overview --format table
+      `,
+    )
     .action(async () => {
       try {
         const globalOpts = program.opts();
@@ -251,6 +338,13 @@ export function registerDeployCommands(program: Command): void {
     .command('deployable')
     .description('List deployable (ACTIVE) versions for a group')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Shows ACTIVE versions that can be deployed. Only published versions appear here.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -277,6 +371,16 @@ export function registerDeployCommands(program: Command): void {
     .description('Compare snapshot diff between two versions')
     .requiredOption('--base <versionId>', 'Base version ID')
     .requiredOption('--target <versionId>', 'Target version ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Shows added, removed, and modified rules between two versions.
+
+        Example:
+          $ lexq deploy diff --base <v1-id> --target <v2-id>
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -285,10 +389,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          params: {
-            baseVersionId: opts.base,
-            targetVersionId: opts.target,
-          },
+          params: { baseVersionId: opts.base, targetVersionId: opts.target },
         });
         printJson(data);
       } catch (error) {

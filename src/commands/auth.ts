@@ -1,18 +1,47 @@
 import { type Command } from 'commander';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import dedent from 'dedent';
 import { saveConfig, deleteConfig, loadConfig, getConfigPath } from '@/lib/config';
 import { apiRequest } from '@/lib/api-client';
 import { printJson, printError } from '@/lib/output';
 import type { WhoAmIResponse } from '@/types/auth';
 
 export function registerAuthCommands(program: Command): void {
-  const auth = program.command('auth').description('Manage authentication');
+  const auth = program
+    .command('auth')
+    .description('Manage authentication')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Commands:
+          login     Save your API key locally
+          logout    Remove stored credentials
+          whoami    Verify authentication and show account info
+
+        Getting Started:
+          1. Get your API key from the LexQ Console (Settings → API Keys)
+          2. Run: lexq auth login
+          3. Verify: lexq auth whoami
+      `,
+    );
 
   // ── login ──
   auth
     .command('login')
     .description('Authenticate with your LexQ API key')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq auth login
+          Enter your API Key: sk_live_****
+
+          ✓ API key saved to ~/.lexq/config.json
+      `,
+    )
     .action(async () => {
       try {
         const rl = createInterface({ input: stdin, output: stdout });
@@ -46,6 +75,15 @@ export function registerAuthCommands(program: Command): void {
   auth
     .command('whoami')
     .description('Show current authentication info')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq auth whoami
+          { "tenantId": "abc-123", "userId": "...", "role": "ADMIN", "apiKey": "sk_live_****abcd" }
+      `,
+    )
     .action(async () => {
       try {
         const config = loadConfig();

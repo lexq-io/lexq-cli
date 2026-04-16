@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import dedent from 'dedent';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 
@@ -10,9 +11,11 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dry_run',
     {
       title: 'Dry Run',
-      description: `Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.
-      Example input: { "facts": { "payment_amount": 100000, "customer_tier": "VIP" } }
-      Always dry-run before publishing to validate rule behavior.`,
+      description: dedent`
+        Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.
+        Example input: { "facts": { "payment_amount": 100000, "customer_tier": "VIP" } }
+        Always dry-run before publishing to validate rule behavior.
+      `,
       inputSchema: {
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"payment_amount":100000}'),
@@ -76,21 +79,23 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_start',
     {
       title: 'Start Simulation',
-      description: `Start a batch simulation against historical or uploaded data.
-      
-      dataset.type: "HISTORICAL" or "UPLOADED"
-      dataset.source (when HISTORICAL): "EXECUTION_LOGS"
-      dataset.from / dataset.to: date range (yyyy-MM-dd, when HISTORICAL)
-      options.maxRecords: number (max 100000, default 10000)
-      options.baselinePolicyVersionId: uuid (optional, for comparison)
-      options.includeRuleStats: boolean
-      
-      Example body:
-      {
-        "policyVersionId": "<uuid>",
-        "dataset": { "type": "HISTORICAL", "source": "EXECUTION_LOGS", "from": "2025-01-01", "to": "2025-01-31" },
-        "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true, "maxRecords": 10000 }
-      }`,
+      description: dedent`
+        Start a batch simulation against historical or uploaded data.
+
+        dataset.type: "HISTORICAL" or "UPLOADED"
+        dataset.source (when HISTORICAL): "EXECUTION_LOGS"
+        dataset.from / dataset.to: date range (yyyy-MM-dd, when HISTORICAL)
+        options.maxRecords: number (max 100000, default 10000)
+        options.baselinePolicyVersionId: uuid (optional, for comparison)
+        options.includeRuleStats: boolean
+
+        Example body:
+        {
+          "policyVersionId": "<uuid>",
+          "dataset": { "type": "HISTORICAL", "source": "EXECUTION_LOGS", "from": "2025-01-01", "to": "2025-01-31" },
+          "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true, "maxRecords": 10000 }
+        }
+      `,
       inputSchema: {
         body: z.string().describe('JSON string of SimulationRequest'),
       },
@@ -172,16 +177,18 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dataset_upload',
     {
       title: 'Upload Dataset',
-      description: `Upload inline CSV or JSON content as a simulation dataset.
-      The content is uploaded to S3 and a path is returned.
-      Use this path in simulation start with dataset type UPLOADED.
-      
-      CSV example:
-      user_id,payment_amount
-      user_001,150000
-      user_002,50000
-      
-      JSON example: [{"user_id":"user_001","payment_amount":150000}, {"user_id":"user_002","payment_amount":50000}]`,
+      description: dedent`
+        Upload inline CSV or JSON content as a simulation dataset.
+        The content is uploaded to S3 and a path is returned.
+        Use this path in simulation start with dataset type UPLOADED.
+
+        CSV example:
+        user_id,payment_amount
+        user_001,150000
+        user_002,50000
+
+        JSON example: [{"user_id":"user_001","payment_amount":150000}, {"user_id":"user_002","payment_amount":50000}]
+      `,
       inputSchema: {
         content: z.string().describe('CSV or JSON content as string'),
         filename: z

@@ -138,5 +138,18 @@ export const TaskType = [
   // Internal
   'IMAGE_PROCESSING',
   'DAILY_SETTLEMENT',
+  'PLATFORM_WEBHOOK',
 ] as const;
 export type TaskType = (typeof TaskType)[number];
+
+// ── Platform Event ──
+export const PlatformEventType = [
+  'VERSION_PUBLISHED',
+  'DEPLOYED',
+  'ROLLED_BACK',
+  'UNDEPLOYED',
+] as const;
+export type PlatformEventType = (typeof PlatformEventType)[number];
+
+export const WebhookPayloadFormat = ['GENERIC', 'SLACK'] as const;
+export type WebhookPayloadFormat = (typeof WebhookPayloadFormat)[number];

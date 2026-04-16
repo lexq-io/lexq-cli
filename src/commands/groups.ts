@@ -1,4 +1,5 @@
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -12,7 +13,27 @@ import type {
 } from '@/types/groups';
 
 export function registerGroupCommands(program: Command): void {
-  const groups = program.command('groups').description('Manage policy groups');
+  const groups = program
+    .command('groups')
+    .description('Manage policy groups')
+    .addHelpText(
+      'after',
+      dedent`
+
+        A policy group is the top-level container for rule versions.
+        It controls deployment lifecycle, conflict resolution, and A/B testing.
+
+        Commands:
+          list        List all policy groups
+          get         Get group detail by ID
+          create      Create a new group
+          update      Update group settings
+          delete      Archive a group
+          ab-test     Manage A/B tests (start, stop, adjust)
+
+        Statuses: ACTIVE, DISABLED (emergency stop), ARCHIVED (soft delete)
+      `,
+    );
 
   // ── list ──
   groups
@@ -82,6 +103,28 @@ export function registerGroupCommands(program: Command): void {
     .command('create')
     .description('Create a new policy group')
     .requiredOption('--json <body>', 'Request body as JSON string')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq groups create --json '{
+              "name": "Payment Policy",
+              "description": "Rules for payment processing",
+              "priority": 0
+            }'
+
+        Fields:
+          name                string    Group name (required, unique per tenant)
+          description         string    Description (optional, max 255 chars)
+          priority            number    Execution priority — lower runs first (required, min 0)
+          activationGroup     string    Cross-group conflict resolution key (optional)
+          activationMode      string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
+          activationStrategy  string    FIRST_MATCH | HIGHEST_PRIORITY | MAX_BENEFIT  [default: FIRST_MATCH]
+          executionLimit      number    Max rules to fire in MAX_N mode (optional)
+          status              string    ACTIVE | DISABLED  [default: ACTIVE]
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -106,6 +149,16 @@ export function registerGroupCommands(program: Command): void {
     .description('Update a policy group')
     .requiredOption('--id <groupId>', 'Policy group ID')
     .requiredOption('--json <body>', 'Request body as JSON string')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq groups update --id <groupId> --json '{"description": "Updated", "priority": 1}'
+
+        All fields are optional — only provided fields are updated.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -130,6 +183,13 @@ export function registerGroupCommands(program: Command): void {
     .description('Delete a policy group')
     .requiredOption('--id <groupId>', 'Policy group ID')
     .option('--force', 'Skip confirmation prompt')
+    .addHelpText(
+      'after',
+      dedent`
+
+        This archives the group (soft delete). Use --force to skip the confirmation prompt.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -162,7 +222,24 @@ export function registerGroupCommands(program: Command): void {
   // A/B Test
   // ══════════════════════════════════════════════════
 
-  const abTest = groups.command('ab-test').description('A/B test management');
+  const abTest = groups
+    .command('ab-test')
+    .description('A/B test management')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Split traffic between the current live version and a challenger version.
+
+        Commands:
+          start     Start an A/B test with a challenger version
+          stop      Stop the test and revert to 100% live version
+          adjust    Change the traffic percentage
+
+        The traffic rate (1-99) determines what percentage goes to the challenger.
+        The remaining traffic continues to the current live version.
+      `,
+    );
 
   // ── start ──
   abTest
@@ -171,6 +248,16 @@ export function registerGroupCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Challenger version ID')
     .requiredOption('--traffic-rate <rate>', 'Traffic rate for challenger (1-99)')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq groups ab-test start --group-id <gid> --version-id <vid> --traffic-rate 20
+
+          Routes 20% of traffic to the challenger version, 80% to the current live version.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -236,6 +323,14 @@ export function registerGroupCommands(program: Command): void {
     .description('Adjust A/B test traffic rate')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--traffic-rate <rate>', 'New traffic rate (1-99)')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq groups ab-test adjust --group-id <gid> --traffic-rate 50
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

@@ -1,11 +1,33 @@
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { PolicyVersionSummary } from '@/types/versions';
 
 export function registerVersionCommands(program: Command): void {
-  const versions = program.command('versions').description('Manage policy versions');
+  const versions = program
+    .command('versions')
+    .description('Manage policy versions')
+    .addHelpText(
+      'after',
+      dedent`
+
+        A version is an immutable snapshot of rules within a policy group.
+
+        Lifecycle: DRAFT → ACTIVE (publish) → ARCHIVED (superseded) | EXPIRED (past effectiveTo)
+
+        Commands:
+          list      List versions for a group
+          get       Get version detail
+          create    Create a new DRAFT version
+          update    Update DRAFT version metadata
+          delete    Delete a DRAFT version
+          clone     Duplicate a version (creates a new DRAFT with same rules)
+
+        Only DRAFT versions can be modified. Published versions are locked.
+      `,
+    );
 
   // ── list ──
   versions
@@ -89,6 +111,25 @@ export function registerVersionCommands(program: Command): void {
     .option('--effective-from <date>', 'Effective from (ISO datetime)')
     .option('--effective-to <date>', 'Effective to (ISO datetime)')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Examples:
+          $ lexq versions create --group-id <gid> --commit-message "Initial version"
+
+          $ lexq versions create --group-id <gid> --json '{
+              "commitMessage": "Seasonal promo",
+              "effectiveFrom": "2026-06-01T00:00:00Z",
+              "effectiveTo": "2026-08-31T23:59:59Z"
+            }'
+
+        Fields:
+          commitMessage    string      Version description (optional, max 255 chars)
+          effectiveFrom    datetime    Start of effective period (optional, ISO-8601)
+          effectiveTo      datetime    End of effective period (optional, auto-expires)
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -122,6 +163,16 @@ export function registerVersionCommands(program: Command): void {
     .option('--effective-from <date>', 'Effective from (ISO datetime)')
     .option('--effective-to <date>', 'Effective to (ISO datetime)')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Only DRAFT versions can be updated. Published (ACTIVE) versions are immutable.
+
+        Example:
+          $ lexq versions update --group-id <gid> --id <vid> --commit-message "Updated rules"
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -152,6 +203,13 @@ export function registerVersionCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--id <versionId>', 'Policy version ID')
     .option('--force', 'Skip confirmation prompt')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Only DRAFT versions can be deleted. Use --force to skip confirmation.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -186,6 +244,17 @@ export function registerVersionCommands(program: Command): void {
     .description('Clone (duplicate) a policy version')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--id <versionId>', 'Source version ID to clone')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Creates a new DRAFT version with all rules copied from the source.
+        Use this to iterate on a published version without modifying it.
+
+        Example:
+          $ lexq versions clone --group-id <gid> --id <source-vid>
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

@@ -40,10 +40,10 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Create Policy Version',
       description:
-        'Create a new DRAFT version in a policy group. Provide a commit message and optional effective date range.',
+        'Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
-        commitMessage: z.string().describe('Commit message describing this version'),
+        commitMessage: z.string().optional().describe('Commit message describing this version'),
         effectiveFrom: z.string().optional().describe('Effective start date (ISO 8601)'),
         effectiveTo: z.string().optional().describe('Effective end date (ISO 8601)'),
       },
@@ -55,7 +55,8 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_update',
     {
       title: 'Update Policy Version',
-      description: 'Update a DRAFT version. Only DRAFT versions can be modified.',
+      description:
+        'Update a DRAFT version. Only DRAFT versions can be modified. Only provided fields are changed.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

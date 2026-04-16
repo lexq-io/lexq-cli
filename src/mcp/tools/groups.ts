@@ -80,7 +80,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Policy Group',
       description:
-        'Update a policy group. This is a full replacement — omitted optional fields will be set to null on the server.',
+        'Update a policy group. Only provided fields are updated; omitted fields remain unchanged.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         name: z.string().optional().describe('New name'),

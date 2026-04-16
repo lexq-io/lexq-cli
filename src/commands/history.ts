@@ -1,4 +1,5 @@
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -9,7 +10,23 @@ import type {
 } from '@/types/history';
 
 export function registerHistoryCommands(program: Command): void {
-  const history = program.command('history').description('Execution history');
+  const history = program
+    .command('history')
+    .description('Execution history')
+    .addHelpText(
+      'after',
+      dedent`
+
+        View and analyze policy execution logs from production traffic.
+
+        Commands:
+          list    List execution history with filters
+          get     Get full execution detail (request facts, traces, decisions)
+          stats   Aggregate statistics (success rate, latency, counts)
+
+        Statuses: SUCCESS, NO_MATCH, ERROR, TIMEOUT
+      `,
+    );
 
   // ── list ──
   history
@@ -23,15 +40,21 @@ export function registerHistoryCommands(program: Command): void {
     .option('--end-date <date>', 'End date (yyyy-MM-dd)')
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Examples:
+          $ lexq history list --status ERROR --format table
+          $ lexq history list --group-id <gid> --start-date 2026-04-01 --end-date 2026-04-15
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const params: Record<string, string> = {
-          page: opts.page,
-          size: opts.size,
-        };
+        const params: Record<string, string> = { page: opts.page, size: opts.size };
         if (opts.traceId) params.traceId = opts.traceId;
         if (opts.groupId) params.policyGroupId = opts.groupId;
         if (opts.versionId) params.versionId = opts.versionId;
@@ -80,6 +103,14 @@ export function registerHistoryCommands(program: Command): void {
     .command('get')
     .description('Get execution detail')
     .requiredOption('--id <traceId>', 'Trace ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Returns the full execution detail including request facts, result traces,
+        and decision traces (SELECTED, BLOCKED_MUTEX, LOST_PRIORITY, etc.).
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -107,6 +138,17 @@ export function registerHistoryCommands(program: Command): void {
     .option('--group-id <groupId>', 'Filter by policy group')
     .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
     .option('--end-date <date>', 'End date (yyyy-MM-dd)')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Shows total executions, success/no-match/failure counts, success rate, and avg latency.
+
+        Example:
+          $ lexq history stats --format table
+          $ lexq history stats --group-id <gid> --start-date 2026-04-01
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

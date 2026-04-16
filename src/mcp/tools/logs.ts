@@ -50,7 +50,8 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_action',
     {
       title: 'Process Failure Log',
-      description: 'Process a single failure log: RETRY, RESOLVE, or IGNORE.',
+      description:
+        'Process a single failure log: RETRY (re-execute with original payload), RESOLVE (mark as manually fixed), or IGNORE (skip intentionally).',
       inputSchema: {
         logId: z.string().uuid().describe('Failure log ID'),
         action: z.enum(FailureAction).describe('Action to take'),
@@ -58,7 +59,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     },
     async ({ logId, action }) =>
       callApi('POST', `failure-logs/${logId}/actions`, {
-        body: { action },
+        params: { action },
       }),
   );
 

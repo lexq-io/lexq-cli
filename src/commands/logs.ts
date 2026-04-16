@@ -1,4 +1,5 @@
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -6,7 +7,26 @@ import type { FailureLogResponse, BulkActionResponse } from '@/types/logs';
 import { TaskType } from '@/types/enums';
 
 export function registerLogCommands(program: Command): void {
-  const logs = program.command('logs').description('Failure logs');
+  const logs = program
+    .command('logs')
+    .description('Failure logs')
+    .addHelpText(
+      'after',
+      dedent`
+
+        System failure logs (DLQ) for background tasks — webhook calls, coupon issuance,
+        point operations, notifications, and platform event webhooks.
+
+        Commands:
+          list         List failure logs with filters
+          get          Get failure log detail (includes payload for retry)
+          action       Process a single log (RETRY, IGNORE, RESOLVE)
+          bulk-action  Process multiple logs at once
+
+        Statuses: PENDING (needs attention), RESOLVED, IGNORED
+        Categories: INTEGRATION (external), INTERNAL (system)
+      `,
+    );
 
   // ── list ──
   logs
@@ -20,15 +40,22 @@ export function registerLogCommands(program: Command): void {
     .option('--end-date <date>', 'End date (yyyy-MM-dd)')
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Examples:
+          $ lexq logs list --status PENDING --format table
+          $ lexq logs list --task-type PLATFORM_WEBHOOK --category INTERNAL
+          $ lexq logs list --keyword "timeout" --start-date 2026-04-01
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const params: Record<string, string> = {
-          page: opts.page,
-          size: opts.size,
-        };
+        const params: Record<string, string> = { page: opts.page, size: opts.size };
         if (opts.category) params.category = opts.category;
         if (opts.taskType) params.taskType = opts.taskType;
         if (opts.status) params.status = opts.status;
@@ -73,6 +100,14 @@ export function registerLogCommands(program: Command): void {
     .command('get')
     .description('Get failure log detail')
     .requiredOption('--id <logId>', 'Log ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Includes the full payload that was used for the failed operation.
+        Use this to inspect what went wrong before deciding to RETRY or RESOLVE.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -95,6 +130,19 @@ export function registerLogCommands(program: Command): void {
     .description('Process a failure log action (RETRY, IGNORE, RESOLVE)')
     .requiredOption('--id <logId>', 'Log ID')
     .requiredOption('--action <action>', 'Action: RETRY, IGNORE, or RESOLVE')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Actions:
+          RETRY    Re-execute the failed operation with the original payload
+          IGNORE   Mark as intentionally skipped (won't appear in PENDING)
+          RESOLVE  Mark as manually resolved (e.g., fixed via external system)
+
+        Example:
+          $ lexq logs action --id <logId> --action RETRY
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -122,6 +170,16 @@ export function registerLogCommands(program: Command): void {
     .description('Bulk process failure logs')
     .requiredOption('--ids <logIds>', 'Comma-separated log IDs')
     .requiredOption('--action <action>', 'Action: RETRY, IGNORE, or RESOLVE')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Processes each log individually. Failures are skipped with a warning.
+
+        Example:
+          $ lexq logs bulk-action --ids "id1,id2,id3" --action RESOLVE
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

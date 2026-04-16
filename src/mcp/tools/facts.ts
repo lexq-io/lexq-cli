@@ -53,12 +53,12 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Fact Definition',
       description:
-        'Update a fact definition. Key and type cannot be changed. System facts only allow name and description changes.',
+        'Update a fact definition. Key and type cannot be changed. Only provided fields are updated. System facts only allow name and description changes.',
       inputSchema: {
         factId: z.string().uuid().describe('Fact definition ID'),
-        name: z.string().describe('Display name'),
+        name: z.string().optional().describe('Display name'),
         description: z.string().optional().describe('Description'),
-        isRequired: z.boolean().describe('Required flag'),
+        isRequired: z.boolean().optional().describe('Required flag'),
       },
     },
     async ({ factId, ...body }) => callApi('PUT', `schema/facts/${factId}`, { body }),
@@ -74,5 +74,16 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       },
     },
     async ({ factId }) => callApi('DELETE', `schema/facts/${factId}`),
+  );
+
+  server.registerTool(
+    'lexq_facts_action_metadata',
+    {
+      title: 'Get Action Runtime Fact Metadata',
+      description:
+        'Retrieve runtime Facts metadata for each Action type. Shows which Facts are required as input, produced as output, or consumed at runtime by each Action (DISCOUNT, SEND_SMS, ADD_TAG, SET_FACT, etc.). Use this BEFORE designing rules to understand which Action produces which output variables (e.g., DISCOUNT produces last_discount_amount). Data is static and changes only on engine deployment — safe to cache in-session.',
+      inputSchema: {},
+    },
+    async () => callApi('GET', 'schema/action-metadata'),
   );
 }

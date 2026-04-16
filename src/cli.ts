@@ -13,6 +13,7 @@ import { registerAnalyticsCommands } from './commands/analytics';
 import { registerHistoryCommands } from './commands/history';
 import { registerIntegrationCommands } from './commands/integrations';
 import { registerLogCommands } from './commands/logs';
+import { registerWebhookSubscriptionCommands } from './commands/webhook-subscriptions';
 import { registerServeCommand } from './commands/serve';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -61,7 +62,10 @@ export function createCli(): Command {
   registerIntegrationCommands(program);
   registerLogCommands(program);
 
-  // // M7: MCP Server
+  // M4: Platform Event Webhooks
+  registerWebhookSubscriptionCommands(program);
+
+  // M7: MCP Server
   registerServeCommand(program);
 
   return program;

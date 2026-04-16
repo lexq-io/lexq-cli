@@ -13,7 +13,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to publish'),
-        memo: z.string().min(1).describe('Publish Deployment memo (required)'),
+        memo: z.string().min(1).describe('Publish memo (required)'),
       },
     },
     async ({ groupId, versionId, memo }) =>
@@ -29,7 +29,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to deploy'),
-        memo: z.string().min(1).describe('Live Deployment memo (required)'),
+        memo: z.string().min(1).describe('Deployment memo (required)'),
       },
     },
     async ({ groupId, versionId, memo }) =>
@@ -46,7 +46,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
         'Rollback to the previous deployed version. Only available if there is a previous version.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
-        memo: z.string().default('').describe('Rollback reason'),
+        memo: z.string().min(1).describe('Rollback reason (required)'),
       },
     },
     async ({ groupId, memo }) =>
@@ -63,7 +63,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
         'Remove the live version from traffic. The version stays ACTIVE but no longer serves requests.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
-        memo: z.string().default('').describe('Undeploy reason'),
+        memo: z.string().min(1).describe('Undeploy reason (required)'),
       },
     },
     async ({ groupId, memo }) =>
@@ -81,16 +81,22 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         groupId: z.string().uuid().optional().describe('Filter by group ID'),
-        type: z
-          .enum(['PUBLISH', 'DEPLOY', 'ROLLBACK', 'UNDEPLOY'])
+        types: z
+          .string()
           .optional()
-          .describe('Filter by deployment type'),
+          .describe(
+            'Filter by deployment types (comma-separated: PUBLISH,DEPLOY,ROLLBACK,UNDEPLOY)',
+          ),
+        startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
+        endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
       },
     },
-    async ({ page, size, groupId, type }) => {
+    async ({ page, size, groupId, types, startDate, endDate }) => {
       const params: Record<string, string> = paginationParams(page, size);
       if (groupId) params.groupId = groupId;
-      if (type) params.type = type;
+      if (types) params.types = types;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
       return callApi('GET', 'deployments', { params });
     },
   );
@@ -117,5 +123,38 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       inputSchema: {},
     },
     async () => callApi('GET', 'deployments/overview'),
+  );
+
+  server.registerTool(
+    'lexq_deploy_deployable',
+    {
+      title: 'List Deployable Versions',
+      description:
+        'List ACTIVE (published) versions that can be deployed for a group. Use this to find which versions are available before calling deploy live.',
+      inputSchema: {
+        groupId: z.string().uuid().describe('Policy group ID'),
+      },
+    },
+    async ({ groupId }) => callApi('GET', `deployments/groups/${groupId}/deployable-versions`),
+  );
+
+  server.registerTool(
+    'lexq_deploy_diff',
+    {
+      title: 'Deployment Diff',
+      description:
+        'Compare rule snapshots between two versions. Shows added, removed, and modified rules. Useful for reviewing changes before deploying a new version.',
+      inputSchema: {
+        baseVersionId: z.string().uuid().describe('Base version ID (typically the current live)'),
+        targetVersionId: z
+          .string()
+          .uuid()
+          .describe('Target version ID (the one you want to deploy)'),
+      },
+    },
+    async ({ baseVersionId, targetVersionId }) =>
+      callApi('GET', 'deployments/diff', {
+        params: { baseVersionId, targetVersionId },
+      }),
   );
 }

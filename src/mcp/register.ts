@@ -11,9 +11,10 @@ import { registerAnalyticsTools } from './tools/analytics';
 import { registerHistoryTools } from './tools/history';
 import { registerIntegrationTools } from './tools/integrations';
 import { registerLogTools } from './tools/logs';
+import { registerWebhookSubscriptionTools } from './tools/webhook-subscriptions';
 
 /**
- * Registers all 55 MCP tools on the given server.
+ * Registers all 62 MCP tools on the given server.
  *
  * @param server - McpServer instance
  * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)
@@ -29,6 +30,7 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
   registerHistoryTools(server, callApi);
   registerIntegrationTools(server, callApi);
   registerLogTools(server, callApi);
+  registerWebhookSubscriptionTools(server, callApi);
 }
 
 // Re-exports for external consumers (lexq-mcp)

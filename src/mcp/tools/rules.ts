@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import dedent from 'dedent';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 
@@ -45,32 +46,34 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_create',
     {
       title: 'Create Rule',
-      description: `Create a rule in a DRAFT version. Requires name, priority, condition tree, and actions array.
+      description: dedent`
+        Create a rule in a DRAFT version. Requires name, priority, condition tree, and actions array.
 
-      Before creating rules with new fact keys, call lexq_facts_list to check existing facts.
-      If a required key is missing, ask the user to confirm the type, isRequired, and description
-      before calling lexq_facts_create — registering facts enables type validation, Console UI
-      autocomplete, and the dry-run requirements analyzer.
+        Before creating rules with new fact keys, call lexq_facts_list to check existing facts.
+        If a required key is missing, ask the user to confirm the type, isRequired, and description
+        before calling lexq_facts_create — registering facts enables type validation, Console UI
+        autocomplete, and the dry-run requirements analyzer.
 
-      Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
-      Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
-      Value types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
+        Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
+        Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
+        Value types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
 
-      Actions: [{ type, parameters }]
+        Actions: [{ type, parameters }]
 
-      Action parameter schemas:
-      - DISCOUNT: { refVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT) }
-      - POINT: { refVar: string, targetVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), integrationId: uuid }
-      - COUPON_ISSUE: { couponId: string, integrationId: uuid }
-      - BLOCK: { reason: string }
-      - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH", targetVar: string, templateId: string, integrationId: uuid }
-      - WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
-        Platform examples:
-          Slack: { "text": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
-          Discord: { "content": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
-          Generic: { "event": "rule_matched", "rule": "{{ruleName}}", "amount": "{{output.payment_amount}}" }
-      - SET_FACT: { key: string, value: string|number|boolean }
-      - ADD_TAG: { tag: string, targetVar: string }`,
+        Action parameter schemas:
+        - DISCOUNT: { refVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT) }
+        - POINT: { refVar: string, targetVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), integrationId: uuid }
+        - COUPON_ISSUE: { couponId: string, integrationId: uuid }
+        - BLOCK: { reason: string }
+        - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH", targetVar: string, templateId: string, integrationId: uuid }
+        - WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
+          Platform examples:
+            Slack: { "text": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
+            Discord: { "content": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
+            Generic: { "event": "rule_matched", "rule": "{{ruleName}}", "amount": "{{output.payment_amount}}" }
+        - SET_FACT: { key: string, value: string|number|boolean }
+        - ADD_TAG: { tag: string, targetVar: string }
+      `,
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

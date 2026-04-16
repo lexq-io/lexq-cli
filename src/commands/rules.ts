@@ -1,4 +1,5 @@
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -11,7 +12,28 @@ import type {
 } from '@/types/rules';
 
 export function registerRuleCommands(program: Command): void {
-  const rules = program.command('rules').description('Manage policy rules');
+  const rules = program
+    .command('rules')
+    .description('Manage policy rules')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Rules define condition → action pairs within a version.
+        They are evaluated in priority order (lower number = higher priority).
+
+        Commands:
+          list      List rules in a version
+          get       Get rule detail
+          create    Add a new rule to a DRAFT version
+          update    Modify a rule in a DRAFT version
+          delete    Remove a rule from a DRAFT version
+          reorder   Change rule priorities (drag & drop equivalent)
+          toggle    Enable or disable a rule
+
+        Only DRAFT versions allow rule modifications.
+      `,
+    );
 
   // ── list ──
   rules
@@ -95,6 +117,41 @@ export function registerRuleCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Policy version ID')
     .requiredOption('--json <body>', 'Request body as JSON string')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq rules create --group-id <gid> --version-id <vid> --json '{
+              "name": "VIP 20% Discount",
+              "priority": 0,
+              "condition": {
+                "type": "SINGLE",
+                "field": "customer_tier",
+                "operator": "EQUALS",
+                "value": "VIP",
+                "valueType": "STRING"
+              },
+              "actions": [
+                { "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 20, "refVar": "payment_amount" } }
+              ]
+            }'
+
+        Condition Operators:
+          EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL,
+          LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
+
+        Action Types:
+          DISCOUNT, POINT, COUPON_ISSUE, BLOCK, NOTIFICATION, WEBHOOK, SET_FACT, ADD_TAG
+
+        Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
+
+        Mutex (optional — rule-level conflict resolution):
+          mutexGroup       string    Logical grouping key (e.g., "best-discount")
+          mutexMode        string    NONE | EXCLUSIVE  [default: NONE]
+          mutexStrategy    string    FIRST_MATCH | HIGHEST_PRIORITY | MAX_BENEFIT
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -125,6 +182,21 @@ export function registerRuleCommands(program: Command): void {
     .requiredOption('--version-id <versionId>', 'Policy version ID')
     .requiredOption('--id <ruleId>', 'Rule ID')
     .requiredOption('--json <body>', 'Request body as JSON string')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Same fields as create. Only DRAFT versions can be modified.
+
+        Example:
+          $ lexq rules update --group-id <gid> --version-id <vid> --id <rid> --json '{
+              "name": "VIP 25% Discount",
+              "actions": [
+                { "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 25, "refVar": "payment_amount" } }
+              ]
+            }'
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -194,6 +266,18 @@ export function registerRuleCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Policy version ID')
     .requiredOption('--rule-ids <ids>', 'Comma-separated rule IDs in desired order')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Assigns priority 0, 1, 2, ... to rules in the order given.
+
+        Example:
+          $ lexq rules reorder --group-id <gid> --version-id <vid> --rule-ids "id3,id1,id2"
+
+          Result: id3 → priority 0, id1 → priority 1, id2 → priority 2
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -232,6 +316,16 @@ export function registerRuleCommands(program: Command): void {
     .requiredOption('--version-id <versionId>', 'Policy version ID')
     .requiredOption('--id <ruleId>', 'Rule ID')
     .requiredOption('--enabled <boolean>', 'true or false')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Disabled rules are skipped during execution without deleting them.
+
+        Example:
+          $ lexq rules toggle --group-id <gid> --version-id <vid> --id <rid> --enabled false
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

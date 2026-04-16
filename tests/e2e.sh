@@ -35,6 +35,7 @@ CREATED_VERSION_ID=""
 CREATED_RULE_ID=""
 CREATED_FACT_ID=""
 CREATED_INTEGRATION_ID=""
+CREATED_WEBHOOK_SUB_ID=""
 CLONED_VERSION_ID=""
 
 # ── CLI ──
@@ -313,15 +314,35 @@ if [ -n "$CREATED_FACT_ID" ]; then
     if assert_field "$FUPD_OUT" "id"; then pass; else fail; fi
 else skip "fact 미생성"; fi
 
+log_test "facts action-metadata (런타임 Facts 메타데이터)"
+FMETA_OUT=$(run_cli facts action-metadata)
+if is_valid_json "$FMETA_OUT" && assert_field "$FMETA_OUT" "metadata"; then
+    # 핵심 Action type 몇 개 검증 (DISCOUNT, SET_FACT, SEND_SMS 등)
+    HAS_DISCOUNT=$(echo "$FMETA_OUT" | node -e "
+        let d='';process.stdin.on('data',c=>d+=c);
+        process.stdin.on('end',()=>{
+            try{
+                const o=JSON.parse(d);
+                process.stdout.write(o.metadata?.DISCOUNT ? 'true' : 'false');
+            }catch{process.stdout.write('false')}
+        });
+    ")
+    if [ "$HAS_DISCOUNT" = "true" ]; then pass
+    else fail "metadata.DISCOUNT 없음"; fi
+else
+    fail "유효한 JSON 아니거나 metadata 필드 없음"
+fi
+
 # ═══════════════════════════════════════════════════════════════
 # 5. Deploy Lifecycle
 #
 # 순서가 중요:
 #   1) publish (DRAFT → ACTIVE)
-#   2) deploy live (ACTIVE → 트래픽 수신)
-#   3) history 조회
-#   4) undeploy (트래픽 해제)
-#   5) THEN toggle (post-deploy)
+#   2) deployable (ACTIVE 버전 목록 확인)
+#   3) deploy live (ACTIVE → 트래픽 수신)
+#   4) diff (두 버전 비교 — Clone과 비교)
+#   5) history 조회
+#   6) undeploy (트래픽 해제)
 #
 # ═══════════════════════════════════════════════════════════════
 
@@ -344,12 +365,26 @@ if [ -n "$CREATED_GROUP_ID" ] && [ -n "$CREATED_VERSION_ID" ] && [ -n "$CREATED_
     else fail "$(echo "$PUB_OUT" | head -c 300)"; fi
 else skip "rule 미생성 — publish 불가"; fi
 
+log_test "deploy deployable (ACTIVE 버전 목록)"
+if [ -n "$CREATED_GROUP_ID" ]; then
+    DPBL_OUT=$(run_cli deploy deployable --group-id "$CREATED_GROUP_ID")
+    if is_valid_json "$DPBL_OUT"; then pass
+    else fail "유효한 JSON 아님"; fi
+else skip "group 미생성"; fi
+
 log_test "deploy live (ACTIVE→배포)"
 if [ -n "$CREATED_GROUP_ID" ] && [ -n "$CREATED_VERSION_ID" ] && [ -n "$CREATED_RULE_ID" ]; then
     LIVE_OUT=$(run_cli deploy live --group-id "$CREATED_GROUP_ID" --version-id "$CREATED_VERSION_ID" --memo "E2E deploy")
     if assert_contains "$LIVE_OUT" "deployed"; then pass
     else fail "$(echo "$LIVE_OUT" | head -c 300)"; fi
 else skip "publish 미실행"; fi
+
+log_test "deploy diff (Version vs Clone 비교)"
+if [ -n "$CREATED_VERSION_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
+    DIFF_OUT=$(run_cli deploy diff --base "$CREATED_VERSION_ID" --target "$CLONED_VERSION_ID")
+    if is_valid_json "$DIFF_OUT"; then pass
+    else fail "유효한 JSON 아님"; fi
+else skip "clone 미생성"; fi
 
 log_test "deploy history"
 DHIST_OUT=$(run_cli deploy history --page 0 --size 5)
@@ -445,10 +480,80 @@ if assert_not_error "$LLIST_OUT"; then pass
 else check_server_error_or_fail "$LLIST_OUT"; fi
 
 # ═══════════════════════════════════════════════════════════════
-# 10. Dry-run Mode
+# 10. Webhook Subscriptions (Platform Event Notifications)
 # ═══════════════════════════════════════════════════════════════
 
-log_section "10. Dry-run Mode"
+log_section "10. Webhook Subscriptions"
+
+WEBHOOK_SUB_NAME="E2E Webhook Sub $TS"
+
+log_test "webhook-subscriptions list"
+WSLIST_OUT=$(run_cli webhook-subscriptions list --page 0 --size 5)
+if assert_not_error "$WSLIST_OUT"; then pass
+else check_server_error_or_fail "$WSLIST_OUT"; fi
+
+log_test "webhook-subscriptions save (create)"
+WSSAVE_OUT=$(run_cli webhook-subscriptions save --json "{
+    \"name\": \"$WEBHOOK_SUB_NAME\",
+    \"webhookUrl\": \"https://httpbin.org/post\",
+    \"subscribedEvents\": [\"VERSION_PUBLISHED\", \"DEPLOYED\", \"ROLLED_BACK\", \"UNDEPLOYED\"],
+    \"payloadFormat\": \"GENERIC\"
+}")
+if assert_field "$WSSAVE_OUT" "id"; then
+    CREATED_WEBHOOK_SUB_ID=$(json_get "$WSSAVE_OUT" "id")
+    pass
+    echo -e "       id: $CREATED_WEBHOOK_SUB_ID"
+else fail "$(json_get "$WSSAVE_OUT" "message")"; fi
+
+log_test "webhook-subscriptions get"
+if [ -n "$CREATED_WEBHOOK_SUB_ID" ]; then
+    WSGET_OUT=$(run_cli webhook-subscriptions get --id "$CREATED_WEBHOOK_SUB_ID")
+    if assert_field "$WSGET_OUT" "webhookUrl"; then pass
+    else fail "$(json_get "$WSGET_OUT" "message")"; fi
+else skip "subscription 미생성"; fi
+
+log_test "webhook-subscriptions save (update — add secret)"
+if [ -n "$CREATED_WEBHOOK_SUB_ID" ]; then
+    WSUPD_OUT=$(run_cli webhook-subscriptions save --json "{
+        \"id\": \"$CREATED_WEBHOOK_SUB_ID\",
+        \"name\": \"$WEBHOOK_SUB_NAME\",
+        \"webhookUrl\": \"https://httpbin.org/post\",
+        \"subscribedEvents\": [\"DEPLOYED\", \"ROLLED_BACK\"],
+        \"payloadFormat\": \"GENERIC\",
+        \"secret\": \"e2e-hmac-secret-$TS\"
+    }")
+    HAS_SECRET=$(json_get "$WSUPD_OUT" "hasSecret")
+    if [ "$HAS_SECRET" = "true" ]; then pass
+    else fail "hasSecret=$HAS_SECRET, expected true"; fi
+else skip "subscription 미생성"; fi
+
+log_test "webhook-subscriptions test (2xx 응답 확인)"
+if [ -n "$CREATED_WEBHOOK_SUB_ID" ]; then
+    WSTEST_OUT=$(run_cli webhook-subscriptions test --id "$CREATED_WEBHOOK_SUB_ID")
+    STATUS_CODE=$(json_get "$WSTEST_OUT" "statusCode")
+    SUCCESS=$(json_get "$WSTEST_OUT" "success")
+    ERROR_CODE=$(json_get "$WSTEST_OUT" "error")
+
+    if [ -n "$STATUS_CODE" ] && [ "$STATUS_CODE" -ge 200 ] 2>/dev/null && [ "$STATUS_CODE" -lt 300 ] 2>/dev/null; then
+        pass
+        echo -e "       HTTP $STATUS_CODE | success: $SUCCESS"
+    elif [ -n "$ERROR_CODE" ] && [ "$ERROR_CODE" != "undefined" ]; then
+        fail "$ERROR_CODE: $(json_get "$WSTEST_OUT" "message")"
+    else
+        fail "unexpected response — statusCode=$STATUS_CODE success=$SUCCESS"
+    fi
+else skip "subscription 미생성"; fi
+
+log_test "webhook-subscriptions list --format table"
+WSTABLE_OUT=$(run_cli webhook-subscriptions list --format table --page 0 --size 5)
+if assert_contains "$WSTABLE_OUT" "total"; then pass
+else fail "table 출력에 'total' 없음"; fi
+
+# ═══════════════════════════════════════════════════════════════
+# 11. Dry-run Mode
+# ═══════════════════════════════════════════════════════════════
+
+log_section "11. Dry-run Mode"
 
 log_test "groups list --dry-run (HTTP 미전송 확인)"
 DRYRUN_OUT=$(run_cli groups list --dry-run)
@@ -463,14 +568,21 @@ log_section "Cleanup"
 
 if [ "${LEXQ_SKIP_CLEANUP:-0}" = "1" ]; then
     echo -e "  ${YELLOW}LEXQ_SKIP_CLEANUP=1 → 정리 생략${NC}"
-    [ -n "$CREATED_GROUP_ID" ]       && echo -e "  Group:       $CREATED_GROUP_ID"
-    [ -n "$CREATED_VERSION_ID" ]     && echo -e "  Version:     $CREATED_VERSION_ID"
-    [ -n "$CLONED_VERSION_ID" ]      && echo -e "  Cloned:      $CLONED_VERSION_ID"
-    [ -n "$CREATED_RULE_ID" ]        && echo -e "  Rule:        $CREATED_RULE_ID"
-    [ -n "$CREATED_FACT_ID" ]        && echo -e "  Fact:        $CREATED_FACT_ID"
-    [ -n "$CREATED_INTEGRATION_ID" ] && echo -e "  Integration: $CREATED_INTEGRATION_ID"
+    [ -n "$CREATED_GROUP_ID" ]         && echo -e "  Group:              $CREATED_GROUP_ID"
+    [ -n "$CREATED_VERSION_ID" ]       && echo -e "  Version:            $CREATED_VERSION_ID"
+    [ -n "$CLONED_VERSION_ID" ]        && echo -e "  Cloned:             $CLONED_VERSION_ID"
+    [ -n "$CREATED_RULE_ID" ]          && echo -e "  Rule:               $CREATED_RULE_ID"
+    [ -n "$CREATED_FACT_ID" ]          && echo -e "  Fact:               $CREATED_FACT_ID"
+    [ -n "$CREATED_INTEGRATION_ID" ]   && echo -e "  Integration:        $CREATED_INTEGRATION_ID"
+    [ -n "$CREATED_WEBHOOK_SUB_ID" ]   && echo -e "  Webhook Sub:        $CREATED_WEBHOOK_SUB_ID"
 else
-    # 역순 삭제 — Integration, Fact는 독립. Group cascade로 Version/Rule 삭제.
+    # 역순 삭제 — Webhook/Integration/Fact는 독립. Group cascade로 Version/Rule 삭제.
+    if [ -n "$CREATED_WEBHOOK_SUB_ID" ]; then
+        log_test "delete webhook subscription"
+        DEL=$(run_cli webhook-subscriptions delete --id "$CREATED_WEBHOOK_SUB_ID" --force)
+        if echo "$DEL" | grep -qi "deleted\|✓"; then pass; else fail "$DEL"; fi
+    fi
+
     if [ -n "$CREATED_INTEGRATION_ID" ]; then
         log_test "delete integration"
         DEL=$(run_cli integrations delete --id "$CREATED_INTEGRATION_ID" --force)

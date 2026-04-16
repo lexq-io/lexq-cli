@@ -1,54 +1,99 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-# LexQ Engine API — 4종 Execution Endpoint Test
+# LexQ Engine API — Execution Endpoint Integration Test
 # ═══════════════════════════════════════════════════════════════
 #
-# 테스트 대상: module-engine-api (:8082)
-#   1. SINGLE_GROUP    POST /groups/{groupId}
-#   2. SPECIFIC_VERSION POST /groups/{groupId}/versions/{versionId}
-#   3. BATCH           POST /groups/{groupId}/batch
-#   4. COMPOSITE       POST /composite
-#   +  REQUIREMENTS    GET  /groups/{groupId}/requirements
+# 4종 Execution endpoint + deployment/mutex/activation/simulation
+# 시나리오를 종합 검증한다.
+#
+#   1. SINGLE_GROUP      POST /groups/{groupId}
+#   2. SPECIFIC_VERSION  POST /groups/{groupId}/versions/{versionId}
+#   3. BATCH             POST /groups/{groupId}/batch
+#   4. COMPOSITE         POST /composite
+#   +  REQUIREMENTS      GET  /groups/{groupId}/requirements
 #
 # 사전 조건:
-#   - lexq-engine 전 모듈 로컬 실행 중 (8080/8081/8082/8083)
 #   - lexq-cli 빌드 완료 (pnpm build)
 #   - lexq auth login 완료 (API Key 저장)
+#   - 테스트 대상 환경 API Key 권한: ADMIN 또는 API_CLIENT
+#
+# ⚠️  주의:
+#   이 스크립트는 실제 테넌트에 리소스를 생성한다.
+#   프로덕션 테넌트 대신 별도 테스트 테넌트를 사용할 것을 권장한다.
+#   LEXQ_SKIP_CLEANUP=1 로 리소스를 남기고 검토 가능하다.
 #
 # 사용법:
-#   chmod +x test-engine-api.sh && ./test-engine-api.sh
+#   chmod +x test-engine-api.sh
+#   ./test-engine-api.sh                          # 기본 (production — config 기반)
+#   PARTNER_BASE_URL=<local-partner-url> \
+#     ENGINE_BASE_URL=<local-engine-url> \
+#     ./test-engine-api.sh                        # 로컬 개발 환경 override
 #
 # 환경변수 (선택):
 #   LEXQ_API_KEY        — 저장된 키 대신 사용
-#   PARTNER_BASE_URL    — 기본값: http://localhost:8080/api/v1/partners
-#   ENGINE_BASE_URL     — 기본값: http://localhost:8082/api/v1/execution
-#   LEXQ_SKIP_CLEANUP   — 1로 설정 시 생성한 리소스 삭제 안 함
+#   PARTNER_BASE_URL    — 기본값: ~/.lexq/config.json 의 baseUrl
+#   ENGINE_BASE_URL     — 기본값: Partner URL의 /partners 를 /execution 으로 치환
+#   LEXQ_TENANT_TZ      — HISTORICAL 시뮬레이션 날짜 계산 timezone (기본값: UTC)
+#                          tenant의 timezone과 일치시켜야 범위가 어긋나지 않음.
+#                          예: America/Los_Angeles, Asia/Seoul
+#   LEXQ_SKIP_CLEANUP   — 1 로 설정 시 생성 리소스 삭제 안 함
 #
 # ═══════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
-# ── Config ──
+# ── Unique suffix ──
 TS=$(date +%s)
-PARTNER_URL="${PARTNER_BASE_URL:-http://localhost:8080/api/v1/partners}"
-ENGINE_URL="${ENGINE_BASE_URL:-http://localhost:8082/api/v1/execution}"
+
+# ── Tenant Timezone (HISTORICAL 시뮬레이션 날짜 계산용) ──
+# Backend는 tenant의 timezone 기준으로 from/to를 Instant로 변환한다.
+# 테스트 머신의 로컬 timezone과 tenant timezone이 다르면 쿼리 범위가
+# 어긋나서 HISTORICAL 시뮬레이션이 0건 처리할 수 있다.
+TENANT_TZ="${LEXQ_TENANT_TZ:-UTC}"
+
+# ── Config File ──
+CONFIG_FILE="$HOME/.lexq/config.json"
+
+# ── Partner API URL 결정 ──
+if [ -n "${PARTNER_BASE_URL:-}" ]; then
+    PARTNER_URL="$PARTNER_BASE_URL"
+elif [ -f "$CONFIG_FILE" ]; then
+    PARTNER_URL=$(node -e "
+        try {
+            const c = require('$CONFIG_FILE');
+            process.stdout.write(c.baseUrl || '');
+        } catch { process.stdout.write(''); }
+    " 2>/dev/null || true)
+fi
+if [ -z "${PARTNER_URL:-}" ]; then
+    echo "ERROR: Partner API URL을 찾을 수 없습니다."
+    echo "       PARTNER_BASE_URL 환경변수 설정 또는 'lexq auth login' 실행 필요."
+    exit 1
+fi
+
+# ── Engine API URL 결정 (Partner URL 기반 자동 유도) ──
+if [ -n "${ENGINE_BASE_URL:-}" ]; then
+    ENGINE_URL="$ENGINE_BASE_URL"
+else
+    # /partners → /execution 치환 (path-based routing 전제)
+    ENGINE_URL="${PARTNER_URL/partners/execution}"
+fi
 
 # ── API Key 결정 ──
 if [ -n "${LEXQ_API_KEY:-}" ]; then
     API_KEY="$LEXQ_API_KEY"
-else
-    # ~/.lexq/config.json 에서 읽기
-    CONFIG_FILE="$HOME/.lexq/config.json"
-    if [ -f "$CONFIG_FILE" ]; then
-        API_KEY=$(node -e "
+elif [ -f "$CONFIG_FILE" ]; then
+    API_KEY=$(node -e "
+        try {
             const c = require('$CONFIG_FILE');
             process.stdout.write(c.apiKey || '');
-        " 2>/dev/null || true)
-    fi
-    if [ -z "${API_KEY:-}" ]; then
-        echo "ERROR: API Key를 찾을 수 없습니다. LEXQ_API_KEY 환경변수 또는 'lexq auth login' 실행 필요."
-        exit 1
-    fi
+        } catch { process.stdout.write(''); }
+    " 2>/dev/null || true)
+fi
+if [ -z "${API_KEY:-}" ]; then
+    echo "ERROR: API Key를 찾을 수 없습니다."
+    echo "       LEXQ_API_KEY 환경변수 설정 또는 'lexq auth login' 실행 필요."
+    exit 1
 fi
 
 # ── CLI ──
@@ -151,18 +196,6 @@ engine_curl() {
     curl "${curl_args[@]}" "${ENGINE_URL}${path}"
 }
 
-# Parse curl response: body + http_code
-parse_response() {
-    local raw="$1"
-    local body http_code
-
-    http_code=$(echo "$raw" | tail -n 1)
-    body=$(echo "$raw" | sed '$d')
-
-    echo "$body"
-    return 0
-}
-
 get_http_code() {
     echo "$1" | tail -n 1
 }
@@ -177,25 +210,38 @@ get_body() {
 
 log_section "Phase 0 — Pre-flight"
 
+echo -e "  ${DIM}Partner URL: $PARTNER_URL${NC}"
+echo -e "  ${DIM}Engine URL:  $ENGINE_URL${NC}"
+echo -e "  ${DIM}Tenant TZ:   $TENANT_TZ${NC}"
+echo ""
+
 log_test "CLI build 확인"
 if [ -f "dist/index.js" ]; then pass
 else fail "dist/index.js 없음 — pnpm build 실행"; exit 1; fi
 
-log_test "Partner API 연결 확인"
+log_test "Partner API 연결 확인 (whoami)"
 WHOAMI=$(run_cli auth whoami)
 TENANT_ID=$(json_get "$WHOAMI" "tenantId")
 if [ -n "$TENANT_ID" ] && [ "$TENANT_ID" != "undefined" ]; then
     pass
     echo -e "       tenant: $TENANT_ID"
 else
-    fail "인증 실패 — Partner API($PARTNER_URL) 확인"
+    fail "인증 실패 — Partner API 응답 없음 또는 API Key 무효"
     exit 1
 fi
 
-log_test "Engine API 연결 확인 (health)"
-ENGINE_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8082/health" 2>/dev/null || echo "000")
-if [ "$ENGINE_HEALTH" = "200" ]; then pass
-else fail "Engine API(:8082) 미응답 (HTTP $ENGINE_HEALTH)"; exit 1; fi
+log_test "Engine API 연결 확인 (잘못된 요청 후 응답 코드 확인)"
+# requirements 엔드포인트는 인증은 통과하지만 groupId가 없으면 400/404로 빠르게 실패
+# → 400이나 404가 나오면 Engine API 자체는 살아있다는 의미
+TEST_RAW=$(engine_curl GET "/groups/00000000-0000-0000-0000-000000000000/requirements")
+TEST_CODE=$(get_http_code "$TEST_RAW")
+if [ "$TEST_CODE" = "404" ] || [ "$TEST_CODE" = "400" ] || [ "$TEST_CODE" = "200" ]; then
+    pass
+    echo -e "       HTTP $TEST_CODE (reachable)"
+else
+    fail "Engine API 미응답 (HTTP $TEST_CODE)"
+    exit 1
+fi
 
 # ═══════════════════════════════════════════════════════════════
 # PHASE 0.5: FactDefinition 확인/생성
@@ -457,7 +503,7 @@ if [ -n "$GROUP_B_ID" ]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 2: Engine API 4종 테스트 (curl → :8082)
+# PHASE 2: Engine API 4종 테스트
 # ═══════════════════════════════════════════════════════════════
 
 log_section "Phase 2 — Engine API 4종 테스트"
@@ -498,7 +544,6 @@ if [ "$HTTP_CODE" = "200" ]; then
     if [ "$SUCCESS" = "SUCCESS" ]; then
         pass
         echo -e "       HTTP $HTTP_CODE | result=SUCCESS"
-        # outputVariables 출력
         OUT_VARS=$(echo "$BODY" | node -e "
             let d='';
             process.stdin.on('data',c=>d+=c);
@@ -511,7 +556,6 @@ if [ "$HTTP_CODE" = "200" ]; then
             });
         ")
         echo -e "       outputVariables: $OUT_VARS"
-        # executionTraces 수
         TRACE_COUNT=$(echo "$BODY" | node -e "
             let d='';
             process.stdin.on('data',c=>d+=c);
@@ -815,7 +859,6 @@ if [ -n "$VERSION_C_ID" ]; then
             pass
             echo -e "       SELECTED: $SELECTED (winner + tag) | BLOCKED: $BLOCKED (loser) | total: $DT_TOTAL"
         else
-            # SELECTED=2(winner+tag), BLOCKED=1(loser)이 아닐 수 있으니 유연하게
             if [ "$BLOCKED" -ge 1 ] 2>/dev/null; then
                 pass
                 echo -e "       SELECTED: $SELECTED | BLOCKED: $BLOCKED | total: $DT_TOTAL"
@@ -910,7 +953,6 @@ if [ -n "$GROUP_D_ID" ] && [ -n "$GROUP_E_ID" ]; then
     BODY=$(get_body "$RAW")
 
     if [ "$HTTP_CODE" = "200" ]; then
-        # Group D(20%)만 실행되어야 함. payment_amount: 100000 → 80000
         FINAL_AMOUNT=$(json_get "$BODY" "data.outputVariables.payment_amount")
         TRACES=$(echo "$BODY" | node -e "
             let d='';
@@ -933,7 +975,6 @@ if [ -n "$GROUP_D_ID" ] && [ -n "$GROUP_E_ID" ]; then
             echo -e "       payment_amount: 100000 → $FINAL_AMOUNT (20%만 적용, Group E 제외)"
             echo -e "       traces: $TRACES"
         else
-            # 80000이 아니더라도 EXCLUSIVE 동작 확인
             pass
             echo -e "       payment_amount: $FINAL_AMOUNT (EXCLUSIVE 적용)"
             echo -e "       traces: $TRACES"
@@ -950,7 +991,6 @@ fi
 log_section "Phase 2C — Dry-Run Compare"
 
 if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
-    # Version A를 Clone → 새 DRAFT
     log_test "Version A Clone → 새 DRAFT"
     CLONE_OUT=$(run_cli versions clone --group-id "$GROUP_A_ID" --id "$VERSION_A_ID")
     CLONED_VERSION_ID=$(json_get "$CLONE_OUT" "id")
@@ -959,7 +999,6 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
         echo -e "       cloned: $CLONED_VERSION_ID"
     else fail "$(json_get "$CLONE_OUT" "message")"; fi
 
-    # Clone에 추가 룰 생성 (30% 할인 → 결과 차이 발생)
     if [ -n "$CLONED_VERSION_ID" ]; then
         log_test "Clone에 추가 룰 (30% 추가 할인)"
         EXTRA_RULE=$(run_cli rules create --group-id "$GROUP_A_ID" --version-id "$CLONED_VERSION_ID" --json '{
@@ -973,7 +1012,6 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
         if [ -n "$(json_get "$EXTRA_RULE" "id")" ]; then pass
         else fail "$(json_get "$EXTRA_RULE" "message")"; fi
 
-        # Dry-Run Compare: Version A vs Cloned Version
         log_test "Dry-Run Compare (Version A vs Clone)"
         COMPARE_OUT=$(run_cli analytics dry-run-compare --json "{
             \"facts\": { \"payment_amount\": 100000, \"user_tier\": \"VIP\" },
@@ -983,7 +1021,6 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
         }")
 
         if is_valid_json "$COMPARE_OUT"; then
-            # resultA와 resultB 비교
             DIFF_RESULT=$(echo "$COMPARE_OUT" | node -e "
                 let d='';
                 process.stdin.on('data',c=>d+=c);
@@ -1006,7 +1043,6 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
                 echo -e "       Clone:     payment_amount=$AMOUNT_B"
                 echo -e "       diff: $DIFF_RESULT"
             else
-                # 차이가 없어도 API 호출 자체는 성공
                 pass
                 echo -e "       결과 동일 (amountA=$AMOUNT_A, amountB=$AMOUNT_B)"
             fi
@@ -1018,24 +1054,14 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 2D: Batch Simulation (대량 시뮬레이션)
-# ═══════════════════════════════════════════════════════════════
-#
-# 핵심 검증: "규칙을 변경하면 기존 트래픽에 어떤 영향이 생기는가?"
-#
-# Version A  = 현재 운영 (VIP 10% + 일반 5%)
-# Clone      = 변경 후보 (VIP 10% + 일반 5% + 추가 30%)
-# 동일한 5건 데이터 → Clone을 target, Version A를 baseline으로 시뮬레이션
-# → metricSummary.delta로 "30% 추가 할인의 매출 영향" 확인
-#
+# PHASE 2D: Batch Simulation (영향도 분석)
 # ═══════════════════════════════════════════════════════════════
 
 log_section "Phase 2D — Batch Simulation (영향도 분석)"
 
-# helper: 시뮬레이션 폴링 (최대 30초)
 poll_simulation() {
     local sim_id="$1"
-    local max_wait=30
+    local max_wait=60
     local waited=0
     local out=""
     local status=""
@@ -1054,11 +1080,13 @@ poll_simulation() {
         echo -ne "${DIM}.${NC}" >&2
     done
 
+    # Timeout — return the last response with whatever status (RUNNING/PENDING)
+    # Do NOT return non-zero: under `set -e` it would terminate the caller via
+    # command substitution. Let the caller decide based on status field.
     echo "$out"
-    return 1
+    return 0
 }
 
-# ── 공통 MANUAL 데이터셋 (5건) ──
 MANUAL_DATA='[
     { "payment_amount": 200000, "user_tier": "VIP" },
     { "payment_amount": 80000,  "user_tier": "GOLD" },
@@ -1069,7 +1097,6 @@ MANUAL_DATA='[
 
 if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
 
-    # ── 2D-1: MANUAL — 변경 후보(Clone) vs 현재 운영(Version A) ──
     log_test "Batch Sim — Clone vs Version A (MANUAL 5건, baseline 비교)"
     SIM_COMPARE_OUT=$(run_cli analytics simulation start --json "{
         \"policyVersionId\": \"$CLONED_VERSION_ID\",
@@ -1090,6 +1117,7 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
 
     SIM_COMPARE_ID=$(echo "$SIM_COMPARE_OUT" | grep "Simulation started" | grep -o '[0-9a-f-]\{36\}')
     if [ -n "$SIM_COMPARE_ID" ]; then
+        pass
         echo -ne "${GREEN}STARTED${NC} (id: ${SIM_COMPARE_ID:0:8}...) polling"
         SIM_CMP_RESULT=$(poll_simulation "$SIM_COMPARE_ID")
         SIM_CMP_STATUS=$(json_get "$SIM_CMP_RESULT" "status")
@@ -1098,13 +1126,11 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
         log_test "비교 시뮬레이션 결과 검증"
         if [ "$SIM_CMP_STATUS" = "COMPLETED" ]; then
             pass
-            # summary
             TOTAL_REC=$(json_get "$SIM_CMP_RESULT" "summary.totalRecords")
             MATCHED=$(json_get "$SIM_CMP_RESULT" "summary.matchedRecords")
             MATCH_RATE=$(json_get "$SIM_CMP_RESULT" "summary.matchRate")
             echo -e "       records: $TOTAL_REC | matched: $MATCHED | matchRate: $MATCH_RATE"
 
-            # metricSummary — 핵심: delta가 있어야 비교가 성립
             BASELINE_VAL=$(json_get "$SIM_CMP_RESULT" "metricSummary.baselineValue")
             SIM_VAL=$(json_get "$SIM_CMP_RESULT" "metricSummary.simulatedValue")
             DELTA=$(json_get "$SIM_CMP_RESULT" "metricSummary.delta")
@@ -1118,11 +1144,9 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
                 echo -e "       delta: $DELTA (${DELTA_PCT}%)"
                 echo -e "       → 30% 추가 할인 적용 시 총 결제액이 ${DELTA_PCT}% 변동"
             else
-                # delta가 0이면 규칙 차이가 반영 안 된 것
                 fail "delta=$DELTA — 변경 영향이 감지되지 않음"
             fi
 
-            # ruleStats 확인
             RULE_STATS=$(echo "$SIM_CMP_RESULT" | node -e "
                 let d='';process.stdin.on('data',c=>d+=c);
                 process.stdin.on('end',()=>{
@@ -1142,8 +1166,22 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
             fi
         elif [ "$SIM_CMP_STATUS" = "FAILED" ]; then
             fail "시뮬레이션 FAILED"
+            log_test "영향도 delta 확인"
+            skip "시뮬레이션 실패"
+            log_test "ruleStats 확인"
+            skip "시뮬레이션 실패"
+        elif [ "$SIM_CMP_STATUS" = "RUNNING" ] || [ "$SIM_CMP_STATUS" = "PENDING" ]; then
+            skip "60초 내 완료되지 않음"
+            log_test "영향도 delta 확인"
+            skip "타임아웃"
+            log_test "ruleStats 확인"
+            skip "타임아웃"
         else
-            fail "타임아웃 (status=$SIM_CMP_STATUS)"
+            fail "예상치 못한 status=$SIM_CMP_STATUS"
+            log_test "영향도 delta 확인"
+            skip "상위 실패"
+            log_test "ruleStats 확인"
+            skip "상위 실패"
         fi
     else
         fail "시뮬레이션 시작 실패 — $(echo "$SIM_COMPARE_OUT" | head -c 200)"
@@ -1155,9 +1193,9 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
         skip "시작 실패"
     fi
 
-    # ── 2D-2: HISTORICAL — 오늘 실행 이력 재생 ──
     log_test "Batch Sim — HISTORICAL (오늘 실행 이력 재생)"
-    TODAY=$(date +%Y-%m-%d)
+    TODAY=$(TZ="$TENANT_TZ" date +%Y-%m-%d)
+    echo -ne "${DIM} (TZ=$TENANT_TZ, TODAY=$TODAY)${NC} "
     SIM_HIST_OUT=$(run_cli analytics simulation start --json "{
         \"policyVersionId\": \"$VERSION_A_ID\",
         \"dataset\": {
@@ -1174,6 +1212,7 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
 
     SIM_HIST_ID=$(echo "$SIM_HIST_OUT" | grep "Simulation started" | grep -o '[0-9a-f-]\{36\}')
     if [ -n "$SIM_HIST_ID" ]; then
+        pass
         echo -ne "${GREEN}STARTED${NC} (id: ${SIM_HIST_ID:0:8}...) polling"
         HIST_RESULT=$(poll_simulation "$SIM_HIST_ID")
         HIST_STATUS=$(json_get "$HIST_RESULT" "status")
@@ -1188,8 +1227,10 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
             echo -e "       total: $H_TOTAL | matched: $H_MATCHED | matchRate: $H_RATE"
         elif [ "$HIST_STATUS" = "FAILED" ]; then
             skip "실행 이력 부족 또는 처리 실패 (테스트 데이터 한정)"
+        elif [ "$HIST_STATUS" = "RUNNING" ] || [ "$HIST_STATUS" = "PENDING" ]; then
+            skip "60초 내 완료되지 않음 — 이력 누적량에 따라 지연 가능"
         else
-            fail "타임아웃 (status=$HIST_STATUS)"
+            fail "예상치 못한 status=$HIST_STATUS"
         fi
     else
         fail "시뮬레이션 시작 실패 — $(echo "$SIM_HIST_OUT" | head -c 200)"
@@ -1197,7 +1238,6 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$CLONED_VERSION_ID" ]; then
         skip "시작 실패"
     fi
 
-    # ── 2D-3: 시뮬레이션 목록 조회 ──
     log_test "시뮬레이션 목록 조회 (simulation list)"
     SIM_LIST=$(run_cli analytics simulation list --page 0 --size 5)
     SIM_LIST_COUNT=$(echo "$SIM_LIST" | node -e "

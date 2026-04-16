@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { type Command } from 'commander';
+import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -16,7 +17,23 @@ import { loadConfig } from '@/lib/config';
 export function registerAnalyticsCommands(program: Command): void {
   const analytics = program
     .command('analytics')
-    .description('Dry run, simulation, and requirements');
+    .description('Dry run, simulation, and requirements')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Test and validate rules before deploying to production.
+
+        Commands:
+          dry-run          Test a single input against a version
+          dry-run-compare  Compare results between two versions
+          requirements     Show required input facts for a version
+          simulation       Batch test against historical data (start, status, list, cancel, export)
+          dataset          Upload datasets and download templates
+
+        Workflow: facts check → dry-run → publish → simulation → deploy
+      `,
+    );
 
   // ══════════════════════════════════════════════════
   // Dry Run
@@ -30,6 +47,20 @@ export function registerAnalyticsCommands(program: Command): void {
     .option('--file <path>', 'Read request body from a JSON file')
     .option('--debug', 'Include debug traces', false)
     .option('--mock', 'Mock external calls', false)
+    .addHelpText(
+      'after',
+      dedent`
+
+        Examples:
+          $ lexq analytics dry-run --version-id <vid> --debug --mock \\
+              --json '{"facts": {"payment_amount": 150000, "customer_tier": "VIP"}}'
+
+          $ lexq analytics dry-run --version-id <vid> --file test-input.json
+
+        The request body must include a "facts" object. Use --debug for execution traces
+        and --mock to skip external service calls (webhooks, coupons, etc.).
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -69,6 +100,20 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Compare dry run results between two versions')
     .option('--json <body>', 'Request body as JSON string')
     .option('--file <path>', 'Read request body from a JSON file')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq analytics dry-run-compare --json '{
+              "versionIdA": "<version-a-id>",
+              "versionIdB": "<version-b-id>",
+              "facts": {"payment_amount": 100000, "customer_tier": "VIP"}
+            }'
+
+        Shows side-by-side which rules matched and what actions fired for each version.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -103,6 +148,16 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Analyze required input facts for a version')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Policy version ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Shows all facts referenced in conditions and actions, along with an example request body.
+
+        Example:
+          $ lexq analytics requirements --group-id <gid> --version-id <vid> --format table
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -145,7 +200,25 @@ export function registerAnalyticsCommands(program: Command): void {
   // Simulation
   // ══════════════════════════════════════════════════
 
-  const sim = analytics.command('simulation').description('Manage batch simulations');
+  const sim = analytics
+    .command('simulation')
+    .description('Manage batch simulations')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Batch-test a version against historical data or uploaded datasets.
+
+        Commands:
+          start     Start a new simulation
+          status    Check progress and results
+          list      List simulation history
+          cancel    Cancel a running simulation
+          export    Export results as CSV or JSON
+
+        Simulations always mock external calls. Use --format table for summary view.
+      `,
+    );
 
   // ── start ──
   sim
@@ -153,6 +226,28 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Start a new batch simulation')
     .requiredOption('--json <body>', 'Simulation request body as JSON')
     .option('--file <path>', 'Read request body from a JSON file')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq analytics simulation start --json '{
+              "policyVersionId": "<vid>",
+              "dataset": {
+                "type": "EXECUTION_LOG",
+                "source": "RECENT",
+                "maxRecords": 1000
+              },
+              "options": {
+                "baselinePolicyVersionId": "<baseline-vid>",
+                "includeRuleStats": true
+              }
+            }'
+
+        Dataset types: EXECUTION_LOG, MANUAL
+        Dataset sources: RECENT, DATE_RANGE, MANUAL
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -178,6 +273,16 @@ export function registerAnalyticsCommands(program: Command): void {
     .command('status')
     .description('Get simulation status and results')
     .requiredOption('--id <simulationId>', 'Simulation ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Shows progress, match rate, metric comparison (if baseline set), and per-rule stats.
+
+        Example:
+          $ lexq analytics simulation status --id <simId> --format table
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -272,10 +377,7 @@ export function registerAnalyticsCommands(program: Command): void {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const params: Record<string, string> = {
-          page: opts.page,
-          size: opts.size,
-        };
+        const params: Record<string, string> = { page: opts.page, size: opts.size };
         if (opts.status) params.status = opts.status;
         if (opts.from) params.from = opts.from;
         if (opts.to) params.to = opts.to;
@@ -322,6 +424,13 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Cancel a running simulation')
     .requiredOption('--id <simulationId>', 'Simulation ID')
     .option('--force', 'Skip confirmation prompt')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Only PENDING or RUNNING simulations can be cancelled.
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -357,6 +466,17 @@ export function registerAnalyticsCommands(program: Command): void {
     .requiredOption('--id <simulationId>', 'Simulation ID')
     .option('--format <fmt>', 'Export format: csv or json', 'json')
     .option('--output <path>', 'Output file path')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Only COMPLETED simulations can be exported.
+
+        Examples:
+          $ lexq analytics simulation export --id <simId> --format csv --output results.csv
+          $ lexq analytics simulation export --id <simId> --format json
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -393,13 +513,33 @@ export function registerAnalyticsCommands(program: Command): void {
 
   const dataset = analytics
     .command('dataset')
-    .description('Upload datasets and download templates');
+    .description('Upload datasets and download templates')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Commands:
+          upload    Upload a CSV or JSON file as a simulation dataset
+          template  Download a dataset template based on version requirements
+      `,
+    );
 
   // ── upload ──
   dataset
     .command('upload')
     .description('Upload a CSV or JSON file as a simulation dataset')
     .requiredOption('--file <path>', 'Path to CSV or JSON file')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Supported formats: CSV (with header row), JSON (array of objects).
+        Use "dataset template" to generate a correctly formatted template.
+
+        Example:
+          $ lexq analytics dataset upload --file transactions.csv
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
@@ -415,13 +555,11 @@ export function registerAnalyticsCommands(program: Command): void {
         const fileBuffer = readFileSync(filePath);
         const fileName = filePath.split('/').pop() ?? 'dataset';
 
-        // Content-Type 추론
         const ext = fileName.split('.').pop()?.toLowerCase();
         let contentType = 'application/octet-stream';
         if (ext === 'csv') contentType = 'text/csv';
         else if (ext === 'json') contentType = 'application/json';
 
-        // Node.js 18+ native FormData + Blob
         const blob = new Blob([fileBuffer], { type: contentType });
         const formData = new FormData();
         formData.append('file', blob, fileName);
@@ -466,6 +604,17 @@ export function registerAnalyticsCommands(program: Command): void {
     .requiredOption('--version-id <versionId>', 'Policy version ID')
     .option('--format <fmt>', 'Template format: csv or json', 'csv')
     .option('--output <path>', 'Output file path')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Generates a template with all required fact columns pre-filled.
+
+        Examples:
+          $ lexq analytics dataset template --group-id <gid> --version-id <vid> --output template.csv
+          $ lexq analytics dataset template --group-id <gid> --version-id <vid> --format json
+      `,
+    )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();

@@ -67,36 +67,39 @@ lexq deploy live --group-id <GROUP_ID> --version-id <VERSION_ID> --memo "Initial
 ## Commands
 
 ```
-lexq auth            login | logout | whoami
-lexq status          API health check
-lexq groups          list | get | create | update | delete
-lexq groups ab-test  start | stop | adjust
-lexq versions        list | get | create | update | delete | clone
-lexq rules           list | get | create | update | delete | reorder | toggle
-lexq facts           list | create | update | delete
-lexq deploy          publish | live | rollback | undeploy | history | detail | overview
-lexq analytics       dry-run | dry-run-compare | requirements
+lexq auth                  login | logout | whoami
+lexq status                API health check
+lexq serve                 Run as MCP stdio server (--mcp)
+lexq groups                list | get | create | update | delete
+lexq groups ab-test        start | stop | adjust
+lexq versions              list | get | create | update | delete | clone
+lexq rules                 list | get | create | update | delete | reorder | toggle
+lexq facts                 list | create | update | delete | action-metadata
+lexq deploy                publish | live | rollback | undeploy | history | detail | overview | deployable | diff
+lexq analytics             dry-run | dry-run-compare | requirements
 lexq analytics simulation  start | status | list | cancel | export
 lexq analytics dataset     upload | template
-lexq history         list | get | stats
-lexq integrations    list | get | save | delete | config-spec
-lexq logs            list | get | action | bulk-action
+lexq history               list | get | stats
+lexq integrations          list | get | save | delete | config-spec
+lexq logs                  list | get | action | bulk-action
+lexq webhook-subscriptions list | get | save | delete | test
 ```
 
 ## Global Options
 
-| Flag | Description |
-|---|---|
-| `--format <json\|table>` | Output format (default: `json`) |
-| `--api-key <key>` | Override stored API key |
-| `--base-url <url>` | Override API base URL |
-| `--dry-run` | Preview the HTTP request without executing |
-| `--verbose` | Show request/response details |
-| `--no-color` | Disable colored output |
+| Flag                     | Description                                |
+|--------------------------|--------------------------------------------|
+| `--format <json\|table>` | Output format (default: `json`)            |
+| `--api-key <key>`        | Override stored API key                    |
+| `--base-url <url>`       | Override API base URL                      |
+| `--dry-run`              | Preview the HTTP request without executing |
+| `--verbose`              | Show request/response details              |
+| `--no-color`             | Disable colored output                     |
 
 ## AI Agent Skills
 
-LexQ CLI ships with **AI Agent Skills** — structured documentation that AI coding agents can read to autonomously manage policies.
+LexQ CLI ships with **AI Agent Skills** — structured documentation that AI coding agents can read to autonomously manage
+policies.
 
 ```
 skills/
@@ -104,8 +107,9 @@ skills/
 ├── lexq-groups/SKILL.md       Policy groups, conflict resolution, A/B testing
 ├── lexq-rules/SKILL.md        Condition syntax, action types, mutex
 ├── lexq-simulation/SKILL.md   Dry run, batch simulation, compare
-├── lexq-execution/SKILL.md    Execution history, stats, failure logs
-└── lexq-recipes/SKILL.md      10 end-to-end recipes
+├── lexq-execution/SKILL.md    Execution history, stats, failure logs,
+│                              integrations, webhook subscriptions
+└── lexq-recipes/SKILL.md      End-to-end recipes
 
 .claude/CLAUDE.md              Claude Code project context
 AGENTS.md                      Universal agent guide (Cursor, Windsurf, Gemini CLI, Cline)
@@ -147,25 +151,27 @@ pnpm start -- groups list
 ```
 
 ```bash
-pnpm typecheck     # Type check
-pnpm lint          # ESLint
-bash tests/e2e.sh  # E2E tests (requires API key)
+pnpm typecheck                  # Type check
+pnpm lint                       # ESLint
+bash tests/e2e.sh               # CLI E2E tests (requires API key)
+bash tests/test-engine-api.sh   # Engine API integration tests
 ```
 
 ## MCP Server Mode
 
-LexQ exposes 55 policy engine tools via MCP. Two connection methods:
+LexQ exposes **63 policy engine tools** via MCP. Two connection methods:
 
 ### Claude.ai (Cloud — no install)
 
 1. Go to **Settings → Connectors → Add Custom Integration**
 2. Enter: `https://mcp.lexq.io`
 3. Sign in with your LexQ account and select an API key
-4. Done — 55 tools available in every conversation
+4. Done — 63 tools available in every conversation
 
 ### Remote (Streamable HTTP)
 
 For any MCP client that supports remote servers:
+
 ```json
 {
   "mcpServers": {
@@ -181,11 +187,12 @@ OAuth 2.1 authentication is required. Your AI client will handle authorization a
 ### Local (stdio)
 
 Run LexQ CLI as a local MCP server:
+
 ```bash
 lexq serve --mcp
 ```
 
-This starts a stdio MCP server exposing 55 tools — the full LexQ API — to any MCP-compatible client.
+This starts a stdio MCP server exposing 63 tools — the full LexQ API — to any MCP-compatible client.
 
 ### Claude Desktop
 
@@ -193,10 +200,10 @@ Add to `claude_desktop_config.json`:
 
 ```json
 {
-  "mcpServers":{
-    "lexq":{
-      "command":"npx",
-      "args":[
+  "mcpServers": {
+    "lexq": {
+      "command": "npx",
+      "args": [
         "-y",
         "@lexq/cli",
         "serve",
@@ -213,10 +220,10 @@ Add to `claude_desktop_config.json`:
 
 ```json
 {
-  "servers":{
-    "lexq":{
-      "command":"npx",
-      "args":[
+  "servers": {
+    "lexq": {
+      "command": "npx",
+      "args": [
         "-y",
         "@lexq/cli",
         "serve",
