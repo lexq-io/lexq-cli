@@ -12,7 +12,7 @@
 #
 # 환경변수 (선택):
 #   LEXQ_API_KEY       — 저장된 키 대신 사용
-#   LEXQ_BASE_URL      — 기본값: ~/.lexq/config.json의 baseUrl
+#   PARTNER_BASE_URL      — 기본값: ~/.lexq/config.json의 baseUrl
 #   LEXQ_SKIP_CLEANUP  — 1로 설정 시 생성한 리소스 삭제 안 함
 #
 # ═══════════════════════════════════════════════════════════════
@@ -42,7 +42,7 @@ CLONED_VERSION_ID=""
 CLI="node dist/index.js"
 GLOBAL_OPTS=""
 [ -n "${LEXQ_API_KEY:-}" ]  && GLOBAL_OPTS="--api-key $LEXQ_API_KEY"
-[ -n "${LEXQ_BASE_URL:-}" ] && GLOBAL_OPTS="$GLOBAL_OPTS --base-url $LEXQ_BASE_URL"
+[ -n "${PARTNER_BASE_URL:-}" ] && GLOBAL_OPTS="$GLOBAL_OPTS --base-url $PARTNER_BASE_URL"
 
 # ═══════════════════════════════════════════════════════════════
 # Helpers

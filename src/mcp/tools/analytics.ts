@@ -13,9 +13,16 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Dry Run',
       description: dedent`
         Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.
+        
+        Returns:
+          inputFacts        — normalized input facts
+          mutatedFacts      — input facts changed by rule actions (e.g. DISCOUNT mutates payment_amount)
+          generatedVariables — new variables created by rules (e.g. last_discount_amount)
+          executionTraces   — per-rule match status
+          decisionTraces    — per-rule decision (SELECTED / BLOCKED_MUTEX / etc.)
+        
         Example input: { "facts": { "payment_amount": 100000, "customer_tier": "VIP" } }
-        Always dry-run before publishing to validate rule behavior.
-      `,
+        Always dry-run before publishing to validate rule behavior.`,
       inputSchema: {
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"payment_amount":100000}'),
@@ -40,8 +47,13 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dry_run_compare',
     {
       title: 'Dry Run Compare',
-      description:
-        'Compare dry run results between two versions using the same input facts. Useful for validating changes.',
+      description: dedent`
+        Compare dry run results between two versions using the same input facts. Useful for validating changes.
+        
+        Returns:
+          resultA / resultB — full DryRunResponse for each version
+          diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})
+          diff.generatedDiff — changes in generatedVariables between A and B`,
       inputSchema: {
         versionIdA: z.string().uuid().describe('Baseline version ID'),
         versionIdB: z.string().uuid().describe('Candidate version ID'),

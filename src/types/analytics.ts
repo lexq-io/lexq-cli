@@ -7,11 +7,15 @@ import type { ActionDefinition } from './rules';
 
 export interface ExecutionTrace {
   traceId: string;
+  tenantId: string;
+  policyGroupId: string;
+  policyVersionId: string;
   ruleId: string;
   ruleName: string;
   executedAt: string;
   matched: boolean;
   matchExpression: string;
+  inputFacts: Record<string, unknown>;
   generatedActions: ActionDefinition[];
 }
 
@@ -37,7 +41,9 @@ export interface DryRunRequest {
 }
 
 export interface DryRunResponse {
-  outputVariables: Record<string, unknown>;
+  inputFacts: Record<string, unknown>;
+  mutatedFacts: Record<string, unknown>;
+  generatedVariables: Record<string, unknown>;
   executionTraces: ExecutionTrace[];
   decisionTraces: DecisionTrace[];
   latencyMs: number;
@@ -160,9 +166,8 @@ export interface DryRunCompareResponse {
 }
 
 export interface OutputDiff {
-  addedKeys: Record<string, unknown>;
-  removedKeys: Record<string, unknown>;
-  changedKeys: Record<string, OutputValueChange>;
+  mutatedDiff: Record<string, OutputValueChange>;
+  generatedDiff: Record<string, OutputValueChange>;
 }
 
 export interface OutputValueChange {

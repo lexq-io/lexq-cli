@@ -86,28 +86,34 @@ export function registerAuthCommands(program: Command): void {
     )
     .action(async () => {
       try {
+        const globalOpts = program.opts();
         const config = loadConfig();
-        if (!config.apiKey) {
+
+        // 우선순위: --api-key flag > 저장된 config
+        const apiKey = (globalOpts.apiKey as string | undefined) ?? config.apiKey;
+        const baseUrl = (globalOpts.baseUrl as string | undefined) ?? config.baseUrl;
+
+        if (!apiKey) {
           console.error('Not authenticated. Run "lexq auth login" first.');
           process.exit(1);
         }
 
         const info = await apiRequest<WhoAmIResponse>('GET', 'whoami', {
-          apiKey: config.apiKey,
-          baseUrl: config.baseUrl,
+          apiKey,
+          baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
         });
 
         const masked =
-          config.apiKey.length > 8
-            ? config.apiKey.substring(0, 4) +
-              '****' +
-              config.apiKey.substring(config.apiKey.length - 4)
+          apiKey.length > 8
+            ? apiKey.substring(0, 4) + '****' + apiKey.substring(apiKey.length - 4)
             : '****';
 
         printJson({
           ...info,
           apiKey: masked,
-          baseUrl: config.baseUrl,
+          baseUrl,
         });
       } catch (error) {
         printError(error);

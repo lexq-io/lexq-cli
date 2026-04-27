@@ -550,12 +550,13 @@ if [ "$HTTP_CODE" = "200" ]; then
             process.stdin.on('end',()=>{
                 try {
                     const o=JSON.parse(d);
-                    const v=o.data?.outputVariables||{};
-                    process.stdout.write(JSON.stringify(v));
+                    const m=o.data?.mutatedFacts||{};
+                    const g=o.data?.generatedVariables||{};
+                    process.stdout.write(JSON.stringify({mutated: m, generated: g}));
                 } catch { process.stdout.write('{}'); }
             });
         ")
-        echo -e "       outputVariables: $OUT_VARS"
+        echo -e "       output: $OUT_VARS"
         TRACE_COUNT=$(echo "$BODY" | node -e "
             let d='';
             process.stdin.on('data',c=>d+=c);
@@ -644,11 +645,13 @@ if [ "$HTTP_CODE" = "200" ]; then
             process.stdin.on('end',()=>{
                 try {
                     const o=JSON.parse(d);
-                    process.stdout.write(JSON.stringify(o.data?.outputVariables||{}));
+                    const m=o.data?.mutatedFacts||{};
+                    const g=o.data?.generatedVariables||{};
+                    process.stdout.write(JSON.stringify({mutated: m, generated: g}));
                 } catch { process.stdout.write('{}'); }
             });
         ")
-        echo -e "       outputVariables: $OUT_VARS"
+        echo -e "       output: $OUT_VARS"
     else
         fail "result!=SUCCESS — $(json_get "$BODY" "message")"
     fi
@@ -696,6 +699,7 @@ fi
 
 # ── 2-4: COMPOSITE ──
 if [ -n "$GROUP_B_ID" ]; then
+    sleep 2  # rate limit 회피
     log_test "COMPOSITE — POST /composite"
     RAW=$(engine_curl POST "/composite" "{
         \"targetGroupIds\": [\"$GROUP_A_ID\", \"$GROUP_B_ID\"],
@@ -721,11 +725,13 @@ if [ -n "$GROUP_B_ID" ]; then
                 process.stdin.on('end',()=>{
                     try {
                         const o=JSON.parse(d);
-                        process.stdout.write(JSON.stringify(o.data?.outputVariables||{}));
+                        const m=o.data?.mutatedFacts||{};
+                        const g=o.data?.generatedVariables||{};
+                        process.stdout.write(JSON.stringify({mutated: m, generated: g}));
                     } catch { process.stdout.write('{}'); }
                 });
             ")
-            echo -e "       outputVariables: $OUT_VARS"
+            echo -e "       output: $OUT_VARS"
             TRACE_COUNT=$(echo "$BODY" | node -e "
                 let d='';
                 process.stdin.on('data',c=>d+=c);
@@ -953,7 +959,7 @@ if [ -n "$GROUP_D_ID" ] && [ -n "$GROUP_E_ID" ]; then
     BODY=$(get_body "$RAW")
 
     if [ "$HTTP_CODE" = "200" ]; then
-        FINAL_AMOUNT=$(json_get "$BODY" "data.outputVariables.payment_amount")
+        FINAL_AMOUNT=$(json_get "$BODY" "data.mutatedFacts.payment_amount")
         TRACES=$(echo "$BODY" | node -e "
             let d='';
             process.stdin.on('data',c=>d+=c);
@@ -965,7 +971,7 @@ if [ -n "$GROUP_D_ID" ] && [ -n "$GROUP_E_ID" ]; then
                     const dt=o.data?.decisionTraces||[];
                     const selected=dt.filter(t=>t.status==='SELECTED').length;
                     const dropped=dt.filter(t=>t.status==='NOT_SELECTED'||t.reasonCode==='GROUP_LIMIT_REACHED').length;
-                    process.stdout.write(JSON.stringify({matched,selected,dropped,finalAmount:o.data?.outputVariables?.payment_amount}));
+                    process.stdout.write(JSON.stringify({matched,selected,dropped,finalAmount:o.data?.mutatedFacts?.payment_amount}));
                 } catch { process.stdout.write('{}'); }
             });
         ")
@@ -1027,10 +1033,11 @@ if [ -n "$VERSION_A_ID" ] && [ -n "$GROUP_A_ID" ]; then
                 process.stdin.on('end',()=>{
                     try {
                         const o=JSON.parse(d);
-                        const a=o.resultA?.outputVariables?.payment_amount;
-                        const b=o.resultB?.outputVariables?.payment_amount;
-                        const changed=Object.keys(o.diff?.changedKeys||{});
-                        process.stdout.write(JSON.stringify({amountA:a, amountB:b, changedKeys:changed}));
+                        const a=o.resultA?.mutatedFacts?.payment_amount;
+                        const b=o.resultB?.mutatedFacts?.payment_amount;
+                        const mutatedKeys=Object.keys(o.diff?.mutatedDiff||{});
+                        const generatedKeys=Object.keys(o.diff?.generatedDiff||{});
+                        process.stdout.write(JSON.stringify({amountA:a, amountB:b, mutatedKeys, generatedKeys}));
                     } catch(e) { process.stdout.write(JSON.stringify({error:e.message})); }
                 });
             ")
