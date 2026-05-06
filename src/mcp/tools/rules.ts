@@ -61,18 +61,20 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         Actions: [{ type, parameters }]
 
         Action parameter schemas:
-        - DISCOUNT: { refVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT) }
-        - POINT: { refVar: string, targetVar: string, method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), integrationId: uuid }
-        - COUPON_ISSUE: { couponId: string, integrationId: uuid }
+        - MUTATE_FACT: { refVar: string, operator: "ASSIGN"|"ADD"|"SUB"|"MUL"|"DIV", method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), rounding?: RoundingOption } Constraints: DIV + PERCENTAGE is invalid (use MUL with rate/100 inverse). DIV + AMOUNT requires value !== 0.
+        - INCREMENT_FACT: { targetVar: string, method: "PERCENTAGE"|"AMOUNT", refVar?: string (required when PERCENTAGE), rate?: number (when PERCENTAGE), value?: number (when AMOUNT), rounding?: RoundingOption } Note: external system call (e.g. point system sync) is NOT a primitive responsibility. Compose [INCREMENT_FACT, EMIT_EVENT] chain instead.
+        - EMIT_EVENT: { integrationId: uuid, eventPayload: object (Map<string,unknown>, ≥1 entry) } eventPayload is passed through to the integration provider as-is. Domain-specific keys (couponId, ticketId, etc.) are routed by the provider, not validated by the engine.
         - BLOCK: { reason: string }
-        - NOTIFICATION: { channel: "SMS"|"EMAIL"|"PUSH", targetVar: string, templateId: string, integrationId: uuid }
-        - WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
+        - EMIT_NOTIFICATION: { integrationId: uuid, targetVar: string, notificationPayload: object (Map<string,unknown>, ≥1 entry) } targetVar identifies the recipient fact (e.g. phone_number / email / device_token). notificationPayload (channel, templateId, body, variables, etc.) is passed through to the provider.
+        - EMIT_WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
           Platform examples:
             Slack: { "text": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
             Discord: { "content": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
             Generic: { "event": "rule_matched", "rule": "{{ruleName}}", "amount": "{{output.payment_amount}}" }
         - SET_FACT: { key: string, value: string|number|boolean }
         - ADD_TAG: { tag: string, targetVar: string }
+        
+        RoundingOption (optional, MUTATE_FACT / INCREMENT_FACT only): { scale: integer (0..16), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),

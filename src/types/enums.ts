@@ -23,12 +23,12 @@ export const LogicalOperator = ['AND', 'OR'] as const;
 export type LogicalOperator = (typeof LogicalOperator)[number];
 
 export const ActionType = [
-  'DISCOUNT',
-  'POINT',
-  'COUPON_ISSUE',
+  'MUTATE_FACT',
+  'INCREMENT_FACT',
+  'EMIT_EVENT',
   'BLOCK',
-  'NOTIFICATION',
-  'WEBHOOK',
+  'EMIT_NOTIFICATION',
+  'EMIT_WEBHOOK',
   'SET_FACT',
   'ADD_TAG',
   'UNKNOWN',

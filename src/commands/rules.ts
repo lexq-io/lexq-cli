@@ -133,7 +133,7 @@ export function registerRuleCommands(program: Command): void {
                 "valueType": "STRING"
               },
               "actions": [
-                { "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 20, "refVar": "payment_amount" } }
+                { "type": "MUTATE_FACT", "parameters": { "refVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "rate": 20 } }
               ]
             }'
 
@@ -142,7 +142,7 @@ export function registerRuleCommands(program: Command): void {
           LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
 
         Action Types:
-          DISCOUNT, POINT, COUPON_ISSUE, BLOCK, NOTIFICATION, WEBHOOK, SET_FACT, ADD_TAG
+          MUTATE_FACT, INCREMENT_FACT, EMIT_EVENT, BLOCK, EMIT_NOTIFICATION, EMIT_WEBHOOK, SET_FACT, ADD_TAG
 
         Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
 
@@ -192,7 +192,7 @@ export function registerRuleCommands(program: Command): void {
           $ lexq rules update --group-id <gid> --version-id <vid> --id <rid> --json '{
               "name": "VIP 25% Discount",
               "actions": [
-                { "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 25, "refVar": "payment_amount" } }
+                { "type": "MUTATE_FACT", "parameters": { "refVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "rate": 25 } }
               ]
             }'
       `,
