@@ -108,7 +108,7 @@ export function registerHistoryCommands(program: Command): void {
       dedent`
 
         Returns the full execution detail including request facts, result traces,
-        and decision traces (SELECTED, BLOCKED_MUTEX, LOST_PRIORITY, etc.).
+        and decision traces (SELECTED, NO_MATCH, BLOCKED, etc.).
       `,
     )
     .action(async (opts) => {

@@ -61,26 +61,17 @@ export const ApiExecutionType = ['SINGLE_GROUP', 'SPECIFIC_VERSION', 'BATCH', 'C
 export type ApiExecutionType = (typeof ApiExecutionType)[number];
 
 // ── Decision ──
-export const DecisionStatus = [
-  'SELECTED',
-  'NO_MATCH',
-  'NOT_SELECTED',
-  'BLOCKED_MUTEX',
-  'LOST_PRIORITY',
-  'DROPPED_LIMIT',
-  'ERROR',
-] as const;
+export const DecisionStatus = ['SELECTED', 'NO_MATCH', 'NOT_SELECTED', 'BLOCKED', 'ERROR'] as const;
 export type DecisionStatus = (typeof DecisionStatus)[number];
 
 export const DecisionReasonCode = [
   'FINAL_WINNER',
-  'VERSION_MISMATCH',
   'EFFECTIVE_DATE_INVALID',
   'CONDITION_MISMATCH',
   'MUTEX_PRIORITY_LOST',
   'MUTEX_LIMIT_REACHED',
+  'GROUP_PRIORITY_LOST',
   'GROUP_LIMIT_REACHED',
-  'TOTAL_LIMIT_REACHED',
   'ACTION_ERROR',
   'ENGINE_ERROR',
 ] as const;

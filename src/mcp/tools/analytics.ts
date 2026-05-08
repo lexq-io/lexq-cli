@@ -19,7 +19,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           mutatedFacts      — input facts changed by rule actions (e.g. DISCOUNT mutates payment_amount)
           generatedVariables — new variables created by rules (e.g. last_discount_amount)
           executionTraces   — per-rule match status
-          decisionTraces    — per-rule decision (SELECTED / BLOCKED_MUTEX / etc.)
+          decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)
         
         Example input: { "facts": { "payment_amount": 100000, "customer_tier": "VIP" } }
         Always dry-run before publishing to validate rule behavior.`,
