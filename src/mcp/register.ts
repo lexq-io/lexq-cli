@@ -14,7 +14,7 @@ import { registerLogTools } from './tools/logs';
 import { registerWebhookSubscriptionTools } from './tools/webhook-subscriptions';
 
 /**
- * Registers all 62 MCP tools on the given server.
+ * Registers all 63 MCP tools on the given server.
  *
  * @param server - McpServer instance
  * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)

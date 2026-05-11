@@ -4,7 +4,8 @@
 
 ## Overview
 
-A **Policy Rule** is a condition → actions pair within a version. Rules are evaluated in priority order (0 = highest). When a rule's condition matches the input facts, its actions fire.
+A **Policy Rule** is a condition → actions pair within a version. Rules are evaluated in priority order (0 = highest).
+When a rule's condition matches the input facts, its actions fire.
 
 ## Rule Structure
 
@@ -12,8 +13,12 @@ A **Policy Rule** is a condition → actions pair within a version. Rules are ev
 {
   "name": "VIP 10% Discount",
   "priority": 0,
-  "condition": { ... },
-  "actions": [ ... ],
+  "condition": {
+    ...
+  },
+  "actions": [
+    ...
+  ],
   "mutexGroup": null,
   "mutexMode": "NONE",
   "mutexStrategy": "FIRST_MATCH",
@@ -65,27 +70,27 @@ Conditions use a tree structure with two node types: `SINGLE` and `GROUP`.
 
 ### Operators
 
-| Operator | Types | Description |
-|---|---|---|
-| `EQUALS` | all | Exact match |
-| `NOT_EQUALS` | all | Negation |
-| `GREATER_THAN` | NUMBER | `>` |
-| `GREATER_THAN_OR_EQUAL` | NUMBER | `>=` |
-| `LESS_THAN` | NUMBER | `<` |
-| `LESS_THAN_OR_EQUAL` | NUMBER | `<=` |
-| `CONTAINS` | STRING | Substring match |
-| `IN` | STRING, NUMBER | Value is in the provided list |
-| `NOT_IN` | STRING, NUMBER | Value is not in the provided list |
+| Operator                | Types          | Description                       |
+|-------------------------|----------------|-----------------------------------|
+| `EQUALS`                | all            | Exact match                       |
+| `NOT_EQUALS`            | all            | Negation                          |
+| `GREATER_THAN`          | NUMBER         | `>`                               |
+| `GREATER_THAN_OR_EQUAL` | NUMBER         | `>=`                              |
+| `LESS_THAN`             | NUMBER         | `<`                               |
+| `LESS_THAN_OR_EQUAL`    | NUMBER         | `<=`                              |
+| `CONTAINS`              | STRING         | Substring match                   |
+| `IN`                    | STRING, NUMBER | Value is in the provided list     |
+| `NOT_IN`                | STRING, NUMBER | Value is not in the provided list |
 
 ### Value Types
 
-| Type | JSON Value | Example |
-|---|---|---|
-| `STRING` | `"string"` | `"VIP"` |
-| `NUMBER` | `number` | `100000` |
-| `BOOLEAN` | `true/false` | `true` |
-| `LIST_STRING` | `["a","b"]` | `["KR","US"]` |
-| `LIST_NUMBER` | `[1,2]` | `[10000, 20000]` |
+| Type          | JSON Value   | Example          |
+|---------------|--------------|------------------|
+| `STRING`      | `"string"`   | `"VIP"`          |
+| `NUMBER`      | `number`     | `100000`         |
+| `BOOLEAN`     | `true/false` | `true`           |
+| `LIST_STRING` | `["a","b"]`  | `["KR","US"]`    |
+| `LIST_NUMBER` | `[1,2]`      | `[10000, 20000]` |
 
 ### Nested Conditions Example
 
@@ -100,12 +105,31 @@ Conditions use a tree structure with two node types: `SINGLE` and `GROUP`.
       "type": "GROUP",
       "operator": "AND",
       "children": [
-        { "type": "SINGLE", "field": "customer_tier", "operator": "EQUALS", "value": "VIP", "valueType": "STRING" },
-        { "type": "SINGLE", "field": "payment_amount", "operator": "GREATER_THAN_OR_EQUAL", "value": 100000, "valueType": "NUMBER" }
+        {
+          "type": "SINGLE",
+          "field": "customer_tier",
+          "operator": "EQUALS",
+          "value": "VIP",
+          "valueType": "STRING"
+        },
+        {
+          "type": "SINGLE",
+          "field": "payment_amount",
+          "operator": "GREATER_THAN_OR_EQUAL",
+          "value": 100000,
+          "valueType": "NUMBER"
+        }
       ]
     },
     {
-      "type": "SINGLE", "field": "region", "operator": "IN", "value": ["KR", "JP"], "valueType": "LIST_STRING"
+      "type": "SINGLE",
+      "field": "region",
+      "operator": "IN",
+      "value": [
+        "KR",
+        "JP"
+      ],
+      "valueType": "LIST_STRING"
     }
   ]
 }
@@ -115,26 +139,34 @@ Conditions use a tree structure with two node types: `SINGLE` and `GROUP`.
 
 Each rule can have multiple actions. Actions fire sequentially.
 
-| Type | Description | Key Parameters |
-|---|---|---|
-| `DISCOUNT` | Apply a discount | `method` (PERCENTAGE/FIXED), `rate`, `refVar` |
-| `POINT` | Award points | `amount`, `pointType` |
-| `COUPON_ISSUE` | Issue a coupon | `couponId`, `expiryDays` |
-| `BLOCK` | Block the transaction | `reason`, `code` |
-| `NOTIFICATION` | Send notification | `channel`, `template` |
-| `WEBHOOK` | Call external URL | `url`, `method`, `headers`, `body` |
-| `SET_FACT` | Set an output variable | `key`, `value` |
-| `ADD_TAG` | Add a tag to the result | `tag` |
+| Type                | Description                                              | Key Parameters                                                                                      |
+|---------------------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `MUTATE_FACT`       | Mutate a fact value (arithmetic)                         | `refVar`, `method` (PERCENTAGE/AMOUNT), `operator` (ADD/SUB/MUL/DIV), `rate` or `value`, `rounding` |
+| `INCREMENT_FACT`    | Increment a fact (cumulative add)                        | `targetVar`, `refVar`, `method`, `value` or `rate`, `rounding`                                      |
+| `EMIT_EVENT`        | Emit an event to an external integration (coupons, etc.) | `integrationId`, `eventPayload` (Map)                                                               |
+| `BLOCK`             | Block the transaction                                    | `reason`, `code`                                                                                    |
+| `EMIT_NOTIFICATION` | Send a notification                                      | `integrationId`, `target`, `notificationPayload` (Map)                                              |
+| `EMIT_WEBHOOK`      | Call an external URL                                     | `url`, `payloadTemplate`                                                                            |
+| `SET_FACT`          | Set a fact value (literal assignment)                    | `key`, `value`                                                                                      |
+| `ADD_TAG`           | Add a tag to the result                                  | `tag`                                                                                               |
 
-### Action Example: 10% Percentage Discount
+### Action Example: 10% Discount via MUTATE_FACT
+
+Reduces `payment_amount` by 10%. `__delta` is auto-generated in `generatedVariables` (e.g.,
+`payment_amount__delta: -10000` for a 100,000 input).
 
 ```json
 {
-  "type": "DISCOUNT",
+  "type": "MUTATE_FACT",
   "parameters": {
+    "refVar": "payment_amount",
     "method": "PERCENTAGE",
+    "operator": "SUB",
     "rate": 10,
-    "refVar": "payment_amount"
+    "rounding": {
+      "mode": "HALF_UP",
+      "scale": 0
+    }
   }
 }
 ```
@@ -183,8 +215,14 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   },
   "actions": [
     {
-      "type": "DISCOUNT",
-      "parameters": { "method": "PERCENTAGE", "rate": 10, "refVar": "payment_amount" }
+      "type": "MUTATE_FACT",
+      "parameters": {
+        "refVar": "payment_amount",
+        "method": "PERCENTAGE",
+        "operator": "SUB",
+        "rate": 10,
+        "rounding": { "mode": "HALF_UP", "scale": 0 }
+      }
     }
   ],
   "isEnabled": true
@@ -198,8 +236,14 @@ lexq rules update --group-id <gid> --version-id <vid> --id <ruleId> --json '{
   "name": "VIP 15% Discount",
   "actions": [
     {
-      "type": "DISCOUNT",
-      "parameters": { "method": "PERCENTAGE", "rate": 15, "refVar": "payment_amount" }
+      "type": "MUTATE_FACT",
+      "parameters": {
+        "refVar": "payment_amount",
+        "method": "PERCENTAGE",
+        "operator": "SUB",
+        "rate": 15,
+        "rounding": { "mode": "HALF_UP", "scale": 0 }
+      }
     }
   ]
 }'
@@ -234,11 +278,11 @@ lexq rules toggle --group-id <gid> --version-id <vid> --id <ruleId> --enabled fa
 
 Within a single version, rules can belong to a `mutexGroup` to limit how many fire.
 
-| mutexMode | Behavior |
-|---|---|
-| `NONE` | All matching rules fire (default) |
-| `EXCLUSIVE` | Only one rule per mutex group fires |
-| `MAX_N` | Up to `mutexLimit` rules per mutex group fire |
+| mutexMode   | Behavior                                      |
+|-------------|-----------------------------------------------|
+| `NONE`      | All matching rules fire (default)             |
+| `EXCLUSIVE` | Only one rule per mutex group fires           |
+| `MAX_N`     | Up to `mutexLimit` rules per mutex group fire |
 
 ```bash
 lexq rules create --group-id <gid> --version-id <vid> --json '{

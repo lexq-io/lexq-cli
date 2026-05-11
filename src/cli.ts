@@ -32,7 +32,9 @@ export function createCli(): Command {
 
   program
     .name('lexq')
-    .description('LexQ CLI — manage policies, simulate rules, and deploy from the terminal.')
+    .description(
+      'Command-line interface for the LexQ Decision Operations Platform. Manage policies, run Impact Simulation, and deploy from your terminal.',
+    )
     .version(getVersion(), '-V, --version')
     .option('--format <format>', 'Output format: json or table', 'json')
     .option('--api-key <key>', 'Override stored API key')

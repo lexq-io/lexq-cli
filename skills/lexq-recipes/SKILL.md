@@ -35,8 +35,14 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "valueType": "NUMBER"
   },
   "actions": [{
-    "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 20, "refVar": "payment_amount" }
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "refVar": "payment_amount",
+      "method": "PERCENTAGE",
+      "operator": "SUB",
+      "rate": 20,
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
   }]
 }'
 
@@ -52,8 +58,14 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     ]
   },
   "actions": [{
-    "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 10, "refVar": "payment_amount" }
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "refVar": "payment_amount",
+      "method": "PERCENTAGE",
+      "operator": "SUB",
+      "rate": 10,
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
   }]
 }'
 
@@ -68,17 +80,23 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "valueType": "NUMBER"
   },
   "actions": [{
-    "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 5, "refVar": "payment_amount" }
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "refVar": "payment_amount",
+      "method": "PERCENTAGE",
+      "operator": "SUB",
+      "rate": 5,
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
   }]
 }'
 
 # 5. Validate
 lexq analytics dry-run --version-id <vid> --debug --mock --json '{"facts":{"payment_amount":600000}}'
-# Expected: 20% discount → 120000
+# Expected: mutatedFacts.payment_amount = 480000, generatedVariables.payment_amount__delta = -120000
 
 lexq analytics dry-run --version-id <vid> --debug --mock --json '{"facts":{"payment_amount":200000}}'
-# Expected: 10% discount → 20000
+# Expected: mutatedFacts.payment_amount = 180000, generatedVariables.payment_amount__delta = -20000
 
 # 6. Deploy
 lexq deploy publish --group-id <gid> --version-id <vid> --memo "Tiered discount v1"
@@ -160,8 +178,14 @@ lexq versions clone --group-id <gid> --version-id <v1id>
 # 2. Update the discount rule in v2
 lexq rules update --group-id <gid> --version-id <v2id> --id <ruleId> --json '{
   "actions": [{
-    "type": "DISCOUNT",
-    "parameters": { "method": "PERCENTAGE", "rate": 15, "refVar": "payment_amount" }
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "refVar": "payment_amount",
+      "method": "PERCENTAGE",
+      "operator": "SUB",
+      "rate": 15,
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
   }]
 }'
 
@@ -205,10 +229,11 @@ lexq versions create --group-id <gid> --json '{"commitMessage": "Points program 
 
 lexq facts create --key purchase_amount --name "Purchase Amount" --type NUMBER --required
 lexq facts create --key is_first_purchase --name "First Purchase" --type BOOLEAN
+lexq facts create --key total_points --name "Total Points" --type NUMBER
 
-# Double points for first purchase
+# Bonus points for first purchase (fixed 200)
 lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "First Purchase Double Points",
+  "name": "First Purchase Bonus Points",
   "priority": 0,
   "condition": {
     "type": "SINGLE",
@@ -218,12 +243,30 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "valueType": "BOOLEAN"
   },
   "actions": [
-    { "type": "POINT", "parameters": { "amount": 200, "pointType": "BONUS" } },
-    { "type": "NOTIFICATION", "parameters": { "channel": "PUSH", "template": "welcome_points" } }
+    {
+      "type": "INCREMENT_FACT",
+      "parameters": {
+        "targetVar": "total_points",
+        "method": "AMOUNT",
+        "value": 200,
+        "rounding": { "mode": "HALF_UP", "scale": 0 }
+      }
+    },
+    {
+      "type": "EMIT_NOTIFICATION",
+      "parameters": {
+        "integrationId": "<notification-integration-uuid>",
+        "target": "user_id",
+        "notificationPayload": {
+          "channel": "PUSH",
+          "templateId": "welcome_points"
+        }
+      }
+    }
   ]
 }'
 
-# Standard points (1 point per 1000 KRW)
+# Standard points: 0.1% of purchase_amount = 1 point per 1000 KRW
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Standard Purchase Points",
   "priority": 1,
@@ -235,7 +278,16 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "valueType": "NUMBER"
   },
   "actions": [
-    { "type": "SET_FACT", "parameters": { "key": "points_earned", "value": "purchase_amount / 1000" } }
+    {
+      "type": "INCREMENT_FACT",
+      "parameters": {
+        "targetVar": "total_points",
+        "refVar": "purchase_amount",
+        "method": "PERCENTAGE",
+        "rate": 0.1,
+        "rounding": { "mode": "FLOOR", "scale": 0 }
+      }
+    }
   ]
 }'
 ```
@@ -267,7 +319,17 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "valueType": "NUMBER"
   },
   "actions": [
-    { "type": "WEBHOOK", "parameters": { "url": "https://api.example.com/webhooks/orders", "method": "POST" } },
+    {
+      "type": "EMIT_WEBHOOK",
+      "parameters": {
+        "url": "https://api.example.com/webhooks/orders",
+        "payloadTemplate": {
+          "event": "rule_matched",
+          "rule": "{{ruleName}}",
+          "amount": "{{output.order_total}}"
+        }
+      }
+    },
     { "type": "ADD_TAG", "parameters": { "tag": "large_order" } }
   ]
 }'
@@ -289,7 +351,16 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "condition": {
     "type": "SINGLE", "field": "customer_tier", "operator": "EQUALS", "value": "VIP", "valueType": "STRING"
   },
-  "actions": [{ "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 20, "refVar": "payment_amount" } }]
+  "actions": [{
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "refVar": "payment_amount",
+      "method": "PERCENTAGE",
+      "operator": "SUB",
+      "rate": 20,
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
+  }]
 }'
 
 lexq rules create --group-id <gid> --version-id <vid> --json '{
@@ -301,7 +372,16 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "condition": {
     "type": "SINGLE", "field": "payment_amount", "operator": "GREATER_THAN_OR_EQUAL", "value": 50000, "valueType": "NUMBER"
   },
-  "actions": [{ "type": "DISCOUNT", "parameters": { "method": "PERCENTAGE", "rate": 15, "refVar": "payment_amount" } }]
+  "actions": [{
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "refVar": "payment_amount",
+      "method": "PERCENTAGE",
+      "operator": "SUB",
+      "rate": 15,
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
+  }]
 }'
 
 # If a VIP customer pays 50000+, only the 20% VIP discount fires (priority 0 wins).
@@ -322,7 +402,16 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "condition": {
     "type": "SINGLE", "field": "user_region", "operator": "IN", "value": ["KR"], "valueType": "LIST_STRING"
   },
-  "actions": [{ "type": "COUPON_ISSUE", "parameters": { "couponId": "KR_WELCOME_2025", "expiryDays": 30 } }]
+  "actions": [{
+    "type": "EMIT_EVENT",
+    "parameters": {
+      "integrationId": "<coupon-integration-uuid>",
+      "eventPayload": {
+        "couponId": "KR_WELCOME_2025",
+        "expiryDays": 30
+      }
+    }
+  }]
 }'
 
 lexq rules create --group-id <gid> --version-id <vid> --json '{
@@ -331,7 +420,16 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "condition": {
     "type": "SINGLE", "field": "user_region", "operator": "IN", "value": ["US"], "valueType": "LIST_STRING"
   },
-  "actions": [{ "type": "COUPON_ISSUE", "parameters": { "couponId": "US_WELCOME_2025", "expiryDays": 14 } }]
+  "actions": [{
+    "type": "EMIT_EVENT",
+    "parameters": {
+      "integrationId": "<coupon-integration-uuid>",
+      "eventPayload": {
+        "couponId": "US_WELCOME_2025",
+        "expiryDays": 14
+      }
+    }
+  }]
 }'
 ```
 

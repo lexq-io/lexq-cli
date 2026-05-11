@@ -1,8 +1,8 @@
 # LexQ CLI
 
-> **The decision platform for engineering teams.**
+> **The Decision Operations Platform for engineering teams.**
 > CLI and MCP server for [LexQ](https://lexq.io) — move business rules out of
-> your deploy pipeline, prove every change with simulation, and ship without
+> your deploy pipeline, prove every change with Impact Simulation, and ship without
 > a git push.
 
 **[Website](https://lexq.io)** · **[Docs](https://docs.lexq.io)** · **[Console](https://console.lexq.io)**
@@ -24,7 +24,7 @@ that changes weekly shouldn't live in code that ships quarterly.
 
 **LexQ separates the two.** Rules live outside your application. You change
 them in a visual console or through this CLI. You prove every change with
-batch simulation against real execution data. You deploy without touching
+Impact Simulation against real execution data. You deploy without touching
 your codebase.
 
 Every decision leaves a full audit trace.
@@ -71,8 +71,14 @@ lexq rules create --group-id <GROUP_ID> --version-id <VERSION_ID> --json '{
     "valueType": "STRING"
   },
   "actions": [{
-    "type": "DISCOUNT",
-    "parameters": {"method":"PERCENTAGE","rate":10,"refVar":"payment_amount"}
+    "type": "MUTATE_FACT",
+    "parameters": {
+      "method": "PERCENTAGE",
+      "rate": 10,
+      "refVar": "payment_amount",
+      "operator": "SUB",
+      "rounding": { "mode": "HALF_UP", "scale": 0 }
+    }
   }]
 }'
 
@@ -176,7 +182,7 @@ skills/
 ├── lexq-shared/SKILL.md       Core concepts, auth, workflow
 ├── lexq-groups/SKILL.md       Policy groups, conflict resolution, A/B testing
 ├── lexq-rules/SKILL.md        Condition syntax, action types, mutex
-├── lexq-simulation/SKILL.md   Dry run, batch simulation, compare
+├── lexq-simulation/SKILL.md   Dry run, Impact Simulation, compare
 ├── lexq-execution/SKILL.md    Execution history, stats, failure logs
 └── lexq-recipes/SKILL.md      End-to-end recipes
 

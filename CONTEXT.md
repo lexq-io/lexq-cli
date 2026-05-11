@@ -7,7 +7,7 @@ simulation, deploy to production, and execute via REST API — all without modif
 
 **Core differentiators:**
 
-- Pre-deploy simulation against real data
+- Impact Simulation against real data
 - A/B testing for rule versions
 - Git-style versioning with full audit trail
 - Platform event webhooks for deployment lifecycle notifications
@@ -91,7 +91,7 @@ Tenant
 
 ### Action Types
 
-`DISCOUNT`, `POINT`, `COUPON_ISSUE`, `BLOCK`, `NOTIFICATION`, `WEBHOOK`, `SET_FACT`, `ADD_TAG`
+`MUTATE_FACT`, `INCREMENT_FACT`, `EMIT_EVENT`, `BLOCK`, `EMIT_NOTIFICATION`, `EMIT_WEBHOOK`, `SET_FACT`, `ADD_TAG`
 
 ### Conflict Resolution Modes
 

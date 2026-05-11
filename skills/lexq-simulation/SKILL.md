@@ -6,11 +6,11 @@
 
 LexQ provides three levels of pre-deploy validation:
 
-| Tool | Scope | When to Use |
-|---|---|---|
-| **Dry Run** | Single input | Quick validation of one scenario |
-| **Dry Run Compare** | Single input, two versions | Side-by-side version comparison |
-| **Simulation** | Batch (historical data) | Full regression test before deploy |
+| Tool                | Scope                      | When to Use                        |
+|---------------------|----------------------------|------------------------------------|
+| **Dry Run**         | Single input               | Quick validation of one scenario   |
+| **Dry Run Compare** | Single input, two versions | Side-by-side version comparison    |
+| **Simulation**      | Batch (historical data)    | Full regression test before deploy |
 
 **Golden rule:** Always dry-run before publishing, always simulate before deploying to production.
 
@@ -30,11 +30,29 @@ Response includes:
   "versionId": "...",
   "versionNo": 3,
   "requiredFacts": [
-    { "key": "payment_amount", "type": "NUMBER", "required": true, "usedBy": ["VIP Discount", "Premium Block"] },
-    { "key": "customer_tier", "type": "STRING", "required": true, "usedBy": ["VIP Discount"] }
+    {
+      "key": "payment_amount",
+      "type": "NUMBER",
+      "required": true,
+      "usedBy": [
+        "VIP Discount",
+        "Premium Block"
+      ]
+    },
+    {
+      "key": "customer_tier",
+      "type": "STRING",
+      "required": true,
+      "usedBy": [
+        "VIP Discount"
+      ]
+    }
   ],
   "exampleRequest": {
-    "facts": { "payment_amount": 0, "customer_tier": "" },
+    "facts": {
+      "payment_amount": 0,
+      "customer_tier": ""
+    },
     "context": {}
   }
 }
@@ -57,11 +75,11 @@ lexq analytics dry-run --version-id <vid> --json '{
 
 ### Options
 
-| Flag | Description | Default |
-|---|---|---|
-| `--debug` | Include execution traces (which rules matched, why) | `false` |
-| `--mock` | Mock external calls (webhooks, integrations) | `false` |
-| `--file <path>` | Read request body from file instead of `--json` | — |
+| Flag            | Description                                         | Default |
+|-----------------|-----------------------------------------------------|---------|
+| `--debug`       | Include execution traces (which rules matched, why) | `false` |
+| `--mock`        | Mock external calls (webhooks, integrations)        | `false` |
+| `--file <path>` | Read request body from file instead of `--json`     | —       |
 
 ### Recommended: Always Use `--debug --mock`
 
@@ -75,53 +93,77 @@ lexq analytics dry-run --version-id <vid> --debug --mock --json '{
 
 ```json
 {
-  "outputVariables": { "discount_amount": 15000 },
-  "executionTraces": [
-    {
-      "traceId": "...",
-      "ruleId": "...",
-      "ruleName": "VIP 10% Discount",
-      "matched": true,
-      "matchExpression": "(customer_tier == VIP AND payment_amount >= 100000)",
-      "generatedActions": [ { "type": "DISCOUNT", "parameters": { ... } } ]
-    }
-  ],
-  "decisionTraces": [
-    {
-      "ruleId": "...",
-      "ruleName": "VIP 10% Discount",
-      "status": "SELECTED",
-      "reasonCode": "FINAL_WINNER",
-      "reasonDetail": "..."
-    }
-  ],
-  "latencyMs": 12,
-  "versionNo": 3
+  "result": "SUCCESS",
+  "data": {
+    "inputFacts": {
+      "payment_amount": 150000,
+      "customer_tier": "VIP"
+    },
+    "mutatedFacts": {
+      "payment_amount": 135000,
+      "customer_tier": "VIP"
+    },
+    "generatedVariables": {
+      "payment_amount__delta": -15000
+    },
+    "executionTraces": [
+      {
+        "traceId": "...",
+        "ruleId": "...",
+        "ruleName": "VIP 10% Discount",
+        "matched": true,
+        "matchExpression": "(customer_tier == VIP AND payment_amount >= 100000)",
+        "generatedActions": [
+          {
+            "type": "MUTATE_FACT",
+            "parameters": {
+              ...
+            }
+          }
+        ]
+      }
+    ],
+    "decisionTraces": [
+      {
+        "ruleId": "...",
+        "ruleName": "VIP 10% Discount",
+        "status": "SELECTED",
+        "reasonCode": "FINAL_WINNER",
+        "reasonDetail": "..."
+      }
+    ],
+    "latencyMs": 12,
+    "versionNo": 3
+  }
 }
 ```
 
+- `mutatedFacts` — input facts changed by rule actions (e.g., `MUTATE_FACT` reduces `payment_amount`)
+- `generatedVariables` — for every fact in `mutatedFacts`, a paired `{fact_name}__delta` key is auto-generated with the
+  signed difference (negative = decrease, positive = increase)
+
 ### Reading Decision Traces
 
-| Status | Meaning |
-|---|---|
-| `SELECTED` | Rule matched and its actions fired |
-| `NO_MATCH` | Condition did not match the input |
-| `NOT_SELECTED` | Matched but excluded by conflict resolution |
-| `BLOCKED_MUTEX` | Blocked by mutex group constraint |
-| `LOST_PRIORITY` | Lost to a higher-priority rule |
-| `DROPPED_LIMIT` | Execution limit reached |
-| `ERROR` | Rule evaluation failed |
+| Status          | Meaning                                     |
+|-----------------|---------------------------------------------|
+| `SELECTED`      | Rule matched and its actions fired          |
+| `NO_MATCH`      | Condition did not match the input           |
+| `NOT_SELECTED`  | Matched but excluded by conflict resolution |
+| `BLOCKED_MUTEX` | Blocked by mutex group constraint           |
+| `LOST_PRIORITY` | Lost to a higher-priority rule              |
+| `DROPPED_LIMIT` | Execution limit reached                     |
+| `ERROR`         | Rule evaluation failed                      |
 
 ### Reading Reason Codes
 
-| Code | Meaning |
-|---|---|
-| `FINAL_WINNER` | Successfully executed |
-| `CONDITION_MISMATCH` | Input facts didn't satisfy the condition |
+| Code                  | Meaning                                                  |
+|-----------------------|----------------------------------------------------------|
+| `FINAL_WINNER`        | Successfully executed                                    |
+| `CONDITION_MISMATCH`  | Input facts didn't satisfy the condition                 |
 | `MUTEX_PRIORITY_LOST` | Another rule in the same mutex group had higher priority |
-| `MUTEX_LIMIT_REACHED` | Mutex group's max rules already fired |
-| `GROUP_LIMIT_REACHED` | Group's `executionLimit` reached |
-| `ACTION_ERROR` | Action execution failed (e.g., webhook timeout) |
+| `MUTEX_LIMIT_REACHED` | Mutex group's max rules already fired                    |
+| `GROUP_LIMIT_REACHED` | Group's `executionLimit` reached                         |
+| `ACTION_ERROR`        | Action execution failed (e.g., webhook timeout)          |
 
 ## 3. Dry Run Compare
 
@@ -137,7 +179,7 @@ lexq analytics dry-run-compare --json '{
 
 Useful for validating that changes in a new version produce expected differences.
 
-## 4. Batch Simulation
+## 4. Impact Simulation
 
 Run a full regression test against historical execution data:
 
@@ -157,7 +199,7 @@ lexq analytics simulation start --json '{
     "maxRecords": 10000,
     "baselinePolicyVersionId": "<currentLiveVersionId>",
     "metricConfig": {
-      "targetVariable": "discount_amount",
+      "targetVariable": "payment_amount__delta",
       "aggregationType": "SUM"
     }
   }
@@ -166,13 +208,14 @@ lexq analytics simulation start --json '{
 
 ### Dataset Types
 
-| Type | Source | Description |
-|---|---|---|
-| `HISTORICAL` | `EXECUTION_LOGS` | Replay past executions from a date range |
-| `MANUAL` | `REQUEST_BODY` | Provide `manualData` array in the request |
-| `UPLOADED` | `S3_BUCKET` | Reference an uploaded dataset by `path` |
+| Type         | Source           | Description                               |
+|--------------|------------------|-------------------------------------------|
+| `HISTORICAL` | `EXECUTION_LOGS` | Replay past executions from a date range  |
+| `MANUAL`     | `REQUEST_BODY`   | Provide `manualData` array in the request |
+| `UPLOADED`   | `S3_BUCKET`      | Reference an uploaded dataset by `path`   |
 
 ### File Upload Dataset
+
 ```bash
 # 1. Download template (optional)
 lexq analytics dataset template \
@@ -212,13 +255,13 @@ lexq analytics simulation status --id <simulationId>
 
 Simulation is async. Poll until `status` is `COMPLETED` or `FAILED`.
 
-| Status | Meaning |
-|---|---|
-| `PENDING` | Queued |
-| `RUNNING` | In progress (`progress` field shows 0–100) |
-| `COMPLETED` | Done — results available |
-| `FAILED` | Error occurred |
-| `CANCELLED` | Manually cancelled |
+| Status      | Meaning                                    |
+|-------------|--------------------------------------------|
+| `PENDING`   | Queued                                     |
+| `RUNNING`   | In progress (`progress` field shows 0–100) |
+| `COMPLETED` | Done — results available                   |
+| `FAILED`    | Error occurred                             |
+| `CANCELLED` | Manually cancelled                         |
 
 ### List Simulations
 
@@ -254,7 +297,7 @@ lexq analytics simulation export --id <simulationId> --format csv --output resul
     "matchRate": 0.85
   },
   "metricSummary": {
-    "targetVariable": "discount_amount",
+    "targetVariable": "payment_amount__delta",
     "aggregationType": "SUM",
     "baselineValue": 5000000,
     "simulatedValue": 4500000,
@@ -273,7 +316,12 @@ lexq analytics simulation export --id <simulationId> --format csv --output resul
     }
   },
   "ruleStats": [
-    { "ruleId": "...", "ruleName": "VIP Discount", "matchedCount": 5000, "metricValue": 3000000 }
+    {
+      "ruleId": "...",
+      "ruleName": "VIP Discount",
+      "matchedCount": 5000,
+      "metricValue": 3000000
+    }
   ]
 }
 ```
@@ -299,7 +347,7 @@ lexq analytics simulation start --json '{
   "options": {
     "baselinePolicyVersionId": "<currentLiveVersionId>",
     "includeRuleStats": true,
-    "metricConfig": { "targetVariable": "discount_amount", "aggregationType": "SUM" }
+    "metricConfig": { "targetVariable": "payment_amount__delta", "aggregationType": "SUM" }
   }
 }'
 

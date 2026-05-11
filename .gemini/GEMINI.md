@@ -20,7 +20,7 @@ Also runs as an **MCP server** (`lexq serve --mcp`) exposing 63 tools to any MCP
 | Shared     | `skills/lexq-shared/SKILL.md`     | Core concepts, auth, workflow, error codes                        |
 | Groups     | `skills/lexq-groups/SKILL.md`     | Policy groups, conflict resolution, A/B testing                   |
 | Rules      | `skills/lexq-rules/SKILL.md`      | Condition syntax, action types, mutex                             |
-| Simulation | `skills/lexq-simulation/SKILL.md` | Dry run, batch simulation, compare                                |
+| Simulation | `skills/lexq-simulation/SKILL.md` | Dry run, Impact Simulation, compare                               |
 | Execution  | `skills/lexq-execution/SKILL.md`  | History, stats, failure logs, integrations, webhook subscriptions |
 | Recipes    | `skills/lexq-recipes/SKILL.md`    | End-to-end workflows                                              |
 

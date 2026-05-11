@@ -7,7 +7,7 @@
 LexQ CLI (`@lexq/cli`, binary: `lexq`) manages a policy execution engine. Policies are business rules (if-then) that
 evaluate input facts and produce actions (discounts, blocks, notifications, etc.).
 
-The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose 62 tools to any MCP-compatible AI client.
+The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose 63 tools to any MCP-compatible AI client.
 
 This file tells you how to use the CLI as an AI agent.
 
@@ -35,7 +35,7 @@ Detailed documentation lives in the `skills/` directory. **Read the relevant ski
 | **Shared**     | `skills/lexq-shared/SKILL.md`     | Core concepts, auth, workflow, error codes. **Read first.**       |
 | **Groups**     | `skills/lexq-groups/SKILL.md`     | Policy groups, conflict resolution, A/B testing                   |
 | **Rules**      | `skills/lexq-rules/SKILL.md`      | Condition syntax, action types, mutex, examples                   |
-| **Simulation** | `skills/lexq-simulation/SKILL.md` | Dry run, batch simulation, compare                                |
+| **Simulation** | `skills/lexq-simulation/SKILL.md` | Dry run, Impact Simulation, compare                               |
 | **Execution**  | `skills/lexq-execution/SKILL.md`  | History, stats, failure logs, integrations, webhook subscriptions |
 | **Recipes**    | `skills/lexq-recipes/SKILL.md`    | End-to-end workflows (copy-paste ready)                           |
 
@@ -142,7 +142,7 @@ Connect via:
 - **Cloud:** `https://mcp.lexq.io` (OAuth 2.1)
 - **Local stdio:** `npx @lexq/cli serve --mcp`
 
-62 tools mirror the CLI command inventory.
+63 tools mirror the CLI command inventory.
 
 ## Troubleshooting
 

@@ -16,8 +16,8 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         
         Returns:
           inputFacts        — normalized input facts
-          mutatedFacts      — input facts changed by rule actions (e.g. DISCOUNT mutates payment_amount)
-          generatedVariables — new variables created by rules (e.g. last_discount_amount)
+          mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates payment_amount)
+          generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {fact_name}__delta key (signed difference)
           executionTraces   — per-rule match status
           decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)
         
@@ -92,7 +92,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'Start Simulation',
       description: dedent`
-        Start a batch simulation against historical or uploaded data.
+        Start an Impact Simulation against historical or uploaded data.
 
         dataset.type: "HISTORICAL" or "UPLOADED"
         dataset.source (when HISTORICAL): "EXECUTION_LOGS"

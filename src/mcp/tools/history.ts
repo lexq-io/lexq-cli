@@ -41,7 +41,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Get Execution Detail',
       description:
-        'Get full execution detail including request facts, result traces, and decision traces.',
+        'Get full execution detail including inputFacts, mutatedFacts, generatedVariables, executionTraces, and decisionTraces.',
       inputSchema: {
         traceId: z.string().describe('Trace ID from execution history'),
       },
