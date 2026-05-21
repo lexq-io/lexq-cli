@@ -53,48 +53,24 @@ lexq auth login
 # 2. Verify
 lexq auth whoami
 
-# 3. Create a policy group
-lexq groups create --json '{"name":"my-policy","priority":0}'
+# 3. Start from a domain template — provisions facts, sample rules, and a policy group
+lexq domain-templates list
+lexq domain-templates apply --template ECOMMERCE
+# Returns: policyGroupId, policyVersionId, factsCreated, rulesCreated
 
-# 4. Create a draft version
-lexq versions create --group-id <GROUP_ID> --json '{"commitMessage":"v1"}'
-
-# 5. Add a rule
-lexq rules create --group-id <GROUP_ID> --version-id <VERSION_ID> --json '{
-  "name": "VIP Discount",
-  "priority": 0,
-  "condition": {
-    "type": "SINGLE",
-    "field": "customer_tier",
-    "operator": "EQUALS",
-    "value": "VIP",
-    "valueType": "STRING"
-  },
-  "actions": [{
-    "type": "MUTATE_FACT",
-    "parameters": {
-      "method": "PERCENTAGE",
-      "rate": 10,
-      "refVar": "payment_amount",
-      "operator": "SUB",
-      "rounding": { "mode": "HALF_UP", "scale": 0 }
-    }
-  }]
-}'
-
-# 6. Test against your data before shipping
+# 4. Test a rule against your data before shipping
 lexq analytics dry-run --version-id <VERSION_ID> --debug --mock \
-  --json '{"facts":{"customer_tier":"VIP","payment_amount":100000}}'
+  --json '{"facts":{"loyalty_tier":"PLATINUM","purchase_subtotal_usd":150}}'
 
-# 7. Deploy
+# 5. Deploy
 lexq deploy publish --group-id <GROUP_ID> --version-id <VERSION_ID> --memo "v1"
 lexq deploy live --group-id <GROUP_ID> --version-id <VERSION_ID> --memo "Initial deploy"
 ```
 
-## For AI Agents — 63 MCP Tools
+## For AI Agents — the Complete Partner API
 
-LexQ is designed to be AI-native. The entire policy engine API — all 63 tools
-— is exposed via Model Context Protocol. Claude, Cursor, and other MCP-compatible
+LexQ is designed to be AI-native. The entire policy engine Partner API is
+exposed via Model Context Protocol. Claude, Cursor, and other MCP-compatible
 agents can create, simulate, and deploy rules autonomously, with human approval
 before production.
 
@@ -103,7 +79,7 @@ before production.
 1. **Settings → Connectors → Add Custom Integration**
 2. Enter: `https://mcp.lexq.io`
 3. Sign in with your LexQ account and select an API key
-4. Done — 63 tools available in every conversation
+4. Done — the full toolset available in every conversation
 
 ### Remote (Streamable HTTP)
 
@@ -210,6 +186,7 @@ lexq groups ab-test        start | stop | adjust
 lexq versions              list | get | create | update | delete | clone
 lexq rules                 list | get | create | update | delete | reorder | toggle
 lexq facts                 list | create | update | delete | action-metadata
+lexq domain-templates      list | preview | apply
 lexq deploy                publish | live | rollback | undeploy | history | detail | overview | deployable | diff
 lexq analytics             dry-run | dry-run-compare | requirements
 lexq analytics simulation  start | status | list | cancel | export
