@@ -12,9 +12,10 @@ import { registerHistoryTools } from './tools/history';
 import { registerIntegrationTools } from './tools/integrations';
 import { registerLogTools } from './tools/logs';
 import { registerWebhookSubscriptionTools } from './tools/webhook-subscriptions';
+import { registerDomainTemplateTools } from '@/mcp/tools/domain-templates';
 
 /**
- * Registers all 63 MCP tools on the given server.
+ * Registers all 66 MCP tools on the given server.
  *
  * @param server - McpServer instance
  * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)
@@ -30,6 +31,7 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
   registerHistoryTools(server, callApi);
   registerIntegrationTools(server, callApi);
   registerLogTools(server, callApi);
+  registerDomainTemplateTools(server, callApi);
   registerWebhookSubscriptionTools(server, callApi);
 }
 

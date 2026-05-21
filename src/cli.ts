@@ -15,6 +15,7 @@ import { registerIntegrationCommands } from './commands/integrations';
 import { registerLogCommands } from './commands/logs';
 import { registerWebhookSubscriptionCommands } from './commands/webhook-subscriptions';
 import { registerServeCommand } from './commands/serve';
+import { registerDomainTemplateCommands } from '@/commands/domain-templates';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -54,6 +55,9 @@ export function createCli(): Command {
   registerVersionCommands(program);
   registerRuleCommands(program);
   registerFactCommands(program);
+
+  // Domain Templates: industry starter packs
+  registerDomainTemplateCommands(program);
 
   // M3: Deployment & Analytics
   registerDeployCommands(program);
