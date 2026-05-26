@@ -108,7 +108,6 @@ lexq analytics dry-run --version-id <vid> --debug --mock --json '{
     },
     "executionTraces": [
       {
-        "traceId": "...",
         "ruleId": "...",
         "ruleName": "VIP 10% Discount",
         "matched": true,
