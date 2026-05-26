@@ -13,7 +13,7 @@ simulation** and **A/B testing** for rule versions.
 ```bash
 # Store your API key (persisted at ~/.lexq/config.json)
 lexq auth login
-# Enter your API Key: sk_live_xxxxxxxxxxxxx
+# Enter your API Key: lexq_us_xxxxxxxxxxxxx
 
 # Verify authentication
 lexq auth whoami
@@ -22,7 +22,7 @@ lexq auth whoami
 The API key is passed as `X-API-KEY` header on every request. You can also override per-command:
 
 ```bash
-lexq groups list --api-key sk_live_override_key
+lexq groups list --api-key lexq_us_override_key
 ```
 
 **Base URL:** `https://api.lexq.io/api/v1/partners` (default). Override with `--base-url`.

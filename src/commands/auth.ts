@@ -37,7 +37,7 @@ export function registerAuthCommands(program: Command): void {
 
         Example:
           $ lexq auth login
-          Enter your API Key: sk_live_****
+          Enter your API Key: lexq_us_****
 
           ✓ API key saved to ~/.lexq/config.json
       `,
@@ -81,7 +81,7 @@ export function registerAuthCommands(program: Command): void {
 
         Example:
           $ lexq auth whoami
-          { "tenantId": "abc-123", "userId": "...", "role": "ADMIN", "apiKey": "sk_live_****abcd" }
+          { "tenantId": "abc-123", "userId": "...", "role": "ADMIN", "apiKey": "lexq_us_****abcd" }
       `,
     )
     .action(async () => {

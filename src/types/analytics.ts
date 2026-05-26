@@ -1,4 +1,9 @@
-import type { DecisionReasonCode, DecisionStatus, SimulationStatus } from './enums';
+import type {
+  DecisionReasonCode,
+  DecisionStatus,
+  SimulationMetricType,
+  SimulationStatus,
+} from './enums';
 import type { ActionDefinition } from './rules';
 
 // ══════════════════════════════════════════
@@ -77,6 +82,33 @@ export interface RequirementsResponse {
 // Simulation
 // ══════════════════════════════════════════
 
+// POST /simulations — 생성 직후 (PENDING, 최소 정보)
+export interface SimulationStartResponse {
+  simulationId: string;
+  status: SimulationStatus;
+  progress: number;
+  createdAt: string;
+}
+
+// GET /simulations/{id} — 상세 조회
+export interface SimulationDetailResponse {
+  simulationId: string;
+  policyGroupId: string;
+  policyGroupName: string;
+  targetVersionName: string | null;
+  baselineVersionName: string | null;
+  status: SimulationStatus;
+  progress: number;
+  summary: SimulationSummary | null;
+  metricSummary: MetricSummary | null;
+  policyImpact: PolicyImpact | null;
+  ruleStats: RuleStat[] | null;
+  sampleErrors: SimulationErrorSample[];
+  note: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
 export interface SimulationHistoryResponse {
   simulationId: string;
   policyGroupId: string;
@@ -88,27 +120,17 @@ export interface SimulationHistoryResponse {
   status: SimulationStatus;
   progress: number;
   totalRecords: number;
+  errorRecords: number;
   matchRate: number;
-  createdAt: string;
-  completedAt: string | null;
-}
-
-export interface SimulationResponse {
-  simulationId: string;
-  policyGroupId: string;
-  policyGroupName: string;
-  status: SimulationStatus;
-  progress: number;
-  summary: SimulationSummary | null;
-  metricSummary: MetricSummary | null;
-  policyImpact: PolicyImpact | null;
-  ruleStats: RuleStat[] | null;
+  note: string | null;
   createdAt: string;
   completedAt: string | null;
 }
 
 export interface SimulationSummary {
   totalRecords: number;
+  processedRecords: number;
+  errorRecords: number;
   matchedRecords: number;
   executionTimeMs: number;
   matchRate: number;
@@ -116,11 +138,18 @@ export interface SimulationSummary {
 
 export interface MetricSummary {
   targetVariable: string;
-  aggregationType: string;
+  aggregationType: SimulationMetricType;
   baselineValue: number;
   simulatedValue: number;
   delta: number;
   deltaPercentage: number;
+}
+
+export interface SimulationErrorSample {
+  recordIndex: number;
+  errorClass: string;
+  errorMessage: string;
+  inputFactKeys: string[];
 }
 
 export interface PolicyImpact {

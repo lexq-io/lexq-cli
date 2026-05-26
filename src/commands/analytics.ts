@@ -9,8 +9,9 @@ import type {
   DryRunCompareResponse,
   DryRunResponse,
   RequirementsResponse,
+  SimulationDetailResponse,
   SimulationHistoryResponse,
-  SimulationResponse,
+  SimulationStartResponse,
 } from '@/types/analytics';
 import { loadConfig } from '@/lib/config';
 
@@ -234,18 +235,20 @@ export function registerAnalyticsCommands(program: Command): void {
           $ lexq analytics simulation start --json '{
               "policyVersionId": "<vid>",
               "dataset": {
-                "type": "EXECUTION_LOG",
-                "source": "RECENT",
-                "maxRecords": 1000
+                "type": "HISTORICAL",
+                "source": "EXECUTION_LOGS",
+                "from": "2026-01-01",
+                "to": "2026-01-31"
               },
               "options": {
                 "baselinePolicyVersionId": "<baseline-vid>",
-                "includeRuleStats": true
+                "includeRuleStats": true,
+                "maxRecords": 1000
               }
             }'
-
-        Dataset types: EXECUTION_LOG, MANUAL
-        Dataset sources: RECENT, DATE_RANGE, MANUAL
+            
+        Dataset types: HISTORICAL, UPLOADED, MANUAL
+        Dataset sources: EXECUTION_LOGS, S3_BUCKET, REQUEST_BODY
       `,
     )
     .action(async (opts) => {
@@ -253,7 +256,7 @@ export function registerAnalyticsCommands(program: Command): void {
         const globalOpts = program.opts();
         const body = resolveBody(opts);
 
-        const data = await apiRequest<SimulationResponse>('POST', 'analytics/simulations', {
+        const data = await apiRequest<SimulationStartResponse>('POST', 'analytics/simulations', {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
@@ -288,7 +291,7 @@ export function registerAnalyticsCommands(program: Command): void {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const data = await apiRequest<SimulationResponse>(
+        const data = await apiRequest<SimulationDetailResponse>(
           'GET',
           `analytics/simulations/${opts.id}`,
           {

@@ -81,17 +81,17 @@ export type DecisionReasonCode = (typeof DecisionReasonCode)[number];
 export const SimulationStatus = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED'] as const;
 export type SimulationStatus = (typeof SimulationStatus)[number];
 
-export const SimulationDatasetType = ['EXECUTION_LOG', 'MANUAL'] as const;
+export const SimulationDatasetType = ['HISTORICAL', 'UPLOADED', 'MANUAL'] as const;
 export type SimulationDatasetType = (typeof SimulationDatasetType)[number];
 
-export const SimulationDatasetSource = ['RECENT', 'DATE_RANGE', 'MANUAL'] as const;
+export const SimulationDatasetSource = ['EXECUTION_LOGS', 'S3_BUCKET', 'REQUEST_BODY'] as const;
 export type SimulationDatasetSource = (typeof SimulationDatasetSource)[number];
 
 export const SimulationMetricType = ['COUNT', 'SUM', 'AVG'] as const;
 export type SimulationMetricType = (typeof SimulationMetricType)[number];
 
 // ── Auth ──
-export const Role = ['ADMIN', 'USER', 'VIEWER', 'API_CLIENT'] as const;
+export const Role = ['SYSTEM_MANAGER', 'ADMIN', 'USER', 'VIEWER', 'API_CLIENT'] as const;
 export type Role = (typeof Role)[number];
 
 // ── Integration ──
