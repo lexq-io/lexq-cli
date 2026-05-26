@@ -6,7 +6,6 @@ import type { ActionDefinition } from './rules';
 // ══════════════════════════════════════════
 
 export interface ExecutionTrace {
-  traceId: string;
   tenantId: string;
   policyGroupId: string;
   policyVersionId: string;
