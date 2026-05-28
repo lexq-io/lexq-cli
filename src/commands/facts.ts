@@ -23,7 +23,7 @@ export function registerFactCommands(program: Command): void {
           delete           Remove a fact definition
           action-metadata  Show action runtime fact metadata
 
-        System facts (payment_amount, user_id, etc.) are auto-created and immutable.
+        System facts (user_id, user_tags) are auto-created.
       `,
     );
 

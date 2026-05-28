@@ -81,7 +81,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Get Action Runtime Fact Metadata',
       description:
-        'Retrieve runtime Facts metadata for each Action type. Shows which Facts are required as input, produced as output, or consumed at runtime by each Action (MUTATE_FACT, INCREMENT_FACT, EMIT_EVENT, BLOCK, EMIT_NOTIFICATION, EMIT_WEBHOOK, SET_FACT, ADD_TAG). Use this BEFORE designing rules to understand which Action mutates which fact (e.g., MUTATE_FACT mutates the refVar fact and auto-generates {fact_name}__delta in generatedVariables). Data is static and changes only on engine deployment — safe to cache in-session.',
+        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload (e.g. MUTATE_FACT requires its refVar fact; INCREMENT_FACT always requires targetVar, plus refVar when method is PERCENTAGE). A required fact absent at runtime throws — the engine never defaults to 0. Facts are supplied as input or written by a prior action in the same rule; Actions never create a fact from nothing. Static data, safe to cache in-session.',
       inputSchema: {},
     },
     async () => callApi('GET', 'schema/action-metadata'),
