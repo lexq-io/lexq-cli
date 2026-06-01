@@ -2,7 +2,6 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
 
 // Condition/Action are deeply nested JSON — accept as opaque object via z.record.
 // The engine validates structure. MCP schema describes the shape in descriptions.
@@ -13,18 +12,14 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Rules',
       description:
-        'List all rules in a version. Returns summary with conditionSummary and actionSummary.',
+        'List all rules in a version (priority ASC). Returns summary with conditionSummary and actionSummary.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
-        page: z.number().int().min(0).default(0).describe('Page number'),
-        size: z.number().int().min(1).max(100).default(20).describe('Page size'),
       },
     },
-    async ({ groupId, versionId, page, size }) =>
-      callApi('GET', `policy-groups/${groupId}/versions/${versionId}/rules`, {
-        params: paginationParams(page, size),
-      }),
+    async ({ groupId, versionId }) =>
+      callApi('GET', `policy-groups/${groupId}/versions/${versionId}/rules`),
   );
 
   server.registerTool(
@@ -47,7 +42,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Create Rule',
       description: dedent`
-        Create a rule in a DRAFT version. Requires name, priority, condition tree, and actions array.
+        Create a rule in a DRAFT version. Requires name, condition tree, and actions array. priority is auto-assigned (appended last); use lexq_rules_reorder to change order.
 
         Before creating rules with new fact keys, call lexq_facts_list to check existing facts.
         If a required key is missing, ask the user to confirm the type, isRequired, and description
@@ -82,7 +77,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         rule: z
           .string()
           .describe(
-            'JSON string of CreateRuleRequest: { name, priority, condition, actions, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }',
+            'JSON string of CreateRuleRequest: { name, condition, actions, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }',
           ),
       },
     },
@@ -104,7 +99,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         rule: z
           .string()
           .describe(
-            'JSON string of UpdateRuleRequest: { name?, priority?, condition?, actions?, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }',
+            'JSON string of UpdateRuleRequest: { name?, condition?, actions?, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }',
           ),
       },
     },
@@ -145,7 +140,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Reorder Rules',
       description:
-        'Reorder rules by specifying rule IDs and their new priorities. Array index 0 = highest priority.',
+        'Reorder rules by specifying rule IDs in desired order. Priorities are assigned 1...N (1-based, continuous); array index 0 = priority 1 (highest precedence).',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
@@ -155,7 +150,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     async ({ groupId, versionId, ruleIds }) => {
       const rules = ruleIds.map((ruleId: string, index: number) => ({
         ruleId,
-        priority: index,
+        priority: index + 1,
       }));
       return callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}/rules/reorder`, {
         body: { rules },

@@ -74,7 +74,6 @@ export interface PolicyRuleDetail {
 
 export interface CreateRuleRequest {
   name: string;
-  priority: number;
   condition: ConditionNode;
   actions: ActionDefinition[];
   mutexGroup?: string;
@@ -86,7 +85,6 @@ export interface CreateRuleRequest {
 
 export interface UpdateRuleRequest {
   name?: string;
-  priority?: number;
   condition?: ConditionNode;
   actions?: ActionDefinition[];
   mutexGroup?: string;

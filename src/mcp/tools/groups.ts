@@ -1,7 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
 
 export function registerGroupTools(server: McpServer, callApi: CallApi): void {
   // ── CRUD ──
@@ -10,16 +9,10 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_list',
     {
       title: 'List Policy Groups',
-      description: 'List all policy groups with pagination.',
-      inputSchema: {
-        page: z.number().int().min(0).default(0).describe('Page number (0-indexed)'),
-        size: z.number().int().min(1).max(100).default(20).describe('Page size'),
-      },
+      description: 'List all policy groups (tenant-wide, priority ASC).',
+      inputSchema: {},
     },
-    async ({ page, size }) => {
-      const params: Record<string, string> = paginationParams(page, size);
-      return callApi('GET', 'policy-groups', { params });
-    },
+    async () => callApi('GET', 'policy-groups'),
   );
 
   server.registerTool(
@@ -39,10 +32,9 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Create Policy Group',
       description:
-        'Create a new policy group. Requires name and priority. Optionally set conflict resolution, activation group, and description.',
+        'Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Groups sharing an activationGroup must share the same activationMode / activationStrategy / executionLimit.',
       inputSchema: {
         name: z.string().describe('Group name (unique among non-ARCHIVED)'),
-        priority: z.number().int().min(0).describe('Execution priority (lower = higher)'),
         description: z.string().optional().describe('Group description'),
         activationMode: z
           .enum(['NONE', 'EXCLUSIVE', 'MAX_N'])
@@ -64,7 +56,6 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     async (args) => {
       const body: Record<string, unknown> = {
         name: args.name,
-        priority: args.priority,
       };
       if (args.description !== undefined) body.description = args.description;
       if (args.activationMode !== undefined) body.activationMode = args.activationMode;
@@ -84,12 +75,15 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         name: z.string().optional().describe('New name'),
-        priority: z.number().int().min(0).optional().describe('New priority'),
         description: z.string().optional().describe('New description'),
         status: z
           .enum(['ACTIVE', 'DISABLED'])
           .optional()
           .describe('Status (DISABLED = emergency stop)'),
+        activationGroup: z
+          .string()
+          .optional()
+          .describe('Activation group (Execution Group) cluster key'),
         activationMode: z
           .enum(['NONE', 'EXCLUSIVE', 'MAX_N'])
           .optional()
@@ -115,6 +109,27 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
       },
     },
     async ({ groupId }) => callApi('DELETE', `policy-groups/${groupId}`),
+  );
+
+  server.registerTool(
+    'lexq_groups_reorder',
+    {
+      title: 'Reorder Policy Groups',
+      description:
+        'Reorder policy groups by priority. Priority is tenant-wide and flat (1...N continuous); array index 0 = priority 1 (highest precedence). activationGroup is not affected — this only changes priority.',
+      inputSchema: {
+        groupIds: z
+          .array(z.string().uuid())
+          .describe('Group IDs in desired priority order (index 0 = priority 1)'),
+      },
+    },
+    async ({ groupIds }) => {
+      const groups = groupIds.map((groupId: string, index: number) => ({
+        groupId,
+        priority: index + 1,
+      }));
+      return callApi('PATCH', 'policy-groups/reorder', { body: { groups } });
+    },
   );
 
   // ── A/B Test ──

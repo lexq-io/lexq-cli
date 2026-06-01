@@ -50,7 +50,6 @@ export interface PolicyGroupDetail {
 export interface CreatePolicyGroupRequest {
   name: string;
   description?: string;
-  priority: number;
   activationGroup?: string;
   activationMode?: ConflictResolutionMode;
   activationStrategy?: ConflictResolutionStrategy;
@@ -61,7 +60,6 @@ export interface CreatePolicyGroupRequest {
 export interface UpdatePolicyGroupRequest {
   name?: string;
   description?: string;
-  priority?: number;
   activationGroup?: string;
   activationMode?: ConflictResolutionMode;
   activationStrategy?: ConflictResolutionStrategy;
@@ -80,4 +78,17 @@ export interface StartAbTestRequest {
 
 export interface AdjustTrafficRateRequest {
   trafficRate: number;
+}
+
+// ══════════════════════════════════════════
+// Reorder
+// ══════════════════════════════════════════
+
+export interface ReorderPolicyGroupsRequest {
+  groups: GroupPriority[];
+}
+
+export interface GroupPriority {
+  groupId: string;
+  priority: number;
 }

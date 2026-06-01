@@ -1,13 +1,13 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
   PolicyGroupSummary,
   PolicyGroupDetail,
   CreatePolicyGroupRequest,
   UpdatePolicyGroupRequest,
+  ReorderPolicyGroupsRequest,
   StartAbTestRequest,
   AdjustTrafficRateRequest,
 } from '@/types/groups';
@@ -28,6 +28,7 @@ export function registerGroupCommands(program: Command): void {
           get         Get group detail by ID
           create      Create a new group
           update      Update group settings
+          reorder     Change group priorities (drag & drag equivalent)
           delete      Archive a group
           ab-test     Manage A/B tests (start, stop, adjust)
 
@@ -39,25 +40,22 @@ export function registerGroupCommands(program: Command): void {
   groups
     .command('list')
     .description('List all policy groups')
-    .option('--page <number>', 'Page number', '0')
-    .option('--size <number>', 'Page size', '20')
-    .action(async (opts) => {
+    .action(async () => {
       try {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const data = await apiRequest<PageResponse<PolicyGroupSummary>>('GET', 'policy-groups', {
+        const data = await apiRequest<PolicyGroupSummary[]>('GET', 'policy-groups', {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          params: { page: opts.page, size: opts.size },
         });
 
         if (format === 'table') {
           printTable(
             ['ID', 'Name', 'Status', 'Priority', 'Version', 'Updated'],
-            data.content.map((g) => [
+            data.map((g) => [
               g.id,
               g.name,
               g.status,
@@ -67,7 +65,7 @@ export function registerGroupCommands(program: Command): void {
             ]),
             { truncate: 24 },
           );
-          console.log(`\n${data.totalElements} total · page ${data.pageNo + 1}/${data.totalPages}`);
+          console.log(`\n${data.length} total`);
         } else {
           printJson(data);
         }
@@ -110,19 +108,20 @@ export function registerGroupCommands(program: Command): void {
         Example:
           $ lexq groups create --json '{
               "name": "Payment Policy",
-              "description": "Rules for payment processing",
-              "priority": 0
+              "description": "Rules for payment processing"
             }'
 
         Fields:
           name                string    Group name (required, unique per tenant)
           description         string    Description (optional, max 255 chars)
-          priority            number    Execution priority — lower runs first (required, min 0)
-          activationGroup     string    Cross-group conflict resolution key (optional)
+          activationGroup     string    Execution Group — conflict-resolution cluster key (optional)
           activationMode      string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
           activationStrategy  string    FIRST_MATCH | HIGHEST_PRIORITY | MAX_BENEFIT  [default: FIRST_MATCH]
           executionLimit      number    Max rules to fire in MAX_N mode (optional)
           status              string    ACTIVE | DISABLED  [default: ACTIVE]
+        
+        priority is auto-assigned (appended last, tenant-wide). Use 'lexq groups reorder' to change order.
+        Groups sharing an activationGroup must share the same activationMode / activationStrategy / executionLimit.
       `,
     )
     .action(async (opts) => {
@@ -154,9 +153,9 @@ export function registerGroupCommands(program: Command): void {
       dedent`
 
         Example:
-          $ lexq groups update --id <groupId> --json '{"description": "Updated", "priority": 1}'
+          $ lexq groups update --id <groupId> --json '{"description": "Updated", "status": "DISABLED"}'
 
-        All fields are optional — only provided fields are updated.
+        All fields are optional — only provided fields are updated. priority is not settable here — use 'lexq groups reorder'.
       `,
     )
     .action(async (opts) => {
@@ -212,6 +211,50 @@ export function registerGroupCommands(program: Command): void {
           verbose: globalOpts.verbose,
         });
         console.log(`✓ Group ${opts.id} deleted.`);
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
+  // ── reorder ──
+  groups
+    .command('reorder')
+    .description('Reorder policy groups by priority (drag & drop equivalent)')
+    .requiredOption('--group-ids <ids>', 'Comma-separated group IDs in desired order')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Assigns priority 1, 2, 3, ... to groups in the order given (tenant-wide, 1...N continuous).
+        activationGroup (Execution Group) is NOT affected — reorder only changes priority.
+
+        Example:
+          $ lexq groups reorder --group-ids "id3,id1,id2"
+
+          Result: id3 → priority 1, id1 → priority 2, id2 → priority 3
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+        const groupIds = (opts.groupIds as string).split(',').map((id: string) => id.trim());
+
+        const body: ReorderPolicyGroupsRequest = {
+          groups: groupIds.map((groupId, index) => ({
+            groupId,
+            priority: index + 1,
+          })),
+        };
+
+        await apiRequest<void>('PATCH', 'policy-groups/reorder', {
+          apiKey: globalOpts.apiKey,
+          baseUrl: globalOpts.baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
+          body,
+        });
+        console.log(`✓ ${groupIds.length} groups reordered.`);
       } catch (error) {
         printError(error);
         process.exit(1);

@@ -1,7 +1,6 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
   PolicyRuleSummary,
@@ -41,14 +40,12 @@ export function registerRuleCommands(program: Command): void {
     .description('List rules for a policy version')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Policy version ID')
-    .option('--page <number>', 'Page number', '0')
-    .option('--size <number>', 'Page size', '20')
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
         const format: OutputFormat = globalOpts.format ?? 'json';
 
-        const data = await apiRequest<PageResponse<PolicyRuleSummary>>(
+        const data = await apiRequest<PolicyRuleSummary[]>(
           'GET',
           `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules`,
           {
@@ -56,14 +53,13 @@ export function registerRuleCommands(program: Command): void {
             baseUrl: globalOpts.baseUrl,
             dryRun: globalOpts.dryRun,
             verbose: globalOpts.verbose,
-            params: { page: opts.page, size: opts.size },
           },
         );
 
         if (format === 'table') {
           printTable(
             ['ID', 'Name', 'Priority', 'Conditions', 'Actions', 'Enabled'],
-            data.content.map((r) => [
+            data.map((r) => [
               r.id,
               r.name,
               String(r.priority),
@@ -73,7 +69,7 @@ export function registerRuleCommands(program: Command): void {
             ]),
             { truncate: 24 },
           );
-          console.log(`\n${data.totalElements} total · page ${data.pageNo + 1}/${data.totalPages}`);
+          console.log(`\n${data.length} total`);
         } else {
           printJson(data);
         }
@@ -124,7 +120,6 @@ export function registerRuleCommands(program: Command): void {
         Example:
           $ lexq rules create --group-id <gid> --version-id <vid> --json '{
               "name": "VIP 20% Discount",
-              "priority": 0,
               "condition": {
                 "type": "SINGLE",
                 "field": "customer_tier",
@@ -148,8 +143,11 @@ export function registerRuleCommands(program: Command): void {
 
         Mutex (optional — rule-level conflict resolution):
           mutexGroup       string    Logical grouping key (e.g., "best-discount")
-          mutexMode        string    NONE | EXCLUSIVE  [default: NONE]
+          mutexMode        string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
           mutexStrategy    string    FIRST_MATCH | HIGHEST_PRIORITY | MAX_BENEFIT
+          mutexLimit       number    Max rules to fire in MAX_N mode (required when MAX_N)
+
+        priority is auto-assigned (appended last). Use 'lexq rules reorder' to change order.
       `,
     )
     .action(async (opts) => {
@@ -270,12 +268,12 @@ export function registerRuleCommands(program: Command): void {
       'after',
       dedent`
 
-        Assigns priority 0, 1, 2, ... to rules in the order given.
+        Assigns priority 1, 2, 3, ... to rules in the order given (1-based, 1...N continuous).
 
         Example:
           $ lexq rules reorder --group-id <gid> --version-id <vid> --rule-ids "id3,id1,id2"
 
-          Result: id3 → priority 0, id1 → priority 1, id2 → priority 2
+          Result: id3 → priority 1, id1 → priority 2, id2 → priority 3
       `,
     )
     .action(async (opts) => {
@@ -286,7 +284,7 @@ export function registerRuleCommands(program: Command): void {
         const body: ReorderRulesRequest = {
           rules: ruleIds.map((ruleId, index) => ({
             ruleId,
-            priority: index,
+            priority: index + 1,
           })),
         };
 
