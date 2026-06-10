@@ -138,7 +138,7 @@ export function registerDomainTemplateCommands(program: Command): void {
           );
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }

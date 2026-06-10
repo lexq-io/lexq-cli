@@ -260,7 +260,7 @@ Simulation is async. Poll until `status` is `COMPLETED` or `FAILED`.
 | `RUNNING`   | In progress (`progress` field shows 0–100) |
 | `COMPLETED` | Done — results available                   |
 | `FAILED`    | Error occurred                             |
-| `CANCELLED` | Manually cancelled                         |
+| `CANCELED`  | Manually canceled                          |
 
 ### List Simulations
 

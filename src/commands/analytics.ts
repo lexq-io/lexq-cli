@@ -367,10 +367,7 @@ export function registerAnalyticsCommands(program: Command): void {
   sim
     .command('list')
     .description('List simulation history')
-    .option(
-      '--status <status>',
-      'Filter by status (PENDING, RUNNING, COMPLETED, FAILED, CANCELLED)',
-    )
+    .option('--status <status>', 'Filter by status (PENDING, RUNNING, COMPLETED, FAILED, CANCELED)')
     .option('--from <date>', 'Start date (yyyy-MM-dd)')
     .option('--to <date>', 'End date (yyyy-MM-dd)')
     .option('--page <number>', 'Page number', '0')
@@ -431,7 +428,7 @@ export function registerAnalyticsCommands(program: Command): void {
       'after',
       dedent`
 
-        Only PENDING or RUNNING simulations can be cancelled.
+        Only PENDING or RUNNING simulations can be canceled.
       `,
     )
     .action(async (opts) => {
@@ -444,7 +441,7 @@ export function registerAnalyticsCommands(program: Command): void {
           const answer = await rl.question(`Cancel simulation ${opts.id}? [y/N] `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }
@@ -455,7 +452,7 @@ export function registerAnalyticsCommands(program: Command): void {
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
         });
-        console.log(`✓ Simulation ${opts.id} cancelled.`);
+        console.log(`✓ Simulation ${opts.id} canceled.`);
       } catch (error) {
         printError(error);
         process.exit(1);

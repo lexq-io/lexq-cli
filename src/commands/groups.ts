@@ -199,7 +199,7 @@ export function registerGroupCommands(program: Command): void {
           const answer = await rl.question(`Delete group ${opts.id}? [y/N] `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }
@@ -342,7 +342,7 @@ export function registerGroupCommands(program: Command): void {
           const answer = await rl.question(`Stop A/B test for group ${opts.groupId}? [y/N] `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }

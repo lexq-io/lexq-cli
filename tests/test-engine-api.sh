@@ -1077,7 +1077,7 @@ poll_simulation() {
         out=$(run_cli analytics simulation status --id "$sim_id")
         status=$(json_get "$out" "status")
 
-        if [ "$status" = "COMPLETED" ] || [ "$status" = "FAILED" ] || [ "$status" = "CANCELLED" ]; then
+        if [ "$status" = "COMPLETED" ] || [ "$status" = "FAILED" ] || [ "$status" = "CANCELED" ]; then
             echo "$out"
             return 0
         fi

@@ -78,7 +78,7 @@ export const DecisionReasonCode = [
 export type DecisionReasonCode = (typeof DecisionReasonCode)[number];
 
 // ── Simulation ──
-export const SimulationStatus = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED'] as const;
+export const SimulationStatus = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'] as const;
 export type SimulationStatus = (typeof SimulationStatus)[number];
 
 export const SimulationDatasetType = ['HISTORICAL', 'UPLOADED', 'MANUAL'] as const;

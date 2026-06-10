@@ -131,7 +131,7 @@ export function registerDeployCommands(program: Command): void {
           const answer = await rl.question(`Rollback group ${opts.groupId}? [y/N] `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }
@@ -177,7 +177,7 @@ export function registerDeployCommands(program: Command): void {
           const answer = await rl.question(`Undeploy group ${opts.groupId}? [y/N] `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }

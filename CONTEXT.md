@@ -112,7 +112,7 @@ live)
 
 ### Simulation Statuses
 
-`PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`
+`PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELED`
 
 ### Decision Statuses
 

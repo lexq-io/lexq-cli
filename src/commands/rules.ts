@@ -235,7 +235,7 @@ export function registerRuleCommands(program: Command): void {
           const answer = await rl.question(`Delete rule ${opts.id}? [y/N] `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
-            console.log('Cancelled.');
+            console.log('Canceled.');
             return;
           }
         }

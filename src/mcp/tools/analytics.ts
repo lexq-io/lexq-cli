@@ -139,7 +139,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         status: z
-          .enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED'])
+          .enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'])
           .optional()
           .describe('Filter by status'),
         from: z.string().optional().describe('Start date (yyyy-MM-dd)'),
