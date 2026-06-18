@@ -104,10 +104,8 @@ export function paginationParams(page?: number, size?: number): Record<string, s
  * so the agent-facing text is identical on every surface. The backend only populates
  * meta.unregisteredFacts on rule create/update, so this only ever fires there.
  */
-export function formatUnregisteredFactWarning(
-  meta: ResponseMeta | null | undefined,
-): string | null {
-  const facts = meta?.unregisteredFacts ?? [];
+export function formatUnregisteredFactWarning(meta: unknown): string | null {
+  const facts = (meta as ResponseMeta | null | undefined)?.unregisteredFacts ?? [];
   if (facts.length === 0) return null;
 
   const lines = facts.map((f) => {
