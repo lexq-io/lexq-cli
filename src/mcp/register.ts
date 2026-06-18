@@ -15,7 +15,7 @@ import { registerWebhookSubscriptionTools } from './tools/webhook-subscriptions'
 import { registerDomainTemplateTools } from '@/mcp/tools/domain-templates';
 
 /**
- * Registers all 66 MCP tools on the given server.
+ * Registers all MCP tools on the given server.
  *
  * @param server - McpServer instance
  * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)
@@ -37,4 +37,4 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
 
 // Re-exports for external consumers (lexq-mcp)
 export type { CallApi, McpToolResult } from './tools/_shared';
-export { paginationParams } from './tools/_shared';
+export { paginationParams, formatUnregisteredFactWarning } from './tools/_shared';

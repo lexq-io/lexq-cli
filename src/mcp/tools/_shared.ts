@@ -1,5 +1,6 @@
-import { apiRequest, type ApiClientOptions } from '@/lib/api-client';
+import { apiRequestWithMeta, type ApiClientOptions } from '@/lib/api-client';
 import { loadConfig } from '@/lib/config';
+import type { ResponseMeta } from '@/types/api';
 
 export interface McpToolResult {
   [key: string]: unknown;
@@ -67,14 +68,17 @@ export function createCallApiFromConfig(): CallApi {
         apiKey: config.apiKey,
         baseUrl: config.baseUrl,
       };
-      const data = await apiRequest(method, path, {
+      const { data, meta } = await apiRequestWithMeta(method, path, {
         ...clientOpts,
         body: opts?.body,
         params: opts?.params,
       });
-      return {
-        content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-      };
+      const content: Array<{ type: 'text'; text: string }> = [
+        { type: 'text', text: JSON.stringify(data, null, 2) },
+      ];
+      const warning = formatUnregisteredFactWarning(meta);
+      if (warning) content.push({ type: 'text', text: warning });
+      return { content };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return {
@@ -90,4 +94,33 @@ export function paginationParams(page?: number, size?: number): Record<string, s
   if (page !== undefined) params.page = String(page);
   if (size !== undefined) params.size = String(size);
   return params;
+}
+
+/**
+ * Builds a salient, actionable warning from a response's meta when it reports facts that
+ * rules reference but the schema does not define. Returns null when there is nothing to warn.
+ *
+ * Shared by both CallApi implementations (CLI stdio here, lexq-mcp HTTP via @lexq/cli/mcp)
+ * so the agent-facing text is identical on every surface. The backend only populates
+ * meta.unregisteredFacts on rule create/update, so this only ever fires there.
+ */
+export function formatUnregisteredFactWarning(
+  meta: ResponseMeta | null | undefined,
+): string | null {
+  const facts = meta?.unregisteredFacts ?? [];
+  if (facts.length === 0) return null;
+
+  const lines = facts.map((f) => {
+    if (f.inferredType) {
+      return `  • ${f.key} (${f.inferredType}) — register: lexq_facts_create({ key: "${f.key}", name: "${f.suggestedName}", type: "${f.inferredType}" })`;
+    }
+    const choices = f.candidateTypes?.join(' | ') ?? 'STRING | NUMBER | BOOLEAN';
+    return `  • ${f.key} (ambiguous) — pick a type (${choices}), then lexq_facts_create({ key: "${f.key}", name: "${f.suggestedName}", type: <chosen> })`;
+  });
+
+  return [
+    `⚠ The saved rule references ${facts.length} fact(s) not defined in the schema. The rule was saved — this does not block — but undefined facts skip type validation and the dry-run requirements analyzer.`,
+    ...lines,
+    `Register them now so the rule validates as intended, or call lexq_facts_unregistered to review the version's full list.`,
+  ].join('\n');
 }

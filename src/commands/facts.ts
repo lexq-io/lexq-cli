@@ -1,7 +1,7 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import type { PageResponse } from '@/types/api';
+import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { FactSchemaResponse } from '@/types/facts';
 
@@ -18,6 +18,7 @@ export function registerFactCommands(program: Command): void {
 
         Commands:
           list             List all fact definitions
+          unregistered     List facts referenced by a version but not yet defined
           create           Register a new fact
           update           Update fact metadata
           delete           Remove a fact definition
@@ -64,6 +65,61 @@ export function registerFactCommands(program: Command): void {
             { truncate: 28 },
           );
           console.log(`\n${data.totalElements} total · page ${data.pageNo + 1}/${data.totalPages}`);
+        } else {
+          printJson(data);
+        }
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
+  // ── unregistered ──
+  facts
+    .command('unregistered')
+    .description('List facts referenced by a version but not yet defined')
+    .requiredOption('--group-id <groupId>', 'Policy group ID')
+    .requiredOption('--version-id <versionId>', 'Policy version ID')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Facts used in a version's rules that have no definition yet (read-only).
+        Does not block publish/deploy — register them to enable validation.
+
+        Example:
+          $ lexq facts unregistered --group-id <gid> --version-id <vid> --format table
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+        const format: OutputFormat = globalOpts.format ?? 'json';
+
+        const data = await apiRequest<UnregisteredFact[]>(
+          'GET',
+          `policy-groups/${opts.groupId}/versions/${opts.versionId}/unregistered-facts`,
+          {
+            apiKey: globalOpts.apiKey,
+            baseUrl: globalOpts.baseUrl,
+            dryRun: globalOpts.dryRun,
+            verbose: globalOpts.verbose,
+          },
+        );
+
+        if (format === 'table') {
+          printTable(
+            ['Key', 'Type', 'Suggested Name', 'Conflict', 'Sources'],
+            data.map((f) => [
+              f.key,
+              f.inferredType ?? f.candidateTypes?.join('|') ?? '?',
+              f.suggestedName,
+              f.conflict ? '✓' : '–',
+              f.sources.map((s) => `${s.kind}:${s.field}`).join(', '),
+            ]),
+            { truncate: 28 },
+          );
+          console.log(`\n${data.length} unregistered`);
         } else {
           printJson(data);
         }

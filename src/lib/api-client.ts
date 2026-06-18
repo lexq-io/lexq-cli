@@ -1,5 +1,5 @@
 import { loadConfig } from './config';
-import type { ApiResponse } from '@/types/api';
+import type { ApiResponse, ResponseMeta } from '@/types/api';
 
 export interface ApiClientOptions {
   apiKey?: string;
@@ -19,11 +19,9 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(
-  method: string,
-  path: string,
-  options: ApiClientOptions & { body?: unknown; params?: Record<string, string> } = {},
-): Promise<T> {
+type RequestOptions = ApiClientOptions & { body?: unknown; params?: Record<string, string> };
+
+async function doFetch(method: string, path: string, options: RequestOptions): Promise<Response> {
   const config = loadConfig();
   const baseUrl = options.baseUrl ?? config.baseUrl;
   const apiKey = options.apiKey ?? config.apiKey;
@@ -32,32 +30,21 @@ export async function apiRequest<T>(
     throw new ApiError(401, 'AUTH', 'Not authenticated. Run "lexq auth login" first.');
   }
 
-  // Build URL with query params
   const url = new URL(path, baseUrl.endsWith('/') ? baseUrl : baseUrl + '/');
   if (options.params) {
     for (const [key, value] of Object.entries(options.params)) {
-      if (value !== undefined && value !== '') {
-        url.searchParams.set(key, value);
-      }
+      if (value !== undefined && value !== '') url.searchParams.set(key, value);
     }
   }
 
-  const headers: Record<string, string> = {
-    'X-API-KEY': apiKey,
-    Accept: 'application/json',
-  };
+  const headers: Record<string, string> = { 'X-API-KEY': apiKey, Accept: 'application/json' };
+  if (options.body) headers['Content-Type'] = 'application/json';
 
-  if (options.body) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  // Dry-run: print request and exit
   if (options.dryRun) {
     const masked =
       apiKey.length > 8
         ? apiKey.substring(0, 4) + '****' + apiKey.substring(apiKey.length - 4)
         : '****';
-
     console.log(`${method} ${url.toString()}`);
     console.log('Headers:');
     console.log(`  X-API-KEY: ${masked}`);
@@ -70,35 +57,20 @@ export async function apiRequest<T>(
     process.exit(0);
   }
 
-  if (options.verbose) {
-    console.error(`→ ${method} ${url.toString()}`);
-  }
-
+  if (options.verbose) console.error(`→ ${method} ${url.toString()}`);
   const startTime = Date.now();
-
   const response = await fetch(url.toString(), {
     method,
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
-
   if (options.verbose) {
     console.error(`← ${response.status} ${response.statusText} (${Date.now() - startTime}ms)`);
   }
+  return response;
+}
 
-  // Handle blob responses (export endpoints)
-  const contentType = response.headers.get('content-type') ?? '';
-  if (contentType.includes('text/csv') || contentType.includes('application/octet-stream')) {
-    return response as unknown as T;
-  }
-
-  // No-content responses (DELETE 204 등)
-  if (response.status === 204 || contentType === '') {
-    return undefined as T;
-  }
-
-  const json = (await response.json()) as ApiResponse<T>;
-
+function assertOk<T>(response: Response, json: ApiResponse<T>): void {
   if (!response.ok || json.result !== 'SUCCESS') {
     throw new ApiError(
       response.status,
@@ -106,6 +78,36 @@ export async function apiRequest<T>(
       json.message ?? `Request failed with status ${response.status}`,
     );
   }
+}
 
-  return json.data;
+export async function apiRequest<T>(
+  method: string,
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const { data } = await apiRequestWithMeta<T>(method, path, options);
+  return data;
+}
+
+export async function apiRequestWithMeta<T>(
+  method: string,
+  path: string,
+  options: RequestOptions = {},
+): Promise<{ data: T; meta: ResponseMeta | null }> {
+  const response = await doFetch(method, path, options);
+
+  // Blob responses (export endpoints) — no envelope, no meta.
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('text/csv') || contentType.includes('application/octet-stream')) {
+    return { data: response as unknown as T, meta: null };
+  }
+
+  // No-content responses (DELETE 204 등) — no envelope, no meta.
+  if (response.status === 204 || contentType === '') {
+    return { data: undefined as T, meta: null };
+  }
+
+  const json = (await response.json()) as ApiResponse<T>;
+  assertOk(response, json);
+  return { data: json.data, meta: json.meta ?? null };
 }

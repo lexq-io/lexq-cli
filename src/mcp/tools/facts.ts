@@ -86,4 +86,19 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     },
     async () => callApi('GET', 'schema/action-metadata'),
   );
+
+  server.registerTool(
+    'lexq_facts_unregistered',
+    {
+      title: 'List Unregistered Facts',
+      description:
+        "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy, INV-4). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+      inputSchema: {
+        groupId: z.string().uuid().describe('Policy group ID'),
+        versionId: z.string().uuid().describe('Version ID'),
+      },
+    },
+    async ({ groupId, versionId }) =>
+      callApi('GET', `policy-groups/${groupId}/versions/${versionId}/unregistered-facts`),
+  );
 }

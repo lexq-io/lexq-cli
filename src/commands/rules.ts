@@ -1,7 +1,13 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
-import { apiRequest } from '@/lib/api-client';
-import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
+import { apiRequest, apiRequestWithMeta } from '@/lib/api-client';
+import {
+  printJson,
+  printTable,
+  printError,
+  printUnregisteredFactsWarning,
+  type OutputFormat,
+} from '@/lib/output';
 import type {
   PolicyRuleSummary,
   PolicyRuleDetail,
@@ -154,7 +160,7 @@ export function registerRuleCommands(program: Command): void {
       try {
         const globalOpts = program.opts();
         const body = JSON.parse(opts.json) as CreateRuleRequest;
-        const data = await apiRequest<PolicyRuleDetail>(
+        const { data, meta } = await apiRequestWithMeta<PolicyRuleDetail>(
           'POST',
           `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules`,
           {
@@ -166,6 +172,7 @@ export function registerRuleCommands(program: Command): void {
           },
         );
         printJson(data);
+        printUnregisteredFactsWarning(meta?.unregisteredFacts ?? []);
       } catch (error) {
         printError(error);
         process.exit(1);
@@ -199,7 +206,7 @@ export function registerRuleCommands(program: Command): void {
       try {
         const globalOpts = program.opts();
         const body = JSON.parse(opts.json) as UpdateRuleRequest;
-        const data = await apiRequest<PolicyRuleDetail>(
+        const { data, meta } = await apiRequestWithMeta<PolicyRuleDetail>(
           'PUT',
           `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}`,
           {
@@ -211,6 +218,7 @@ export function registerRuleCommands(program: Command): void {
           },
         );
         printJson(data);
+        printUnregisteredFactsWarning(meta?.unregisteredFacts ?? []);
       } catch (error) {
         printError(error);
         process.exit(1);

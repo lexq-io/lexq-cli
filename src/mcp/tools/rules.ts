@@ -48,6 +48,9 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         If a required key is missing, ask the user to confirm the type, isRequired, and description
         before calling lexq_facts_create — registering facts enables type validation, Console UI
         autocomplete, and the dry-run requirements analyzer.
+        
+        After saving, lexq_facts_unregistered lists any keys this version references but has not
+        defined (non-blocking, version-wide) — use it to decide what to register.
 
         Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
         Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN

@@ -1,4 +1,5 @@
 import Table from 'cli-table3';
+import type { UnregisteredFact } from '@/types/api';
 
 export type OutputFormat = 'json' | 'table';
 
@@ -46,4 +47,22 @@ export function printError(error: unknown): void {
   } else {
     console.error(JSON.stringify({ error: 'UNKNOWN', message: String(error) }, null, 2));
   }
+}
+
+/** 미등록 fact 경고 — stderr 로(stdout JSON 비오염), 비차단. 복붙용 create 힌트 포함. */
+export function printUnregisteredFactsWarning(facts: UnregisteredFact[]): void {
+  if (facts.length === 0) return;
+  const s = facts.length === 1 ? '' : 's';
+  console.error(
+    `\n⚠ ${facts.length} undefined fact${s} referenced — register to enable validation:`,
+  );
+  for (const f of facts) {
+    const type = f.inferredType ?? f.candidateTypes?.[0] ?? 'STRING';
+    const note = f.conflict ? ` (ambiguous: ${f.candidateTypes?.join(' | ') ?? '?'})` : '';
+    console.error(`  • ${f.key} → ${type}${note}`);
+    console.error(
+      `      lexq facts create --key ${f.key} --name "${f.suggestedName}" --type ${type}`,
+    );
+  }
+  console.error('');
 }

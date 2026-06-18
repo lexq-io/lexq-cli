@@ -9,7 +9,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Publish Version',
       description:
-        'Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule.',
+        'Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to publish'),
@@ -25,7 +25,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Deploy to Live',
       description:
-        'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately.',
+        'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to deploy'),

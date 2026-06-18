@@ -144,3 +144,12 @@ export type PlatformEventType = (typeof PlatformEventType)[number];
 
 export const WebhookPayloadFormat = ['GENERIC', 'SLACK'] as const;
 export type WebhookPayloadFormat = (typeof WebhookPayloadFormat)[number];
+
+export const Confidence = ['EXACT', 'AMBIGUOUS'] as const;
+export type Confidence = (typeof Confidence)[number];
+
+export const SourceKind = ['CONDITION', 'ACTION'] as const;
+export type SourceKind = (typeof SourceKind)[number];
+
+export const SkipReason = ['ALREADY_EXISTS', 'INVALID_KEY', 'RESERVED'] as const;
+export type SkipReason = (typeof SkipReason)[number];

@@ -1,8 +1,14 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import type { PageResponse } from '@/types/api';
-import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
+import type { PageResponse, UnregisteredFact } from '@/types/api';
+import {
+  printJson,
+  printTable,
+  printError,
+  printUnregisteredFactsWarning,
+  type OutputFormat,
+} from '@/lib/output';
 import type { DeploymentSummary, DeploymentDetail, DeploymentStatus } from '@/types/deploy';
 
 export function registerDeployCommands(program: Command): void {
@@ -51,6 +57,7 @@ export function registerDeployCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
+        await warnUnregisteredFacts(globalOpts, opts.groupId, opts.versionId);
         await apiRequest<void>(
           'POST',
           `policy-groups/${opts.groupId}/versions/${opts.versionId}/publish`,
@@ -89,6 +96,7 @@ export function registerDeployCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
+        await warnUnregisteredFacts(globalOpts, opts.groupId, opts.versionId);
         await apiRequest<void>('POST', `policy-groups/${opts.groupId}/deploy`, {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
@@ -397,4 +405,23 @@ export function registerDeployCommands(program: Command): void {
         process.exit(1);
       }
     });
+}
+
+/** publish/live 전 미등록 fact 사전 경고(비차단·best-effort). dry-run 시 실호출 금지 위해 생략. */
+async function warnUnregisteredFacts(
+  globalOpts: { apiKey?: string; baseUrl?: string; dryRun?: boolean; verbose?: boolean },
+  groupId: string,
+  versionId: string,
+): Promise<void> {
+  if (globalOpts.dryRun) return;
+  try {
+    const facts = await apiRequest<UnregisteredFact[]>(
+      'GET',
+      `policy-groups/${groupId}/versions/${versionId}/unregistered-facts`,
+      { apiKey: globalOpts.apiKey, baseUrl: globalOpts.baseUrl, verbose: globalOpts.verbose },
+    );
+    printUnregisteredFactsWarning(facts);
+  } catch {
+    // 사전 경고 실패가 배포를 막지 않는다 (INV-4)
+  }
 }
