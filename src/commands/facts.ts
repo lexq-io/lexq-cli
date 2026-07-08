@@ -3,7 +3,7 @@ import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { FactSchemaResponse } from '@/types/facts';
+import type { CreateFactRequest, UpdateFactRequest, FactSchemaResponse } from '@/types/facts';
 
 export function registerFactCommands(program: Command): void {
   const facts = program
@@ -53,7 +53,7 @@ export function registerFactCommands(program: Command): void {
 
         if (format === 'table') {
           printTable(
-            ['ID', 'Key', 'Name', 'Type', 'System', 'Required'],
+            ['ID', 'Key', 'Name', 'Type', 'System', 'Required', 'PII'],
             data.content.map((f) => [
               f.id,
               f.key,
@@ -61,6 +61,7 @@ export function registerFactCommands(program: Command): void {
               f.type,
               f.isSystem ? '✓' : '–',
               f.isRequired ? '✓' : '–',
+              f.isPii ? '✓' : '–',
             ]),
             { truncate: 28 },
           );
@@ -138,6 +139,7 @@ export function registerFactCommands(program: Command): void {
     .option('--type <type>', 'Value type: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER')
     .option('--description <desc>', 'Description')
     .option('--required', 'Mark as required', false)
+    .option('--pii', 'Mark as PII — value is masked on every read surface', false)
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
@@ -162,7 +164,9 @@ export function registerFactCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
-        const body = opts.json ? JSON.parse(opts.json) : buildCreateBody(opts);
+        const body: CreateFactRequest = opts.json
+          ? (JSON.parse(opts.json) as CreateFactRequest)
+          : buildCreateBody(opts);
 
         const data = await apiRequest<FactSchemaResponse>('POST', 'schema/facts', {
           apiKey: globalOpts.apiKey,
@@ -187,6 +191,8 @@ export function registerFactCommands(program: Command): void {
     .option('--description <desc>', 'Description')
     .option('--required', 'Mark as required')
     .option('--no-required', 'Mark as not required')
+    .option('--pii', 'Mark as PII (enables masking)')
+    .option('--no-pii', 'Unmark as PII (disables masking — value becomes visible)')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
@@ -201,7 +207,9 @@ export function registerFactCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
-        const body = opts.json ? JSON.parse(opts.json) : buildUpdateBody(opts);
+        const body: UpdateFactRequest = opts.json
+          ? (JSON.parse(opts.json) as UpdateFactRequest)
+          : buildUpdateBody(opts);
 
         const data = await apiRequest<FactSchemaResponse>('PUT', `schema/facts/${opts.id}`, {
           apiKey: globalOpts.apiKey,
@@ -287,27 +295,25 @@ export function registerFactCommands(program: Command): void {
     });
 }
 
-function buildCreateBody(
-  opts: Record<string, string | boolean | undefined>,
-): Record<string, unknown> {
+function buildCreateBody(opts: Record<string, string | boolean | undefined>): CreateFactRequest {
   if (!opts.key || !opts.name || !opts.type)
     throw new Error('--key, --name, and --type are required (or use --json).');
-  const body: Record<string, unknown> = {
-    key: opts.key,
-    name: opts.name,
-    type: opts.type,
+  const body: CreateFactRequest = {
+    key: opts.key as string,
+    name: opts.name as string,
+    type: opts.type as CreateFactRequest['type'],
     isRequired: opts.required === true,
+    isPii: opts.pii === true,
   };
-  if (opts.description) body.description = opts.description;
+  if (opts.description) body.description = opts.description as string;
   return body;
 }
 
-function buildUpdateBody(
-  opts: Record<string, string | boolean | undefined>,
-): Record<string, unknown> {
-  const body: Record<string, unknown> = {};
-  if (opts.name) body.name = opts.name;
-  if (opts.description !== undefined) body.description = opts.description;
+function buildUpdateBody(opts: Record<string, string | boolean | undefined>): UpdateFactRequest {
+  const body: UpdateFactRequest = {};
+  if (opts.name) body.name = opts.name as string;
+  if (opts.description !== undefined) body.description = opts.description as string;
   if (typeof opts.required === 'boolean') body.isRequired = opts.required;
+  if (typeof opts.isPii === 'boolean') body.isPii = opts.isPii;
   return body;
 }

@@ -3,7 +3,11 @@ import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { DecisionReplayResponse, ReplayJobListItem } from '@/types/replay';
+import type {
+  DecisionReplayResponse,
+  ReplayJobListItem,
+  ReplayJobSubmitResponse,
+} from '@/types/replay';
 
 export function registerReplayCommands(program: Command): void {
   const replay = program
@@ -88,7 +92,7 @@ export function registerReplayCommands(program: Command): void {
         };
         if (opts.maxRecords) body.maxRecords = Number(opts.maxRecords);
 
-        const data = await apiRequest('POST', 'replay/jobs', {
+        const data = await apiRequest<ReplayJobSubmitResponse>('POST', 'replay/jobs', {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,

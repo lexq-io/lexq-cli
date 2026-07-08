@@ -12,6 +12,7 @@ export interface FactSchemaResponse {
   description: string | null;
   isSystem: boolean;
   isRequired: boolean;
+  isPii: boolean;
 }
 
 // ══════════════════════════════════════════
@@ -24,10 +25,12 @@ export interface CreateFactRequest {
   type: ValueType;
   description?: string;
   isRequired: boolean;
+  isPii: boolean;
 }
 
 export interface UpdateFactRequest {
-  name: string;
+  name?: string;
   description?: string;
-  isRequired: boolean;
+  isRequired?: boolean;
+  isPii?: boolean;
 }

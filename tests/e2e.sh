@@ -368,13 +368,14 @@ FLIST_OUT=$(run_cli facts list --page 0 --size 10)
 if assert_field "$FLIST_OUT" "totalElements"; then pass
 else fail "$(echo "$<VAR>" | head -c 200)"; fi
 
-log_test "facts create"
-FCREATE_OUT=$(run_cli facts create --key "$FACT_KEY" --name "E2E Fact" --type STRING)
-if assert_field "$FCREATE_OUT" "id"; then
+log_test "facts create (with --pii)"
+# --pii smoke: proves the create path applies the flag end-to-end (CLI → API → entity)
+FCREATE_OUT=$(run_cli facts create --key "$FACT_KEY" --name "E2E Fact" --type STRING --pii)
+if assert_field "$FCREATE_OUT" "id" && [ "$(json_get "$FCREATE_OUT" "isPii")" = "true" ]; then
     CREATED_FACT_ID=$(json_get "$FCREATE_OUT" "id")
     pass
-    echo -e "       key: $FACT_KEY"
-else fail "$(json_get "$FCREATE_OUT" "message")"; fi
+    echo -e "       key: $FACT_KEY | isPii: true"
+else fail "$(echo "$FCREATE_OUT" | head -c 200)"; fi
 
 log_test "facts update"
 if [ -n "$CREATED_FACT_ID" ]; then
@@ -500,13 +501,24 @@ else check_server_error_or_fail "$SIM_OUT"; fi
 log_section "7. Execution History"
 
 log_test "history list"
-HIST_OUT=$(run_cli history list --page 0 --size 5)
+HIST_OUT=$(run_cli history list --page 0 --size 20)
 if assert_not_error "$HIST_OUT"; then pass
 else check_server_error_or_fail "$HIST_OUT"; fi
 
-# Capture a trace for the Replay/Provenance sections below —
-# empty on a fresh tenant, which routes those tests to SKIP.
-E2E_TRACE_ID=$(json_get "$HIST_OUT" "content.0.traceId")
+# Capture a SINGLE_GROUP trace for the Replay/Provenance sections below.
+# COMPOSITE summary rows carry sentinel ids (policyGroupId=COMPOSITE,
+# policyVersionId=MIXED) rather than UUIDs — blindly taking content[0]
+# fed the sentinel into replay and produced a spurious P-002.
+# Empty on a fresh tenant, which routes those tests to SKIP.
+read -r E2E_TRACE_ID E2E_TRACE_VERSION_ID <<< "$(echo "$HIST_OUT" | node -e '
+    let d="";process.stdin.on("data",c=>d+=c);
+    process.stdin.on("end",()=>{
+        try{
+            const r=(JSON.parse(d).content||[]).find(x=>x.executionType==="SINGLE_GROUP");
+            process.stdout.write(r ? r.traceId+" "+r.policyVersionId : "");
+        }catch{process.stdout.write("")}
+    });
+')"
 
 log_test "history get"
 if [ -n "$E2E_TRACE_ID" ]; then
@@ -536,22 +548,18 @@ else check_server_error_or_fail "$RPLIST_OUT"; fi
 log_test "replay decision (single — free, external effects mocked)"
 # Same-version replay: the trace's own version satisfies the baseline facts by
 # construction, and executed versions cannot be deleted (audit retention) —
-# so this holds for any tenant trace. An unrelated fresh version has no
-# guaranteed required-facts overlap with an arbitrary baseline.
-E2E_TRACE_VERSION_ID=$(json_get "$HIST_OUT" "content.0.policyVersionId")
-if [ -n "${E2E_TRACE_ID:-}" ] && [ -n "$E2E_TRACE_VERSION_ID" ]; then
+# so this holds for any SINGLE_GROUP trace (selected in Section 7).
+if [ -n "${E2E_TRACE_ID:-}" ] && [ -n "${E2E_TRACE_VERSION_ID:-}" ]; then
     RPD_OUT=$(run_cli replay decision --trace-id "$E2E_TRACE_ID" --version-id "$E2E_TRACE_VERSION_ID")
     if assert_field "$RPD_OUT" "decisionChanged"; then pass
     else
         ERR=$(json_get "$RPD_OUT" "error")
         case "$ERR" in
             P-002|AN-024)
-                # Shared-tenant state race: this suite fishes history[0], and a
-                # concurrent run (or archival) can invalidate that trace's world
-                # between the read and this replay. Endpoint/authz smoke is
-                # covered; the hermetic determinism assert lives in
-                # test-engine-api.sh, which owns its own trace.
-                skip "trace/version no longer resolvable (tenant state race: $ERR)" ;;
+                # Defense-in-depth: with SINGLE_GROUP selection this should no
+                # longer occur (audit retention keeps executed versions), but
+                # pre-retention legacy rows deep in history could still 404.
+                skip "trace/version no longer resolvable ($ERR)" ;;
             *) check_server_error_or_fail "$RPD_OUT" ;;
         esac
     fi

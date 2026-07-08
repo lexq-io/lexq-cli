@@ -9,7 +9,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Fact Definitions',
       description:
-        'List all fact definitions (input variable schema). Shows key, type, and required status. Always check this before creating rules.',
+        'List all fact definitions (input variable schema). Shows key, type, required, and PII status. Always check this before creating rules.',
       inputSchema: {
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
@@ -43,6 +43,12 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
           .boolean()
           .default(false)
           .describe('Whether this fact is required for rule evaluation'),
+        isPii: z
+          .boolean()
+          .default(false)
+          .describe(
+            'Mark as PII — masked on every read surface, revealable only in the console (audited)',
+          ),
       },
     },
     async (args) => callApi('POST', 'schema/facts', { body: args }),
@@ -53,12 +59,16 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Fact Definition',
       description:
-        'Update a fact definition. Key and type cannot be changed. Only provided fields are updated. System facts only allow name and description changes.',
+        'Update a fact definition. Key and type cannot be changed. Only provided fields are updated. System facts only allow name, description, and PII changes.',
       inputSchema: {
         factId: z.string().uuid().describe('Fact definition ID'),
         name: z.string().optional().describe('Display name'),
         description: z.string().optional().describe('Description'),
         isRequired: z.boolean().optional().describe('Required flag'),
+        isPii: z
+          .boolean()
+          .optional()
+          .describe('PII flag — enables/disables masking (changeable even on system facts)'),
       },
     },
     async ({ factId, ...body }) => callApi('PUT', `schema/facts/${factId}`, { body }),

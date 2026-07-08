@@ -32,7 +32,15 @@ export type CallApi = (
 export function createCallApiFromConfig(): CallApi {
   return async (method, path, opts) => {
     try {
-      const config = loadConfig();
+      // Env overrides (same vocabulary as the test suites) — lets Inspector,
+      // CI, and Claude Desktop env blocks target any environment without
+      // touching ~/.lexq/config.json. Precedence: env > stored config.
+      const stored = loadConfig();
+      const config = {
+        ...stored,
+        baseUrl: process.env.PARTNER_BASE_URL ?? stored.baseUrl,
+        apiKey: process.env.LEXQ_API_KEY ?? stored.apiKey,
+      };
 
       // ── Upload 처리 (multipart/form-data) ──
       if (opts?.upload) {
