@@ -8,11 +8,13 @@ import { registerRuleTools } from './tools/rules';
 import { registerFactTools } from './tools/facts';
 import { registerDeployTools } from './tools/deploy';
 import { registerAnalyticsTools } from './tools/analytics';
+import { registerReplayTools } from './tools/replay';
 import { registerHistoryTools } from './tools/history';
+import { registerProvenanceTools } from './tools/provenance';
 import { registerIntegrationTools } from './tools/integrations';
 import { registerLogTools } from './tools/logs';
 import { registerWebhookSubscriptionTools } from './tools/webhook-subscriptions';
-import { registerDomainTemplateTools } from '@/mcp/tools/domain-templates';
+import { registerDomainTemplateTools } from './tools/domain-templates';
 
 /**
  * Registers all MCP tools on the given server.
@@ -28,7 +30,9 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
   registerFactTools(server, callApi);
   registerDeployTools(server, callApi);
   registerAnalyticsTools(server, callApi);
+  registerReplayTools(server, callApi);
   registerHistoryTools(server, callApi);
+  registerProvenanceTools(server, callApi);
   registerIntegrationTools(server, callApi);
   registerLogTools(server, callApi);
   registerDomainTemplateTools(server, callApi);

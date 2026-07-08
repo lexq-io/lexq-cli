@@ -11,6 +11,8 @@ import { registerFactCommands } from './commands/facts';
 import { registerDeployCommands } from './commands/deploy';
 import { registerAnalyticsCommands } from './commands/analytics';
 import { registerHistoryCommands } from './commands/history';
+import { registerReplayCommands } from './commands/replay';
+import { registerProvenanceCommands } from './commands/provenance';
 import { registerIntegrationCommands } from './commands/integrations';
 import { registerLogCommands } from './commands/logs';
 import { registerWebhookSubscriptionCommands } from './commands/webhook-subscriptions';
@@ -39,7 +41,10 @@ export function createCli(): Command {
     .version(getVersion(), '-V, --version')
     .option('--format <format>', 'Output format: json or table', 'json')
     .option('--api-key <key>', 'Override stored API key')
-    .option('--base-url <url>', 'Override API base URL')
+    .option(
+      '--base-url <url>',
+      'Override API base URL — must include the API prefix, e.g. http://localhost:8080/api/v1/partners',
+    )
     .option('--dry-run', 'Preview the HTTP request without executing')
     .option('--verbose', 'Show request/response details')
     .option('--no-color', 'Disable colored output');
@@ -65,6 +70,8 @@ export function createCli(): Command {
 
   // M3+: Execution History, Integrations, Failure Logs
   registerHistoryCommands(program);
+  registerReplayCommands(program);
+  registerProvenanceCommands(program);
   registerIntegrationCommands(program);
   registerLogCommands(program);
 

@@ -14,7 +14,7 @@ export function registerServeCommand(program: Command): void {
         Example:
           $ lexq serve --mcp
 
-          Starts a stdio MCP server that exposes 60 tools for policy management.
+          Starts a stdio MCP server that exposes the full LexQ toolset for policy management.
           Used by Claude Desktop, Claude.ai, Cursor, and other MCP-compatible clients.
 
         Claude Desktop config (~/.claude/claude_desktop_config.json):

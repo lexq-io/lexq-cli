@@ -92,20 +92,31 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'Start Simulation',
       description: dedent`
-        Start an Impact Simulation against historical or uploaded data.
+        Start an Impact Simulation against historical, uploaded, or inline data.
 
-        dataset.type: "HISTORICAL" or "UPLOADED"
-        dataset.source (when HISTORICAL): "EXECUTION_LOGS"
-        dataset.from / dataset.to: date range (yyyy-MM-dd, when HISTORICAL)
+        dataset.type and dataset.source are BOTH required, and must be paired:
+          HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd)
+          UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)
+          MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)
+
         options.maxRecords: number (max 100000, default 10000)
-        options.baselinePolicyVersionId: uuid (optional, for comparison)
+        options.baselinePolicyVersionId: uuid (optional, for baseline comparison)
         options.includeRuleStats: boolean
+        options.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass
+          { "targetVariable": "<fact>", "aggregationType": "COUNT" | "SUM" | "AVG" }
 
-        Example body:
+        Example (uploaded dataset):
         {
           "policyVersionId": "<uuid>",
-          "dataset": { "type": "HISTORICAL", "source": "EXECUTION_LOGS", "from": "2025-01-01", "to": "2025-01-31" },
+          "dataset": { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<path from lexq_dataset_upload>" },
           "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true, "maxRecords": 10000 }
+        }
+
+        Example (historical):
+        {
+          "policyVersionId": "<uuid>",
+          "dataset": { "type": "HISTORICAL", "source": "EXECUTION_LOGS", "from": "2026-01-01", "to": "2026-01-31" },
+          "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true }
         }
       `,
       inputSchema: {
@@ -191,8 +202,10 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Upload Dataset',
       description: dedent`
         Upload inline CSV or JSON content as a simulation dataset.
-        The content is uploaded to S3 and a path is returned.
-        Use this path in simulation start with dataset type UPLOADED.
+        The content is uploaded to S3 and a path is returned in the "path" field.
+
+        To use the returned path in lexq_simulation_start, set:
+          dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
 
         CSV example:
         user_id,payment_amount
@@ -209,10 +222,30 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           .describe('Filename with extension (.csv or .json)'),
       },
     },
-    async ({ content, filename }) =>
-      callApi('POST', 'analytics/datasets/upload', {
+    async ({ content, filename }) => {
+      const result = await callApi('POST', 'analytics/datasets/upload', {
         upload: { content, filename, fieldName: 'file' },
-      }),
+      });
+
+      if (!result.isError) {
+        try {
+          const uploaded = JSON.parse(result.content[0]?.text ?? '{}') as { path?: string };
+          if (uploaded.path) {
+            const dataset = { type: 'UPLOADED', source: 'S3_BUCKET', path: uploaded.path };
+            result.content.push({
+              type: 'text',
+              text:
+                'Ready-to-use dataset block for lexq_simulation_start:\n' +
+                JSON.stringify({ dataset }, null, 2),
+            });
+          }
+        } catch {
+          // path 추출 실패는 무시 — 업로드 원본 응답은 그대로 반환된다.
+        }
+      }
+
+      return result;
+    },
   );
 
   // ── Dataset Template ──
