@@ -10,6 +10,7 @@ import { registerRuleCommands } from './commands/rules';
 import { registerFactCommands } from './commands/facts';
 import { registerDeployCommands } from './commands/deploy';
 import { registerAnalyticsCommands } from './commands/analytics';
+import { registerProfileCommands } from './commands/profile';
 import { registerHistoryCommands } from './commands/history';
 import { registerReplayCommands } from './commands/replay';
 import { registerProvenanceCommands } from './commands/provenance';
@@ -67,6 +68,7 @@ export function createCli(): Command {
   // M3: Deployment & Analytics
   registerDeployCommands(program);
   registerAnalyticsCommands(program);
+  registerProfileCommands(program);
 
   // M3+: Execution History, Integrations, Failure Logs
   registerHistoryCommands(program);

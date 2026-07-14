@@ -8,6 +8,7 @@ import { registerRuleTools } from './tools/rules';
 import { registerFactTools } from './tools/facts';
 import { registerDeployTools } from './tools/deploy';
 import { registerAnalyticsTools } from './tools/analytics';
+import { registerProfileTools } from './tools/profile';
 import { registerReplayTools } from './tools/replay';
 import { registerHistoryTools } from './tools/history';
 import { registerProvenanceTools } from './tools/provenance';
@@ -30,6 +31,7 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
   registerFactTools(server, callApi);
   registerDeployTools(server, callApi);
   registerAnalyticsTools(server, callApi);
+  registerProfileTools(server, callApi);
   registerReplayTools(server, callApi);
   registerHistoryTools(server, callApi);
   registerProvenanceTools(server, callApi);

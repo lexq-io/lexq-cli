@@ -60,6 +60,16 @@ export type ApiExecutionStatus = (typeof ApiExecutionStatus)[number];
 export const ApiExecutionType = ['SINGLE_GROUP', 'SPECIFIC_VERSION', 'BATCH', 'COMPOSITE'] as const;
 export type ApiExecutionType = (typeof ApiExecutionType)[number];
 
+// ── Latency Profile ──
+export const ProfileCacheState = ['HIT', 'MISS'] as const;
+export type ProfileCacheState = (typeof ProfileCacheState)[number];
+
+export const ProfilePhase = ['CONDITION', 'ACTION'] as const;
+export type ProfilePhase = (typeof ProfilePhase)[number];
+
+export const BaselineStatus = ['OK', 'INSUFFICIENT_COHORT'] as const;
+export type BaselineStatus = (typeof BaselineStatus)[number];
+
 // ── Decision ──
 export const DecisionStatus = ['SELECTED', 'NO_MATCH', 'NOT_SELECTED', 'BLOCKED', 'ERROR'] as const;
 export type DecisionStatus = (typeof DecisionStatus)[number];
