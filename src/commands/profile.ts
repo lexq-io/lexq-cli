@@ -24,8 +24,9 @@ export function registerProfileCommands(program: Command): void {
 
         Slow-rule judgment is relative only: flagged = p50 ≥ 10× the median of
         per-rule p50s within the group. Absolute ms thresholds are intentionally
-        not supported. Percentiles are withheld (–) when n < 100; TOTAL is
-        recorded for every call, rule detail from a deterministic 1% sample.
+        not supported. Each percentile is withheld (–) unless n×(1−q) ≥ 3 —
+        p50 from n ≥ 6, p95 from n ≥ 60, p99 from n ≥ 300. TOTAL is recorded
+        on every call, rule detail from a deterministic 1% sample.
 
         Examples:
           $ lexq profile <groupId>

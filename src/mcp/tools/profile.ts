@@ -28,7 +28,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
       description:
         'Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cache state (HIT = compiled ruleset cache hit, MISS = deep-load + compile), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. ' +
         RELATIVE_THRESHOLD +
-        ' Every percentile is accompanied by its sample count n; percentiles are withheld (null) when n < 100, and baselines report INSUFFICIENT_COHORT when fewer than 3 rules qualify. Rule detail comes from a deterministic 1% sample of calls; TOTAL is recorded for every call. Defaults: last 24h, live version, cacheState HIT.',
+        ' Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ 3 (p50 needs n ≥ 6, p95 n ≥ 60, p99 n ≥ 300 — display gate, separate from the n ≥ 100 judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than 3 rules qualify. Rule detail comes from a deterministic 1% sample of calls; TOTAL is recorded for every call. Defaults: last 24h, live version, cacheState HIT.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z
@@ -58,7 +58,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Rule Latency Detail',
       description:
-        "Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (60s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) when n < 100. " +
+        "Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (60s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) unless n×(1−q) ≥ 3 (p50 n ≥ 6, p95 n ≥ 60, p99 n ≥ 300). " +
         RELATIVE_THRESHOLD,
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
