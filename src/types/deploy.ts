@@ -1,4 +1,11 @@
-import type { DeploymentType, PolicyGroupStatus, PolicyVersionStatus } from './enums';
+import type {
+  DeploymentScheduleStatus,
+  DeploymentType,
+  PolicyGroupStatus,
+  PolicyVersionStatus,
+  ScheduleCancelReason,
+  ScheduleFailureReason,
+} from './enums';
 
 // ══════════════════════════════════════════
 // Response — Summary
@@ -62,6 +69,7 @@ export interface DeploymentStatus {
 
   currentVersionId: string | null;
   currentVersionName: string | null;
+  currentVersionEffectiveTo: string | null;
 
   lastDeploymentType: DeploymentType | null;
   lastDeployedBy: string | null;
@@ -87,5 +95,39 @@ export interface RollbackRequest {
 }
 
 export interface UndeployRequest {
+  memo: string;
+}
+
+// ══════════════════════════════════════════
+// Response — Scheduled Deployment
+// ══════════════════════════════════════════
+
+export interface DeploymentSchedule {
+  id: string;
+  policyGroupId: string;
+  policyGroupName: string | null;
+  versionId: string;
+  versionNo: number | null;
+  scheduledFor: string;
+  scheduledBy: string;
+  scheduledByName: string;
+  memo: string | null;
+  status: DeploymentScheduleStatus;
+  executedAt: string | null;
+  executedDeploymentId: string | null;
+  canceledAt: string | null;
+  canceledByName: string | null;
+  canceledReason: ScheduleCancelReason | null;
+  failedReason: ScheduleFailureReason | null;
+  failureDetail: string | null;
+  createdAt: string;
+}
+
+// ══════════════════════════════════════════
+// Request — Scheduled Deployment
+// ══════════════════════════════════════════
+
+export interface ScheduleRequest {
+  versionId: string;
   memo: string;
 }

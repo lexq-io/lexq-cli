@@ -9,7 +9,17 @@ import {
   printUnregisteredFactsWarning,
   type OutputFormat,
 } from '@/lib/output';
-import type { DeploymentSummary, DeploymentDetail, DeploymentStatus } from '@/types/deploy';
+import type {
+  DeploymentSummary,
+  DeploymentDetail,
+  DeploymentStatus,
+  DeploymentSchedule,
+  PublishRequest,
+  DeployRequest,
+  RollbackRequest,
+  UndeployRequest,
+  ScheduleRequest,
+} from '@/types/deploy';
 
 export function registerDeployCommands(program: Command): void {
   const deploy = program
@@ -19,13 +29,16 @@ export function registerDeployCommands(program: Command): void {
       'after',
       dedent`
 
-        Lifecycle: Publish (DRAFT→ACTIVE) → Deploy (ACTIVE→LIVE) → Rollback / Undeploy
+        Lifecycle: Publish (DRAFT→ACTIVE) → Deploy or Schedule (ACTIVE→LIVE) → Rollback / Undeploy
 
         Commands:
           publish     Lock a DRAFT version (DRAFT → ACTIVE)
           live        Push an ACTIVE version to production traffic
           rollback    Revert to the previous deployed version
           undeploy    Remove the live version (stops all traffic)
+          schedule    Schedule an ACTIVE version to auto-deploy at its effective start
+          unschedule  Cancel the pending scheduled deployment
+          schedules   List scheduled deployments (all statuses)
           history     List deployment history with filters
           detail      Get deployment detail with integrity check
           overview    Show all groups' deployment status at a glance
@@ -66,7 +79,7 @@ export function registerDeployCommands(program: Command): void {
             baseUrl: globalOpts.baseUrl,
             dryRun: globalOpts.dryRun,
             verbose: globalOpts.verbose,
-            body: { memo: opts.memo },
+            body: { memo: opts.memo } satisfies PublishRequest,
           },
         );
         console.log(`✓ Version ${opts.versionId} published.`);
@@ -102,7 +115,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { versionId: opts.versionId, memo: opts.memo },
+          body: { versionId: opts.versionId, memo: opts.memo } satisfies DeployRequest,
         });
         console.log(`✓ Version ${opts.versionId} deployed to live.`);
       } catch (error) {
@@ -149,7 +162,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { memo: opts.memo },
+          body: { memo: opts.memo } satisfies RollbackRequest,
         });
         console.log(`✓ Group ${opts.groupId} rolled back.`);
       } catch (error) {
@@ -195,7 +208,7 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { memo: opts.memo },
+          body: { memo: opts.memo } satisfies UndeployRequest,
         });
         console.log(`✓ Group ${opts.groupId} undeployed.`);
       } catch (error) {
@@ -209,10 +222,7 @@ export function registerDeployCommands(program: Command): void {
     .command('history')
     .description('List deployment history')
     .option('--group-id <groupId>', 'Filter by policy group')
-    .option(
-      '--types <types>',
-      'Filter by types (comma-separated: PUBLISH,DEPLOY,ROLLBACK,UNDEPLOY)',
-    )
+    .option('--types <types>', 'Filter by types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)')
     .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
     .option('--end-date <date>', 'End date (yyyy-MM-dd)')
     .option('--page <number>', 'Page number', '0')
@@ -400,6 +410,153 @@ export function registerDeployCommands(program: Command): void {
           params: { baseVersionId: opts.base, targetVersionId: opts.target },
         });
         printJson(data);
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
+  // ── schedule ──
+  deploy
+    .command('schedule')
+    .description('Schedule an ACTIVE version to auto-deploy at its effective start')
+    .requiredOption('--group-id <groupId>', 'Policy group ID')
+    .requiredOption('--version-id <versionId>', 'Version ID to schedule')
+    .requiredOption('--memo <memo>', 'Schedule memo')
+    .addHelpText(
+      'after',
+      dedent`
+
+        The version must be ACTIVE with a future effective start date; the system
+        deploys it automatically at that time (within one scheduler tick, ≤60s).
+        One pending schedule per group. Manual deploy/rollback/undeploy, starting
+        an A/B test, or archiving the group cancels the pending schedule.
+
+        Example:
+          $ lexq deploy schedule --group-id <gid> --version-id <vid> --memo "Q4 pricing"
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+        const data = await apiRequest<DeploymentSchedule>(
+          'POST',
+          `policy-groups/${opts.groupId}/schedule`,
+          {
+            apiKey: globalOpts.apiKey,
+            baseUrl: globalOpts.baseUrl,
+            dryRun: globalOpts.dryRun,
+            verbose: globalOpts.verbose,
+            body: { versionId: opts.versionId, memo: opts.memo } satisfies ScheduleRequest,
+          },
+        );
+        console.log(`✓ Scheduled v${data.versionNo ?? '?'} for ${data.scheduledFor}.`);
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
+  // ── unschedule ──
+  deploy
+    .command('unschedule')
+    .description('Cancel the pending scheduled deployment for a group')
+    .requiredOption('--group-id <groupId>', 'Policy group ID')
+    .option('--force', 'Skip confirmation prompt')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Cancels the PENDING schedule only — the version itself is not affected.
+
+        Example:
+          $ lexq deploy unschedule --group-id <gid> --force
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+
+        if (!opts.force) {
+          const { createInterface } = await import('node:readline/promises');
+          const rl = createInterface({ input: process.stdin, output: process.stdout });
+          const answer = await rl.question(
+            `Cancel the pending scheduled deployment for group ${opts.groupId}? [y/N] `,
+          );
+          rl.close();
+          if (answer.toLowerCase() !== 'y') {
+            console.log('Canceled.');
+            return;
+          }
+        }
+
+        await apiRequest<void>('DELETE', `policy-groups/${opts.groupId}/schedule`, {
+          apiKey: globalOpts.apiKey,
+          baseUrl: globalOpts.baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
+        });
+        console.log(`✓ Scheduled deployment canceled for group ${opts.groupId}.`);
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
+  // ── schedules ──
+  deploy
+    .command('schedules')
+    .description('List scheduled deployments (all statuses, newest first)')
+    .option('--page <number>', 'Page number', '0')
+    .option('--size <number>', 'Page size', '20')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Example:
+          $ lexq deploy schedules --format table
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+        const format: OutputFormat = globalOpts.format ?? 'json';
+
+        const data = await apiRequest<PageResponse<DeploymentSchedule>>(
+          'GET',
+          'policy-groups/schedules',
+          {
+            apiKey: globalOpts.apiKey,
+            baseUrl: globalOpts.baseUrl,
+            dryRun: globalOpts.dryRun,
+            verbose: globalOpts.verbose,
+            params: { page: opts.page, size: opts.size },
+          },
+        );
+
+        if (format === 'table') {
+          printTable(
+            ['Status', 'Group', 'Version', 'Scheduled For', 'By', 'Result'],
+            data.content.map((s) => [
+              s.status,
+              s.policyGroupName ?? s.policyGroupId.substring(0, 8),
+              s.versionNo != null ? `v${s.versionNo}` : '–',
+              s.scheduledFor.substring(0, 16),
+              s.scheduledByName,
+              s.status === 'EXECUTED'
+                ? (s.executedAt?.substring(0, 16) ?? '–')
+                : s.status === 'CANCELED'
+                  ? (s.canceledReason ?? '–')
+                  : s.status === 'FAILED'
+                    ? (s.failedReason ?? '–')
+                    : '–',
+            ]),
+            { truncate: 20 },
+          );
+          console.log(`\n${data.totalElements} total · page ${data.pageNo + 1}/${data.totalPages}`);
+        } else {
+          printJson(data);
+        }
       } catch (error) {
         printError(error);
         process.exit(1);

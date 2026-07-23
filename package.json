@@ -29,7 +29,10 @@
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "knip": "knip",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "keywords": [
     "lexq",
@@ -57,15 +60,14 @@
     "cli-table3": "^0.6.5",
     "commander": "^13.1.0",
     "dedent": "^1.7.2",
-    "ora": "^8.2.0",
-    "prettier": "^3.8.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
-    "@types/dedent": "^0.7.2",
     "@types/node": "^22.12.0",
     "eslint": "^10.2.0",
+    "knip": "^6.29.0",
+    "prettier": "^3.9.6",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.24.0"

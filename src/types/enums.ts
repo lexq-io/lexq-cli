@@ -50,7 +50,8 @@ export const ConflictResolutionStrategy = [
 export type ConflictResolutionStrategy = (typeof ConflictResolutionStrategy)[number];
 
 // ── Deployment ──
-export const DeploymentType = ['PUBLISH', 'DEPLOY', 'ROLLBACK', 'UNDEPLOY'] as const;
+// PUBLISH removed — publishing is a qualification event, not a deployment (server enum dropped it).
+export const DeploymentType = ['DEPLOY', 'ROLLBACK', 'UNDEPLOY'] as const;
 export type DeploymentType = (typeof DeploymentType)[number];
 
 // ── Execution ──
@@ -140,6 +141,7 @@ export const TaskType = [
   'IMAGE_PROCESSING',
   'DAILY_SETTLEMENT',
   'PLATFORM_WEBHOOK',
+  'SCHEDULED_DEPLOYMENT',
 ] as const;
 export type TaskType = (typeof TaskType)[number];
 
@@ -149,6 +151,8 @@ export const PlatformEventType = [
   'DEPLOYED',
   'ROLLED_BACK',
   'UNDEPLOYED',
+  'DEPLOY_SCHEDULED',
+  'DEPLOY_SCHEDULE_CANCELED',
 ] as const;
 export type PlatformEventType = (typeof PlatformEventType)[number];
 
@@ -163,3 +167,24 @@ export type SourceKind = (typeof SourceKind)[number];
 
 export const SkipReason = ['ALREADY_EXISTS', 'INVALID_KEY', 'RESERVED'] as const;
 export type SkipReason = (typeof SkipReason)[number];
+
+// ── Scheduled Deployment ──
+export const DeploymentScheduleStatus = ['PENDING', 'EXECUTED', 'CANCELED', 'FAILED'] as const;
+export type DeploymentScheduleStatus = (typeof DeploymentScheduleStatus)[number];
+
+export const ScheduleCancelReason = [
+  'MANUAL_DEPLOY',
+  'ROLLBACK',
+  'UNDEPLOY',
+  'AB_TEST_STARTED',
+  'GROUP_ARCHIVED',
+  'USER_REQUEST',
+] as const;
+export type ScheduleCancelReason = (typeof ScheduleCancelReason)[number];
+
+export const ScheduleFailureReason = [
+  'HASH_MISMATCH',
+  'VERSION_NOT_ACTIVE',
+  'DEPLOY_ERROR',
+] as const;
+export type ScheduleFailureReason = (typeof ScheduleFailureReason)[number];

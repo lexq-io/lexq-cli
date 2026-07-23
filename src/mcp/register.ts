@@ -44,3 +44,4 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
 // Re-exports for external consumers (lexq-mcp)
 export type { CallApi, McpToolResult } from './tools/_shared';
 export { paginationParams, formatUnregisteredFactWarning } from './tools/_shared';
+export { ApiError } from '@/lib/api-client';

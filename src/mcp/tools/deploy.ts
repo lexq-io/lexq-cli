@@ -25,7 +25,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Deploy to Live',
       description:
-        'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.',
+        'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to deploy'),
@@ -73,6 +73,55 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
   );
 
   server.registerTool(
+    'lexq_deploy_schedule',
+    {
+      title: 'Schedule Deployment',
+      description:
+        'Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).',
+      inputSchema: {
+        groupId: z.string().uuid().describe('Policy group ID'),
+        versionId: z
+          .string()
+          .uuid()
+          .describe('ACTIVE version ID with a future effective start date'),
+        memo: z.string().min(1).describe('Schedule memo (required)'),
+      },
+    },
+    async ({ groupId, versionId, memo }) =>
+      callApi('POST', `policy-groups/${groupId}/schedule`, {
+        body: { versionId, memo },
+      }),
+  );
+
+  server.registerTool(
+    'lexq_deploy_unschedule',
+    {
+      title: 'Cancel Scheduled Deployment',
+      description:
+        'Cancel the pending scheduled deployment for a group. The version itself is not affected. Fails with P-039 if no pending schedule exists.',
+      inputSchema: {
+        groupId: z.string().uuid().describe('Policy group ID'),
+      },
+    },
+    async ({ groupId }) => callApi('DELETE', `policy-groups/${groupId}/schedule`),
+  );
+
+  server.registerTool(
+    'lexq_deploy_schedules',
+    {
+      title: 'List Scheduled Deployments',
+      description:
+        'List scheduled deployments across all groups (all statuses: PENDING, EXECUTED, CANCELED, FAILED), newest first.',
+      inputSchema: {
+        page: z.number().int().min(0).default(0).describe('Page number'),
+        size: z.number().int().min(1).max(100).default(20).describe('Page size'),
+      },
+    },
+    async ({ page, size }) =>
+      callApi('GET', 'policy-groups/schedules', { params: paginationParams(page, size) }),
+  );
+
+  server.registerTool(
     'lexq_deploy_history',
     {
       title: 'Deployment History',
@@ -84,9 +133,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
         types: z
           .string()
           .optional()
-          .describe(
-            'Filter by deployment types (comma-separated: PUBLISH,DEPLOY,ROLLBACK,UNDEPLOY)',
-          ),
+          .describe('Filter by deployment types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)'),
         startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
         endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
       },
