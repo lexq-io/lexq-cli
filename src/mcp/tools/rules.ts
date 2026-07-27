@@ -53,8 +53,23 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         defined (non-blocking, version-wide) — use it to decide what to register.
 
         Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
-        Operators: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
         Value types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
+        
+        Operators are constrained by the LEFT fact's type (from lexq_facts_list). Using one outside
+        its type is rejected by the server — check the fact type before choosing an operator.
+        - STRING fact:       EQUALS, NOT_EQUALS, CONTAINS, IN, NOT_IN
+        - NUMBER fact:       EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, IN, NOT_IN
+        - BOOLEAN fact:      EQUALS, NOT_EQUALS
+        - LIST_* fact:       HAS_ANY, HAS_ALL, HAS_NONE (only these)
+
+        HAS_* query list-typed facts. Value is always an array whose element type matches the fact:
+        - HAS_ANY: fact has at least one of the given values
+        - HAS_ALL: fact has all of the given values
+        - HAS_NONE: fact has none of the given values
+        Example: { "type": "SINGLE", "field": "user_tags", "operator": "HAS_ANY", "value": ["VIP","GOLD"], "valueType": "LIST_STRING" }
+
+        Do NOT use CONTAINS on a list fact — CONTAINS is substring match on STRING facts only.
+        IN is the mirror of HAS_*: IN takes a scalar fact with a list value; HAS_* takes lists on both sides.
 
         Actions: [{ type, parameters }]
 
@@ -63,14 +78,14 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         - INCREMENT_FACT: { targetVar: string, method: "PERCENTAGE"|"AMOUNT", refVar?: string (required when PERCENTAGE), rate?: number (when PERCENTAGE), value?: number (when AMOUNT), rounding?: RoundingOption } targetVar (accumulation target) must exist at execution; refVar (PERCENTAGE source) must exist when method is PERCENTAGE. Each is supplied as an input fact or written by a prior action in this rule — a missing required fact throws (no 0 default). Note: external system call (e.g. point system sync) is NOT a primitive responsibility. Compose [INCREMENT_FACT, EMIT_EVENT] chain instead.
         - EMIT_EVENT: { integrationId: uuid, eventPayload: object (Map<string,unknown>, ≥1 entry) } eventPayload is passed through to the integration provider as-is. Domain-specific keys (couponId, ticketId, etc.) are routed by the provider, not validated by the engine.
         - BLOCK: { reason: string }
-        - EMIT_NOTIFICATION: { integrationId: uuid, targetVar: string, notificationPayload: object (Map<string,unknown>, ≥1 entry) } targetVar identifies the recipient fact (e.g. phone_number / email / device_token). notificationPayload (channel, templateId, body, variables, etc.) is passed through to the provider.
+        - EMIT_NOTIFICATION: { integrationId: uuid, targetVar: string, notificationPayload: object (Map<string,unknown>, ≥1 entry) } targetVar identifies the recipient fact (e.g. phone_number / email / device_token) and is REQUIRED — the named fact must be present in the request or the action throws. (Contrast with ADD_TAG, where targetVar is an optional write target that is created if absent.)
         - EMIT_WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
           Platform examples:
             Slack: { "text": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
             Discord: { "content": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
             Generic: { "event": "rule_matched", "rule": "{{ruleName}}", "amount": "{{output.payment_amount}}" }
         - SET_FACT: { key: string, value: string|number|boolean }
-        - ADD_TAG: { tag: string, targetVar: string }
+        - ADD_TAG: { tag: string, targetVar?: string (defaults to "user_tags") } Appends tag to a LIST_STRING fact, creating it if absent. Adding an existing tag is a no-op (idempotent). Read tags back with HAS_ANY / HAS_ALL / HAS_NONE.
         
         RoundingOption (optional, MUTATE_FACT / INCREMENT_FACT only): { scale: integer (0..16), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,

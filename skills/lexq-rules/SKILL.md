@@ -70,17 +70,53 @@ Conditions use a tree structure with two node types: `SINGLE` and `GROUP`.
 
 ### Operators
 
-| Operator                | Types          | Description                       |
-|-------------------------|----------------|-----------------------------------|
-| `EQUALS`                | all            | Exact match                       |
-| `NOT_EQUALS`            | all            | Negation                          |
-| `GREATER_THAN`          | NUMBER         | `>`                               |
-| `GREATER_THAN_OR_EQUAL` | NUMBER         | `>=`                              |
-| `LESS_THAN`             | NUMBER         | `<`                               |
-| `LESS_THAN_OR_EQUAL`    | NUMBER         | `<=`                              |
-| `CONTAINS`              | STRING         | Substring match                   |
-| `IN`                    | STRING, NUMBER | Value is in the provided list     |
-| `NOT_IN`                | STRING, NUMBER | Value is not in the provided list |
+Operators are constrained by the **left fact's type**. Using one outside its type is rejected
+by the server — check `lexq facts list` before choosing.
+
+| Fact type                     | Allowed operators                                                                                                  |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `STRING`                      | `EQUALS`, `NOT_EQUALS`, `CONTAINS`, `IN`, `NOT_IN`                                                                 |
+| `NUMBER`                      | `EQUALS`, `NOT_EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `LESS_THAN`, `LESS_THAN_OR_EQUAL`, `IN`, `NOT_IN` |
+| `BOOLEAN`                     | `EQUALS`, `NOT_EQUALS`                                                                                             |
+| `LIST_STRING` / `LIST_NUMBER` | `HAS_ANY`, `HAS_ALL`, `HAS_NONE`                                                                                   |
+
+| Operator                                                                      | Description                                                | `value` |
+|-------------------------------------------------------------------------------|------------------------------------------------------------|---------|
+| `EQUALS` / `NOT_EQUALS`                                                       | Exact match / negation                                     | scalar  |
+| `GREATER_THAN` / `GREATER_THAN_OR_EQUAL` / `LESS_THAN` / `LESS_THAN_OR_EQUAL` | Numeric comparison                                         | scalar  |
+| `CONTAINS`                                                                    | **Substring** match on a STRING fact — not list membership | scalar  |
+| `IN` / `NOT_IN`                                                               | Scalar fact is (not) in the given list                     | array   |
+| `HAS_ANY`                                                                     | List fact has **at least one** of the given values         | array   |
+| `HAS_ALL`                                                                     | List fact has **all** of the given values                  | array   |
+| `HAS_NONE`                                                                    | List fact has **none** of the given values                 | array   |
+
+**`IN` vs `HAS_*` — mirrors of each other.** This is the most common mistake here:
+
+```json
+// scalar fact, list value
+{
+  "field": "region",
+  "operator": "IN",
+  "value": [
+    "KR",
+    "JP"
+  ],
+  "valueType": "LIST_STRING"
+}
+
+// list fact, list value
+{
+  "field": "user_tags",
+  "operator": "HAS_ANY",
+  "value": [
+    "VIP",
+    "GOLD"
+  ],
+  "valueType": "LIST_STRING"
+}
+```
+
+Do **not** use `CONTAINS` on a list fact — that idiom works in some rule engines but is rejected here.
 
 ### Value Types
 
@@ -145,10 +181,15 @@ Each rule can have multiple actions. Actions fire sequentially.
 | `INCREMENT_FACT`    | Increment a fact (cumulative add)                        | `targetVar`, `refVar`, `method`, `value` or `rate`, `rounding`                                      |
 | `EMIT_EVENT`        | Emit an event to an external integration (coupons, etc.) | `integrationId`, `eventPayload` (Map)                                                               |
 | `BLOCK`             | Block the transaction                                    | `reason`, `code`                                                                                    |
-| `EMIT_NOTIFICATION` | Send a notification                                      | `integrationId`, `target`, `notificationPayload` (Map)                                              |
+| `EMIT_NOTIFICATION` | Send a notification                                      | `integrationId`, `targetVar`, `notificationPayload` (Map)                                           |
 | `EMIT_WEBHOOK`      | Call an external URL                                     | `url`, `payloadTemplate`                                                                            |
 | `SET_FACT`          | Set a fact value (literal assignment)                    | `key`, `value`                                                                                      |
-| `ADD_TAG`           | Add a tag to the result                                  | `tag`                                                                                               |
+| `ADD_TAG`           | Append a tag to a list fact                              | `tag`, `targetVar` (optional, default `user_tags`)                                                  |
+
+**Two different `targetVar` meanings.** `EMIT_NOTIFICATION.targetVar` is a **read** — it names the
+fact holding the recipient (`phone_number`, `email`, `device_token`), and the action throws if that
+fact is absent from the request. `ADD_TAG.targetVar` is a **write** — the list is created if absent,
+and adding a tag that is already present is a no-op.
 
 ### Action Example: 10% Discount via MUTATE_FACT
 
@@ -306,3 +347,4 @@ Before creating rules, always:
 2. **Confirm the version is DRAFT:** `lexq versions get --group-id <gid> --id <vid>` → status must be `DRAFT`
 3. **Use exact fact keys** from the fact definitions (snake_case, case-sensitive)
 4. **Match value types** — a fact defined as `NUMBER` must receive numeric values, not strings
+5. **Match the operator to the fact type** — list-typed facts accept only `HAS_ANY` / `HAS_ALL` / `HAS_NONE`

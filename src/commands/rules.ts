@@ -138,9 +138,27 @@ export function registerRuleCommands(program: Command): void {
               ]
             }'
 
-        Condition Operators:
-          EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL,
-          LESS_THAN, LESS_THAN_OR_EQUAL, CONTAINS, IN, NOT_IN
+        Condition Operators (by fact type):
+          STRING        EQUALS, NOT_EQUALS, CONTAINS, IN, NOT_IN
+          NUMBER        EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL,
+                        LESS_THAN, LESS_THAN_OR_EQUAL, IN, NOT_IN
+          BOOLEAN       EQUALS, NOT_EQUALS
+          LIST_STRING   HAS_ANY, HAS_ALL, HAS_NONE
+          LIST_NUMBER   HAS_ANY, HAS_ALL, HAS_NONE
+
+          Using an operator outside its fact type is rejected by the server.
+
+        List-typed facts (HAS_*) — the value is always an array:
+          HAS_ANY    fact has at least one of the given values
+          HAS_ALL    fact has all of the given values
+          HAS_NONE   fact has none of the given values
+
+          Example:
+            { "type": "SINGLE", "field": "user_tags", "operator": "HAS_ANY",
+              "value": ["VIP", "GOLD"], "valueType": "LIST_STRING" }
+
+          CONTAINS is substring match on STRING facts, not list membership.
+          IN is the mirror of HAS_*: scalar fact, list value.
 
         Action Types:
           MUTATE_FACT, INCREMENT_FACT, EMIT_EVENT, BLOCK, EMIT_NOTIFICATION, EMIT_WEBHOOK, SET_FACT, ADD_TAG

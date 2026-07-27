@@ -256,7 +256,7 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
       "type": "EMIT_NOTIFICATION",
       "parameters": {
         "integrationId": "<notification-integration-uuid>",
-        "target": "user_id",
+        "targetVar": "user_id",
         "notificationPayload": {
           "channel": "PUSH",
           "templateId": "welcome_points"
@@ -503,3 +503,72 @@ lexq analytics simulation start --json '{
 # 6. If simulation passes, deploy
 lexq deploy live --group-id <gid> --version-id <newVid> --memo "Migration complete"
 ```
+
+---
+
+## Recipe 11: Tag-Based Segmentation
+
+**Goal:** Write tags in one rule, branch on them in another.
+
+`user_tags` is a `LIST_STRING` fact seeded automatically for every tenant. `ADD_TAG` appends to
+it; `HAS_ANY` / `HAS_ALL` / `HAS_NONE` read it.
+
+```bash
+# Tags are written by earlier rules (or supplied as input facts).
+lexq rules create --group-id <gid> --version-id <vid> --json '{
+  "name": "Tag High-Value Customers",
+  "condition": {
+    "type": "SINGLE", "field": "lifetime_value", "operator": "GREATER_THAN_OR_EQUAL",
+    "value": 1000000, "valueType": "NUMBER"
+  },
+  "actions": [
+    { "type": "ADD_TAG", "parameters": { "tag": "high_value" } }
+  ]
+}'
+
+# Branch on any one of several tags
+lexq rules create --group-id <gid> --version-id <vid> --json '{
+  "name": "Priority Support for VIP or High Value",
+  "condition": {
+    "type": "SINGLE", "field": "user_tags", "operator": "HAS_ANY",
+    "value": ["VIP", "high_value"], "valueType": "LIST_STRING"
+  },
+  "actions": [{ "type": "SET_FACT", "parameters": { "key": "support_tier", "value": "PRIORITY" } }]
+}'
+
+# Require every tag
+lexq rules create --group-id <gid> --version-id <vid> --json '{
+  "name": "Beta Feature for Verified VIP",
+  "condition": {
+    "type": "SINGLE", "field": "user_tags", "operator": "HAS_ALL",
+    "value": ["VIP", "verified"], "valueType": "LIST_STRING"
+  },
+  "actions": [{ "type": "SET_FACT", "parameters": { "key": "beta_enabled", "value": true } }]
+}'
+
+# Exclude tagged users
+lexq rules create --group-id <gid> --version-id <vid> --json '{
+  "name": "Promo Excludes Fraud Review",
+  "condition": {
+    "type": "SINGLE", "field": "user_tags", "operator": "HAS_NONE",
+    "value": ["fraud_review", "suspended"], "valueType": "LIST_STRING"
+  },
+  "actions": [{ "type": "MUTATE_FACT", "parameters": {
+    "refVar": "payment_amount", "method": "PERCENTAGE", "operator": "SUB", "rate": 5,
+    "rounding": { "mode": "HALF_UP", "scale": 0 }
+  }}]
+}'
+
+# Verify
+lexq analytics dry-run --version-id <vid> --debug --mock --json '{
+  "facts": { "user_tags": ["VIP", "verified"], "payment_amount": 100000, "lifetime_value": 500000 }
+}'
+```
+
+**Notes**
+
+- The `value` is always an array, even for a single tag: `"value": ["VIP"]`.
+- `ADD_TAG` writes to `user_tags` by default. Pass `targetVar` to append to a different `LIST_STRING` fact. The list is
+  created if absent, and re-adding an existing tag is a no-op.
+- An empty array makes `HAS_ALL` and `HAS_NONE` always true — they never look at the fact.
+- Rules fire in priority order, so a tag written by rule 0 is visible to rule 1.

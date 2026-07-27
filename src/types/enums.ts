@@ -16,6 +16,11 @@ export const ConditionOperator = [
   'CONTAINS',
   'IN',
   'NOT_IN',
+  // LIST-typed facts only (CONVENTIONS §26). Mirror of IN/NOT_IN:
+  // IN takes a scalar fact and a list value; HAS_* takes a list on both sides.
+  'HAS_ANY',
+  'HAS_ALL',
+  'HAS_NONE',
 ] as const;
 export type ConditionOperator = (typeof ConditionOperator)[number];
 

@@ -111,7 +111,7 @@ lexq analytics dry-run --version-id <vid> --debug --mock --json '{
         "ruleId": "...",
         "ruleName": "VIP 10% Discount",
         "matched": true,
-        "matchExpression": "(customer_tier == VIP AND payment_amount >= 100000)",
+        "matchExpression": "(customer_tier == 'VIP') && (payment_amount >= 100000)",
         "generatedActions": [
           {
             "type": "MUTATE_FACT",
@@ -143,26 +143,46 @@ lexq analytics dry-run --version-id <vid> --debug --mock --json '{
 
 ### Reading Decision Traces
 
-| Status          | Meaning                                     |
-|-----------------|---------------------------------------------|
-| `SELECTED`      | Rule matched and its actions fired          |
-| `NO_MATCH`      | Condition did not match the input           |
-| `NOT_SELECTED`  | Matched but excluded by conflict resolution |
-| `BLOCKED_MUTEX` | Blocked by mutex group constraint           |
-| `LOST_PRIORITY` | Lost to a higher-priority rule              |
-| `DROPPED_LIMIT` | Execution limit reached                     |
-| `ERROR`         | Rule evaluation failed                      |
+Each trace carries a `status` (what happened) and a `reasonCode` (why).
+
+| Status         | Meaning                                            |
+|----------------|----------------------------------------------------|
+| `SELECTED`     | Rule matched and its actions fired                 |
+| `NO_MATCH`     | Condition did not match, or could not be evaluated |
+| `NOT_SELECTED` | Matched but excluded by conflict resolution        |
+| `BLOCKED`      | Blocked by a mutex group or group activation limit |
+| `ERROR`        | Action execution failed                            |
 
 ### Reading Reason Codes
 
-| Code                  | Meaning                                                  |
-|-----------------------|----------------------------------------------------------|
-| `FINAL_WINNER`        | Successfully executed                                    |
-| `CONDITION_MISMATCH`  | Input facts didn't satisfy the condition                 |
-| `MUTEX_PRIORITY_LOST` | Another rule in the same mutex group had higher priority |
-| `MUTEX_LIMIT_REACHED` | Mutex group's max rules already fired                    |
-| `GROUP_LIMIT_REACHED` | Group's `executionLimit` reached                         |
-| `ACTION_ERROR`        | Action execution failed (e.g., webhook timeout)          |
+| Code                     | Meaning                                                  |
+|--------------------------|----------------------------------------------------------|
+| `FINAL_WINNER`           | Successfully executed                                    |
+| `CONDITION_MISMATCH`     | Condition not satisfied, or could not be evaluated       |
+| `EFFECTIVE_DATE_INVALID` | Outside the version's effective date range               |
+| `MUTEX_PRIORITY_LOST`    | Another rule in the same mutex group had higher priority |
+| `MUTEX_LIMIT_REACHED`    | Mutex group's max rules already fired                    |
+| `GROUP_PRIORITY_LOST`    | Another group in the same activation group won           |
+| `GROUP_LIMIT_REACHED`    | Group's `executionLimit` reached                         |
+| `ACTION_ERROR`           | Action execution failed (e.g., webhook timeout)          |
+| `ENGINE_ERROR`           | Internal engine failure                                  |
+
+#### `reasonDetail` on unevaluable conditions
+
+`CONDITION_MISMATCH` covers two different things, distinguished by `reasonDetail`:
+
+- **empty** — the condition was evaluated and did not match
+- **`Evaluation error: <code>`** — the condition could not be evaluated at all
+
+| Code                    | Meaning                                                            |
+|-------------------------|--------------------------------------------------------------------|
+| `FACT_NOT_PROVIDED`     | The rule references a fact absent from the request                 |
+| `FACT_TYPE_MISMATCH`    | The fact's runtime type does not match the condition               |
+| `UNSUPPORTED_FACT_TYPE` | Operator not valid for the fact's type (e.g. `CONTAINS` on a list) |
+| `MALFORMED_RULE`        | The stored rule is structurally invalid                            |
+
+A rule from another group referencing facts you did not send yields `FACT_NOT_PROVIDED` — this
+is normal, not an error.
 
 ## 3. Dry Run Compare
 
