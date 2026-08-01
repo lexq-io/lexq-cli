@@ -35,7 +35,7 @@ lexq groups list --api-key lexq_us_override_key
 | **Policy Version**  | A snapshot of rules within a group. Follows DRAFT → ACTIVE → ARCHIVED lifecycle.                                 | Git branch / commit    |
 | **Policy Rule**     | A condition + actions pair within a version. Evaluated in priority order.                                        | if-then statement      |
 | **Fact Definition** | Input schema — declares available variables and their types (STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER). | Function parameter     |
-| **Deployment**      | Promotes a PUBLISHED version to live traffic. Supports rollback.                                                 | Production release     |
+| **Deployment**      | Promotes an ACTIVE version to live traffic. Supports rollback and scheduled arming.                              | Production release     |
 | **Dry Run**         | Tests a single input against a DRAFT or ACTIVE version without side effects.                                     | Unit test              |
 | **Simulation**      | Batch-tests a version against historical execution data. Compares with a baseline.                               | Integration test suite |
 
@@ -50,15 +50,15 @@ This is the typical lifecycle. **Always follow this order:**
 4. lexq rules create           → Add rules with conditions + actions
 5. lexq analytics dry-run      → Test with sample facts (validate before publish)
 6. lexq deploy publish         → DRAFT → ACTIVE (locks the version)
-7. lexq deploy live            → Deploy ACTIVE version to production
-8. lexq analytics simulation   → Run batch comparison against baseline (optional)
+7. lexq analytics simulation   → Batch-test against historical data with a baseline (optional)
+8. lexq deploy live            → Deploy ACTIVE version to production
 ```
 
 ### Critical Ordering Constraints
 
 - **Cannot create rules without a DRAFT version.** Create the version first.
 - **Cannot publish without at least one rule.** Add rules before publishing.
-- **Cannot modify a published version.** Clone it to create a new DRAFT if changes are needed.
+  **Cannot modify an ACTIVE version.** Clone it to create a new DRAFT if changes are needed.
 - **Cannot deploy a DRAFT version.** Must publish first (DRAFT → ACTIVE).
 - **Always run `lexq analytics dry-run` before publishing.** This is your safety net.
 
@@ -80,19 +80,24 @@ Every command accepts these flags:
 
 ## Command Groups
 
-| Group          | Commands                                                                                   | Description                     |
-|----------------|--------------------------------------------------------------------------------------------|---------------------------------|
-| `auth`         | `login`, `logout`, `whoami`                                                                | Authentication                  |
-| `status`       | (root)                                                                                     | API health check                |
-| `groups`       | `list`, `get`, `create`, `update`, `delete` + `ab-test start\|stop\|adjust`                | Policy group CRUD + A/B testing |
-| `versions`     | `list`, `get`, `create`, `update`, `delete`, `clone`                                       | Version CRUD                    |
-| `rules`        | `list`, `get`, `create`, `update`, `delete`, `reorder`, `toggle`                           | Rule CRUD                       |
-| `facts`        | `list`, `create`, `update`, `delete`                                                       | Fact definition CRUD            |
-| `deploy`       | `publish`, `live`, `rollback`, `undeploy`, `history`, `detail`, `overview`                 | Deployment lifecycle            |
-| `analytics`    | `dry-run`, `dry-run-compare`, `requirements`, `simulation start/status/list/cancel/export` | Testing & analysis              |
-| `history`      | `list`, `get`, `stats`                                                                     | Execution history               |
-| `integrations` | `list`, `get`, `save`, `delete`, `config-spec`                                             | External integrations           |
-| `logs`         | `list`, `get`, `action`, `bulk-action`                                                     | Failure log management          |
+| Group                   | Commands                                                                                                                   | Description                     |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------|---------------------------------|
+| `auth`                  | `login`, `logout`, `whoami`                                                                                                | Authentication                  |
+| `status`                | (root)                                                                                                                     | API health check                |
+| `groups`                | `list`, `get`, `create`, `update`, `delete`, `reorder` + `ab-test start\|stop\|adjust`                                     | Policy group CRUD + A/B testing |
+| `versions`              | `list`, `get`, `create`, `update`, `delete`, `clone`                                                                       | Version CRUD                    |
+| `rules`                 | `list`, `get`, `create`, `update`, `delete`, `reorder`, `toggle`                                                           | Rule CRUD                       |
+| `facts`                 | `list`, `create`, `update`, `delete`                                                                                       | Fact definition CRUD            |
+| `domain-templates`      | `list`, `preview`, `apply`                                                                                                 | Industry starter packs          |
+| `deploy`                | `publish`, `live`, `rollback`, `undeploy`, `history`, `detail`, `overview`, `schedule`, `unschedule`, `schedules`          | Deployment lifecycle            |
+| `analytics`             | `dry-run`, `dry-run-compare`, `requirements`, `simulation start\|status\|list\|cancel\|export`, `dataset upload\|template` | Testing & analysis              |
+| `profile`               | (root, takes `<groupId>`)                                                                                                  | Per-rule latency profile        |
+| `history`               | `list`, `get`, `stats`                                                                                                     | Execution history               |
+| `replay`                | `decision`, `start`, `list`, `get`, `cancel`                                                                               | Decision replay                 |
+| `provenance`            | `get`, `reveal-audits`                                                                                                     | Decision provenance + PII audit |
+| `logs`                  | `list`, `get`, `action`, `bulk-action`                                                                                     | Failure log management          |
+| `webhook-subscriptions` | `list`, `get`, `save`, `delete`, `test`                                                                                    | Platform event webhooks         |
+| `serve`                 | `--mcp`                                                                                                                    | MCP server over stdio           |
 
 ## Pagination
 
@@ -120,19 +125,27 @@ API errors return:
 {
   "result": "ERROR",
   "message": "Policy version not found.",
-  "code": "ENTITY_NOT_FOUND"
+  "errorCode": "P-002"
 }
 ```
 
-**Common error codes and what to do:**
+`errorCode` is a stable identifier of the form `<domain>-<number>`. `message` is the
+human-readable explanation and is localized by `Accept-Language`. **Branch on `errorCode`, never
+on `message`.**
 
-| Code               | Meaning                        | Action                                                                          |
-|--------------------|--------------------------------|---------------------------------------------------------------------------------|
-| `ENTITY_NOT_FOUND` | Resource doesn't exist         | Verify the ID. Run the corresponding `list` command.                            |
-| `INVALID_INPUT`    | Validation failed              | Check required fields. Run `lexq analytics requirements` for fact requirements. |
-| `CANNOT_MODIFY`    | Version is not DRAFT           | Clone the version to create a new DRAFT: `lexq versions clone`                  |
-| `EMPTY_RULES`      | Publish attempted with 0 rules | Add at least one rule before publishing.                                        |
-| `UNAUTHORIZED`     | Invalid or missing API key     | Run `lexq auth login` with a valid key.                                         |
+Prefixes you will encounter through the CLI:
+
+| Prefix | Domain                | Example cause                                  |
+|--------|-----------------------|------------------------------------------------|
+| `C-`   | Common validation     | Malformed or missing request field             |
+| `A-`   | Auth                  | Invalid or missing API key                     |
+| `P-`   | Policy group/version  | Not found, wrong lifecycle state, already live |
+| `ACT-` | Action parameters     | Missing or invalid action parameter            |
+| `FD-`  | Fact definitions      | Duplicate key, system fact immutable           |
+| `AN-`  | Analytics             | Dry-run or simulation failure                  |
+| `FL-`  | Failure logs          | Log not found                                  |
+| `WH-`  | Webhook subscriptions | Invalid URL, delivery failure                  |
+| `I-`   | Idempotency           | Duplicate idempotency key                      |
 
 ## Important Conventions
 
@@ -140,6 +153,13 @@ API errors return:
 2. **IDs are UUIDs.** Always copy the full ID from list/create output — do not guess.
 3. **Dates use ISO 8601.** Example: `2025-01-01T00:00:00Z`. Time zone is UTC.
 4. **JSON bodies via `--json`.** Most create/update commands accept `--json '<body>'` for the request body.
-5. **File input via `--file`.** Analytics commands accept `--file path/to/body.json` as an alternative to `--json`.
+5. **File input via `--file`.** `analytics dry-run`, `dry-run-compare`, `simulation start` accept
+   `--file path/to/body.json` as an alternative to `--json`. `analytics dataset upload` requires
+   `--file` (CSV or JSON). `simulation export` and `dataset template` write output with `--output`.
 6. **Confirmation prompts.** Destructive operations (delete, cancel, undeploy) prompt for confirmation. Use `--force` to
    skip in automation.
+
+## Skill Formatting
+
+Catalog-style skills (`lexq-recipes`) separate independent items with `---`. Narrative skills do
+not use it at all. Never mix both in one file.

@@ -27,17 +27,7 @@ export type ConditionOperator = (typeof ConditionOperator)[number];
 export const LogicalOperator = ['AND', 'OR'] as const;
 export type LogicalOperator = (typeof LogicalOperator)[number];
 
-export const ActionType = [
-  'MUTATE_FACT',
-  'INCREMENT_FACT',
-  'EMIT_EVENT',
-  'BLOCK',
-  'EMIT_NOTIFICATION',
-  'EMIT_WEBHOOK',
-  'SET_FACT',
-  'ADD_TAG',
-  'UNKNOWN',
-] as const;
+export const ActionType = ['MUTATE_FACT', 'BLOCK', 'SET_FACT'] as const;
 export type ActionType = (typeof ActionType)[number];
 
 export const ValueType = ['STRING', 'NUMBER', 'BOOLEAN', 'LIST_STRING', 'LIST_NUMBER'] as const;
@@ -47,11 +37,7 @@ export type ValueType = (typeof ValueType)[number];
 export const ConflictResolutionMode = ['NONE', 'EXCLUSIVE', 'MAX_N'] as const;
 export type ConflictResolutionMode = (typeof ConflictResolutionMode)[number];
 
-export const ConflictResolutionStrategy = [
-  'FIRST_MATCH',
-  'HIGHEST_PRIORITY',
-  'MAX_BENEFIT',
-] as const;
+export const ConflictResolutionStrategy = ['HIGHEST_PRIORITY'] as const;
 export type ConflictResolutionStrategy = (typeof ConflictResolutionStrategy)[number];
 
 // ── Deployment ──
@@ -110,44 +96,14 @@ export type SimulationMetricType = (typeof SimulationMetricType)[number];
 export const Role = ['SYSTEM_MANAGER', 'ADMIN', 'USER', 'VIEWER', 'API_CLIENT'] as const;
 export type Role = (typeof Role)[number];
 
-// ── Integration ──
-export const IntegrationType = [
-  'COUPON',
-  'POINT',
-  'NOTIFICATION',
-  'CRM',
-  'MESSENGER',
-  'WEBHOOK',
-] as const;
-export type IntegrationType = (typeof IntegrationType)[number];
-
 // ── Failure Log ──
 export const FailureStatus = ['PENDING', 'RESOLVED', 'IGNORED'] as const;
 export type FailureStatus = (typeof FailureStatus)[number];
 
-export const FailureAction = ['RETRY', 'IGNORE', 'RESOLVE'] as const;
+export const FailureAction = ['IGNORE', 'RESOLVE'] as const;
 export type FailureAction = (typeof FailureAction)[number];
 
-export const TaskCategory = ['INTEGRATION', 'INTERNAL'] as const;
-export type TaskCategory = (typeof TaskCategory)[number];
-
-export const TaskType = [
-  // Integration
-  'COUPON_ISSUE',
-  'COUPON_CANCEL',
-  'POINT_EARN',
-  'POINT_USE',
-  'POINT_REFUND',
-  'NOTIFICATION_SEND',
-  'CRM_SYNC_USER',
-  'CRM_ADD_TAG',
-  'WEBHOOK_EXECUTE',
-  // Internal
-  'IMAGE_PROCESSING',
-  'DAILY_SETTLEMENT',
-  'PLATFORM_WEBHOOK',
-  'SCHEDULED_DEPLOYMENT',
-] as const;
+export const TaskType = ['PLATFORM_WEBHOOK', 'SCHEDULED_DEPLOYMENT'] as const;
 export type TaskType = (typeof TaskType)[number];
 
 // ── Platform Event ──

@@ -5,7 +5,8 @@
 LexQ CLI (`@lexq/cli`, binary: `lexq`) is a TypeScript CLI for managing the LexQ policy execution engine. Full
 lifecycle: define facts → create groups → author rules → simulate → deploy → monitor → notify.
 
-Also runs as an **MCP server** (`lexq serve --mcp`) exposing 63 tools to any MCP-compatible AI client.
+Also runs as an **MCP server** (`lexq serve --mcp`) exposing the full Partner API toolset to any MCP-compatible AI
+client.
 
 ## Getting Started
 
@@ -21,7 +22,7 @@ Also runs as an **MCP server** (`lexq serve --mcp`) exposing 63 tools to any MCP
 | Groups     | `skills/lexq-groups/SKILL.md`     | Policy groups, conflict resolution, A/B testing                   |
 | Rules      | `skills/lexq-rules/SKILL.md`      | Condition syntax, action types, mutex                             |
 | Simulation | `skills/lexq-simulation/SKILL.md` | Dry run, Impact Simulation, compare                               |
-| Execution  | `skills/lexq-execution/SKILL.md`  | History, stats, failure logs, integrations, webhook subscriptions |
+| Execution  | `skills/lexq-execution/SKILL.md`  | History, stats, failure logs, provenance, replay, latency profile |
 | Recipes    | `skills/lexq-recipes/SKILL.md`    | End-to-end workflows                                              |
 
 ## Tech Stack
@@ -48,14 +49,14 @@ bash tests/test-engine-api.sh   # Engine API integration tests
 ```
 src/
 ├── cli.ts                 # Command registration
-├── commands/              # 13 command files (auth, status, serve, groups,
-│                          # versions, rules, facts, deploy, analytics,
-│                          # history, integrations, logs, webhook-subscriptions)
+├── commands/              # auth, status, serve, groups, versions, rules, facts,
+│                          # domain-templates, deploy, analytics, profile, history,
+│                          # replay, provenance, logs, webhook-subscriptions
 ├── lib/                   # api-client, config, output, errors
 ├── mcp/                   # MCP server mode
-│   ├── register.ts        # registers all 63 tools
-│   └── tools/             # tool definitions by domain (11 files + _shared)
-└── types/                 # type definitions (13 files)
+│   ├── register.ts        # registerAllTools() — 75 tools
+│   └── tools/             # tool definitions by domain (mirrors commands/ + _shared)
+└── types/                 # type definitions (mirrors commands/ + api, enums)
 ```
 
 Two surfaces, one core:
@@ -73,5 +74,5 @@ Types mirror engine DTOs exactly.
 4. Check facts (`lexq facts list`) before creating rules.
 5. Copy full UUIDs from output — never guess or truncate.
 6. Memo is required for all deploy operations (publish, live, rollback, undeploy).
-7. For deployment lifecycle notifications, register webhook subscriptions — not integrations. Integrations fire on rule
-   match; webhook subscriptions fire on platform events (VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED).
+7. Actions never call external systems. Read the decision from the response and act on it yourself. Deployment lifecycle
+   events are the one push channel: `lexq webhook-subscriptions`.

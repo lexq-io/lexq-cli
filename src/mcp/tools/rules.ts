@@ -74,20 +74,33 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         Actions: [{ type, parameters }]
 
         Action parameter schemas:
-        - MUTATE_FACT: { refVar: string, operator: "ASSIGN"|"ADD"|"SUB"|"MUL"|"DIV", method: "PERCENTAGE"|"AMOUNT", rate?: number (when PERCENTAGE), value?: number (when AMOUNT), rounding?: RoundingOption } Constraints: DIV + PERCENTAGE is invalid (use MUL with rate/100 inverse). DIV + AMOUNT requires value !== 0.
-        - INCREMENT_FACT: { targetVar: string, method: "PERCENTAGE"|"AMOUNT", refVar?: string (required when PERCENTAGE), rate?: number (when PERCENTAGE), value?: number (when AMOUNT), rounding?: RoundingOption } targetVar (accumulation target) must exist at execution; refVar (PERCENTAGE source) must exist when method is PERCENTAGE. Each is supplied as an input fact or written by a prior action in this rule — a missing required fact throws (no 0 default). Note: external system call (e.g. point system sync) is NOT a primitive responsibility. Compose [INCREMENT_FACT, EMIT_EVENT] chain instead.
-        - EMIT_EVENT: { integrationId: uuid, eventPayload: object (Map<string,unknown>, ≥1 entry) } eventPayload is passed through to the integration provider as-is. Domain-specific keys (couponId, ticketId, etc.) are routed by the provider, not validated by the engine.
-        - BLOCK: { reason: string }
-        - EMIT_NOTIFICATION: { integrationId: uuid, targetVar: string, notificationPayload: object (Map<string,unknown>, ≥1 entry) } targetVar identifies the recipient fact (e.g. phone_number / email / device_token) and is REQUIRED — the named fact must be present in the request or the action throws. (Contrast with ADD_TAG, where targetVar is an optional write target that is created if absent.)
-        - EMIT_WEBHOOK: { url: string, method: "POST", payloadTemplate?: object } payloadTemplate is optional. Without it, all facts are sent as-is. With it, the object is sent as the HTTP body with {{variables}} replaced at execution time. Variables: {{fact.xxx}}, {{output.xxx}}, {{timestamp}}, {{ruleName}}, {{groupName}}, {{versionNo}}, {{xxx}} (shorthand).
-          Platform examples:
-            Slack: { "text": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
-            Discord: { "content": "Rule {{ruleName}} fired — {{fact.customer_tier}}" }
-            Generic: { "event": "rule_matched", "rule": "{{ruleName}}", "amount": "{{output.payment_amount}}" }
-        - SET_FACT: { key: string, value: string|number|boolean }
-        - ADD_TAG: { tag: string, targetVar?: string (defaults to "user_tags") } Appends tag to a LIST_STRING fact, creating it if absent. Adding an existing tag is a no-op (idempotent). Read tags back with HAS_ANY / HAS_ALL / HAS_NONE.
-        
-        RoundingOption (optional, MUTATE_FACT / INCREMENT_FACT only): { scale: integer (0..16), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
+        - MUTATE_FACT: { targetVar: string, operator: "ASSIGN"|"ADD"|"SUB"|"MUL"|"DIV", method: "PERCENTAGE"|"AMOUNT", operand: number, refVar?: string, rounding?: RoundingOption }
+          targetVar is the fact this action reads and writes. It must exist in facts at execution
+          time as a number — supplied as an input fact or written by a prior action in this rule.
+          A missing required fact throws (no 0 default).
+          operand is the arithmetic operand; the unit is dictated by method (percent when
+          PERCENTAGE, absolute amount when AMOUNT). Ranges are not constrained — negative values
+          and >100 percentages are valid (refunds, surcharges).
+          refVar is the base for percentage calculation and is OPTIONAL — omit it to use targetVar
+          itself. It is only meaningful in PERCENTAGE × {ASSIGN, ADD, SUB}; specifying it in any
+          other cell is an error. Use it when the base differs from the target, e.g.
+          "points += order_total × 5%" → { targetVar: "points", refVar: "order_total",
+          operator: "ADD", method: "PERCENTAGE", operand: 5 }.
+          operator × method matrix:
+            ASSIGN  targetVar = operand              | targetVar = refVar × operand/100
+            ADD     targetVar += operand             | targetVar += refVar × operand/100
+            SUB     targetVar -= operand             | targetVar -= refVar × operand/100
+            MUL     targetVar *= operand             | targetVar *= (operand/100 + 1)
+            DIV     targetVar /= operand             | invalid
+          Constraints: DIV + PERCENTAGE is invalid (use MUL with the inverse). DIV + AMOUNT
+          requires operand !== 0.
+        - SET_FACT: { targetVar: string, value: string|number|boolean } Creates the fact if absent
+          — this is the only action that does. MUTATE_FACT requires the target to already exist.
+        - BLOCK: { reason: string } Records a rejection decision. It does NOT halt rule execution —
+          subsequent actions and subsequent winning rules still run. Enforcement is the caller's
+          responsibility; the decision surfaces as the is_blocked fact.
+
+        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..16), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),

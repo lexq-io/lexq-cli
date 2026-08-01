@@ -14,7 +14,6 @@ import { registerProfileCommands } from './commands/profile';
 import { registerHistoryCommands } from './commands/history';
 import { registerReplayCommands } from './commands/replay';
 import { registerProvenanceCommands } from './commands/provenance';
-import { registerIntegrationCommands } from './commands/integrations';
 import { registerLogCommands } from './commands/logs';
 import { registerWebhookSubscriptionCommands } from './commands/webhook-subscriptions';
 import { registerServeCommand } from './commands/serve';
@@ -70,11 +69,10 @@ export function createCli(): Command {
   registerAnalyticsCommands(program);
   registerProfileCommands(program);
 
-  // M3+: Execution History, Integrations, Failure Logs
+  // M3+: Execution History, Failure Logs
   registerHistoryCommands(program);
   registerReplayCommands(program);
   registerProvenanceCommands(program);
-  registerIntegrationCommands(program);
   registerLogCommands(program);
 
   // M4: Platform Event Webhooks

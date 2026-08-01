@@ -41,7 +41,6 @@ export interface DryRunRequest {
   facts: Record<string, unknown>;
   context?: Record<string, unknown>;
   includeDebugInfo: boolean;
-  mockExternalCalls: boolean;
 }
 
 export interface DryRunResponse {
@@ -184,7 +183,6 @@ export interface DryRunCompareRequest {
   context?: Record<string, unknown>;
   versionIdA: string;
   versionIdB: string;
-  mockExternalCalls: boolean;
 }
 
 export interface DryRunCompareResponse {

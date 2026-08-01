@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
-import { FailureAction, FailureStatus, TaskCategory, TaskType } from '@/types/enums';
+import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
 
 export function registerLogTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -10,11 +10,10 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Failure Logs',
       description:
-        'List system failure logs from background tasks (webhook calls, coupon issuance, etc.).',
+        'List system failure logs from background tasks (platform event webhooks, scheduled deployments).',
       inputSchema: {
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
-        category: z.enum(TaskCategory).optional().describe('Task category'),
         taskType: z.enum(TaskType).optional().describe('Task type'),
         status: z.enum(FailureStatus).optional().describe('Log status'),
         keyword: z.string().optional().describe('Search in refId, refSubId, errorMessage'),
@@ -22,9 +21,8 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
         endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
       },
     },
-    async ({ page, size, category, taskType, status, keyword, startDate, endDate }) => {
+    async ({ page, size, taskType, status, keyword, startDate, endDate }) => {
       const params: Record<string, string> = paginationParams(page, size);
-      if (category) params.category = category;
       if (taskType) params.taskType = taskType;
       if (status) params.status = status;
       if (keyword) params.keyword = keyword;
@@ -51,7 +49,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Process Failure Log',
       description:
-        'Process a single failure log: RETRY (re-execute with original payload), RESOLVE (mark as manually fixed), or IGNORE (skip intentionally).',
+        'Process a single failure log: RESOLVE (mark as manually fixed) or IGNORE (skip intentionally).',
       inputSchema: {
         logId: z.string().uuid().describe('Failure log ID'),
         action: z.enum(FailureAction).describe('Action to take'),

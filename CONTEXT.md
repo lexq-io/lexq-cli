@@ -11,6 +11,8 @@ simulation, deploy to production, and execute via REST API — all without modif
 - A/B testing for rule versions
 - Git-style versioning with full audit trail
 - Platform event webhooks for deployment lifecycle notifications
+- Decision Replay — re-evaluate past decisions against a candidate version
+- Decision Provenance — deterministic "why" for every recorded decision
 
 ## Architecture
 
@@ -49,13 +51,10 @@ Tenant
  ├── PolicyGroup (ACTIVE | DISABLED | ARCHIVED)
  │    ├── PolicyVersion (DRAFT → ACTIVE → ARCHIVED | EXPIRED)
  │    │    └── PolicyRule (condition + actions, priority-ordered)
- │    ├── PolicyDeployment (PUBLISH | DEPLOY | ROLLBACK | UNDEPLOY)
+ │    ├── PolicyDeployment (DEPLOY | ROLLBACK | UNDEPLOY)
  │    └── A/B Test (testVersionId + trafficRate)
  │
  ├── FactDefinition (key, type, displayName — shared across all groups)
- │
- ├── Integration (WEBHOOK | COUPON | POINT | NOTIFICATION | CRM | MESSENGER)
- │                — fires on rule match (per-rule configured)
  │
  └── WebhookSubscription (subscribedEvents + webhookUrl + payloadFormat)
       — fires on platform events (deployment lifecycle)
@@ -83,7 +82,9 @@ Tenant
 ### Condition Operators
 
 `EQUALS`, `NOT_EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `LESS_THAN`, `LESS_THAN_OR_EQUAL`, `CONTAINS`, `IN`,
-`NOT_IN`
+`NOT_IN`, `HAS_ANY`, `HAS_ALL`, `HAS_NONE`
+
+`HAS_*` are for LIST-typed facts only. `IN` / `NOT_IN` are their mirror — scalar fact, list value.
 
 ### Value Types
 
@@ -91,7 +92,7 @@ Tenant
 
 ### Action Types
 
-`MUTATE_FACT`, `INCREMENT_FACT`, `EMIT_EVENT`, `BLOCK`, `EMIT_NOTIFICATION`, `EMIT_WEBHOOK`, `SET_FACT`, `ADD_TAG`
+`MUTATE_FACT`, `SET_FACT`, `BLOCK`
 
 ### Conflict Resolution Modes
 
@@ -99,12 +100,13 @@ Tenant
 
 ### Conflict Resolution Strategies
 
-`FIRST_MATCH`, `HIGHEST_PRIORITY`, `MAX_BENEFIT`
+`HIGHEST_PRIORITY`
 
 ### Deployment Types
 
-`PUBLISH` (DRAFT → ACTIVE), `DEPLOY` (ACTIVE → live traffic), `ROLLBACK` (revert to previous), `UNDEPLOY` (remove from
-live)
+`DEPLOY` (ACTIVE → live traffic), `ROLLBACK` (revert to previous), `UNDEPLOY` (remove from live)
+
+Publishing (DRAFT → ACTIVE) is a qualification event, not a deployment — it has no `DeploymentType`.
 
 ### Execution Statuses
 
@@ -116,51 +118,43 @@ live)
 
 ### Decision Statuses
 
-`SELECTED`, `NO_MATCH`, `NOT_SELECTED`, `BLOCKED_MUTEX`, `LOST_PRIORITY`, `DROPPED_LIMIT`, `ERROR`
+`SELECTED`, `NO_MATCH`, `BLOCKED`, `ERROR`
+
+`BLOCKED` means the rule matched but lost conflict resolution — the round and reason are in `reasonCode` (
+`MUTEX_PRIORITY_LOST`, `GROUP_LIMIT_REACHED`, …). It is unrelated to the `BLOCK` action, whose rule stays `SELECTED`.
+
+`NOT_SELECTED` exists in the enum but the engine never produces it (reserved for effective-date filtering, not yet
+implemented).
 
 ### Platform Event Types (for webhook subscriptions)
 
-`VERSION_PUBLISHED`, `DEPLOYED`, `ROLLED_BACK`, `UNDEPLOYED`
+`VERSION_PUBLISHED`, `DEPLOYED`, `ROLLED_BACK`, `UNDEPLOYED`, `DEPLOY_SCHEDULED`, `DEPLOY_SCHEDULE_CANCELED`
 
 ### Webhook Payload Formats
 
 `GENERIC` (full JSON payload), `SLACK` (`{"text": "..."}` simplified)
 
-## Integration vs Webhook Subscription
-
-Two distinct webhook mechanisms — do not confuse them:
-
-| Concern       | **Integration** (WEBHOOK type)             | **WebhookSubscription**                           |
-|---------------|--------------------------------------------|---------------------------------------------------|
-| When it fires | Rule match during execution                | Platform event (publish/deploy/rollback/undeploy) |
-| Configured at | Per-rule action                            | Per-tenant subscription                           |
-| Payload       | Rule-defined template                      | Standard platform event schema                    |
-| Use case      | "Notify when VIP makes a purchase"         | "Notify Slack when a policy is deployed"          |
-| Signing       | Optional (HMAC via Integration.credential) | Optional HMAC-SHA256 via `secret`                 |
-| Formats       | Free-form (any)                            | GENERIC or SLACK                                  |
-
 ## Glossary
 
-| Term                     | Definition                                                                                                                           |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| **Policy Group**         | Top-level container for rule versions. Controls deployment lifecycle, conflict resolution, and A/B testing.                          |
-| **Policy Version**       | An immutable snapshot of rules. Only DRAFT versions can be modified.                                                                 |
-| **Policy Rule**          | A condition → actions pair. Evaluated in priority order within a version.                                                            |
-| **Fact**                 | An input variable passed during execution. Declared via Fact Definitions with key, type, and name.                                   |
-| **Fact Definition**      | Schema declaration for a fact — its key (snake_case), value type, display name, and description.                                     |
-| **Dry Run**              | Single-input test execution. Returns which rules matched, what actions would fire, and decision traces.                              |
-| **Simulation**           | Batch test replaying historical executions against a version. Compares with a baseline.                                              |
-| **Activation Group**     | A logical grouping of Policy Groups for cross-group conflict resolution.                                                             |
-| **Mutex Group**          | A logical grouping of Policy Rules within a version for intra-version conflict resolution.                                           |
-| **Deployment**           | The act of putting an ACTIVE version into production to receive traffic.                                                             |
-| **Rollback**             | Reverting to the previously deployed version. Creates a new deployment record.                                                       |
-| **Undeploy**             | Removing a group from live traffic. No version serves requests until re-deployed.                                                    |
-| **A/B Test**             | Splitting traffic between the current live version and a test version by percentage.                                                 |
-| **Execution Trace**      | Per-rule evaluation result showing whether the condition matched and what actions were generated.                                    |
-| **Decision Trace**       | Final disposition of a rule after conflict resolution (SELECTED, BLOCKED_MUTEX, etc.).                                               |
-| **Snapshot Hash**        | SHA-256 hash of a version's rule snapshot at deployment time. Used to verify integrity.                                              |
-| **Traffic Rate**         | Percentage (0–100) of traffic routed to the A/B test version.                                                                        |
-| **Integration**          | An external service binding (WEBHOOK, COUPON, POINT, NOTIFICATION, CRM, MESSENGER) referenced by rule actions. Fires per rule match. |
-| **Webhook Subscription** | A platform event listener — receives notifications on deployment lifecycle events. Tenant-level, independent from Integrations.      |
-| **Platform Event**       | A lifecycle event emitted by the engine itself (VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED).                               |
-| **Failure Log**          | A record of a background task failure (webhook delivery, coupon issuance, etc.) available for retry/resolve/ignore.                  |
+| Term                     | Definition                                                                                                                                                     |
+|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Policy Group**         | Top-level container for rule versions. Controls deployment lifecycle, conflict resolution, and A/B testing.                                                    |
+| **Policy Version**       | An immutable snapshot of rules. Only DRAFT versions can be modified.                                                                                           |
+| **Policy Rule**          | A condition → actions pair. Evaluated in priority order within a version.                                                                                      |
+| **Fact**                 | An input variable passed during execution. Declared via Fact Definitions with key, type, and name.                                                             |
+| **Fact Definition**      | Schema declaration for a fact — its key (snake_case), value type, display name, and description.                                                               |
+| **Dry Run**              | Single-input test execution. Returns which rules matched, what actions would fire, and decision traces.                                                        |
+| **Simulation**           | Batch test replaying historical executions against a version. Compares with a baseline.                                                                        |
+| **Activation Group**     | A logical grouping of Policy Groups for cross-group conflict resolution.                                                                                       |
+| **Mutex Group**          | A logical grouping of Policy Rules within a version for intra-version conflict resolution.                                                                     |
+| **Deployment**           | The act of putting an ACTIVE version into production to receive traffic.                                                                                       |
+| **Rollback**             | Reverting to the previously deployed version. Creates a new deployment record.                                                                                 |
+| **Undeploy**             | Removing a group from live traffic. No version serves requests until re-deployed.                                                                              |
+| **A/B Test**             | Splitting traffic between the current live version and a test version by percentage.                                                                           |
+| **Execution Trace**      | Per-rule evaluation result showing whether the condition matched and what actions were generated.                                                              |
+| **Decision Trace**       | Final disposition of a rule after conflict resolution (`SELECTED`, `BLOCKED`, …), with a `reasonCode` explaining why.                                          |
+| **Snapshot Hash**        | SHA-256 hash of a version's rule snapshot at deployment time. Used to verify integrity.                                                                        |
+| **Traffic Rate**         | Percentage (1–99) of traffic routed to the A/B test version.                                                                                                   |
+| **Webhook Subscription** | A platform event listener — receives notifications on deployment lifecycle events. Tenant-level.                                                               |
+| **Platform Event**       | A lifecycle event emitted by the engine itself (`VERSION_PUBLISHED`, `DEPLOYED`, `ROLLED_BACK`, `UNDEPLOYED`, `DEPLOY_SCHEDULED`, `DEPLOY_SCHEDULE_CANCELED`). |
+| **Failure Log**          | A record of a background task failure (platform webhook delivery, scheduled deployment). Mark as `RESOLVE` or `IGNORE` — there is no retry.                    |

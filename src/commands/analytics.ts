@@ -47,19 +47,17 @@ export function registerAnalyticsCommands(program: Command): void {
     .option('--json <body>', 'Request body as JSON string')
     .option('--file <path>', 'Read request body from a JSON file')
     .option('--debug', 'Include debug traces', false)
-    .option('--mock', 'Mock external calls', false)
     .addHelpText(
       'after',
       dedent`
 
         Examples:
-          $ lexq analytics dry-run --version-id <vid> --debug --mock \\
+          $ lexq analytics dry-run --version-id <vid> --debug \\
               --json '{"facts": {"payment_amount": 150000, "customer_tier": "VIP"}}'
 
           $ lexq analytics dry-run --version-id <vid> --file test-input.json
 
         The request body must include a "facts" object. Use --debug for execution traces
-        and --mock to skip external service calls (webhooks, coupons, etc.).
       `,
     )
     .action(async (opts) => {
@@ -72,7 +70,6 @@ export function registerAnalyticsCommands(program: Command): void {
         }
 
         body.includeDebugInfo = opts.debug;
-        body.mockExternalCalls = opts.mock;
 
         const data = await apiRequest<DryRunResponse>(
           'POST',
@@ -217,7 +214,7 @@ export function registerAnalyticsCommands(program: Command): void {
           cancel    Cancel a running simulation
           export    Export results as CSV or JSON
 
-        Simulations always mock external calls. Use --format table for summary view.
+        Use --format table for summary view.
       `,
     );
 

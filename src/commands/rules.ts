@@ -134,7 +134,7 @@ export function registerRuleCommands(program: Command): void {
                 "valueType": "STRING"
               },
               "actions": [
-                { "type": "MUTATE_FACT", "parameters": { "refVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "rate": 20 } }
+                { "type": "MUTATE_FACT", "parameters": { "targetVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "operand": 20 } }
               ]
             }'
 
@@ -161,14 +161,19 @@ export function registerRuleCommands(program: Command): void {
           IN is the mirror of HAS_*: scalar fact, list value.
 
         Action Types:
-          MUTATE_FACT, INCREMENT_FACT, EMIT_EVENT, BLOCK, EMIT_NOTIFICATION, EMIT_WEBHOOK, SET_FACT, ADD_TAG
+          MUTATE_FACT   { targetVar, operator, method, operand, refVar?, rounding? }
+          SET_FACT      { targetVar, value }
+          BLOCK         { reason }
+
+          refVar is the percentage base and is optional — omit to use targetVar itself.
+          It is only valid in PERCENTAGE × {ASSIGN, ADD, SUB}.
 
         Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
 
         Mutex (optional — rule-level conflict resolution):
           mutexGroup       string    Logical grouping key (e.g., "best-discount")
           mutexMode        string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
-          mutexStrategy    string    FIRST_MATCH | HIGHEST_PRIORITY | MAX_BENEFIT
+          mutexStrategy    string    HIGHEST_PRIORITY (currently the only value)
           mutexLimit       number    Max rules to fire in MAX_N mode (required when MAX_N)
 
         priority is auto-assigned (appended last). Use 'lexq rules reorder' to change order.
@@ -215,7 +220,7 @@ export function registerRuleCommands(program: Command): void {
           $ lexq rules update --group-id <gid> --version-id <vid> --id <rid> --json '{
               "name": "VIP 25% Discount",
               "actions": [
-                { "type": "MUTATE_FACT", "parameters": { "refVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "rate": 25 } }
+                { "type": "MUTATE_FACT", "parameters": { "targetVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "operand": 25 } }
               ]
             }'
       `,

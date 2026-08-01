@@ -4,15 +4,18 @@
 
 ## Overview
 
-A **Policy Rule** is a condition → actions pair within a version. Rules are evaluated in priority order (0 = highest).
-When a rule's condition matches the input facts, its actions fire.
+A **Policy Rule** is a condition → actions pair within a version. Rules are evaluated in priority
+order — **lower number wins**, and priorities are 1-based (1 is highest). When a rule's condition
+matches the input facts, its actions fire.
+
+`priority` is assigned by the server, not by you. New rules are appended last. Use
+`lexq rules reorder` to change the order.
 
 ## Rule Structure
 
 ```json
 {
   "name": "VIP 10% Discount",
-  "priority": 0,
   "condition": {
     ...
   },
@@ -21,7 +24,7 @@ When a rule's condition matches the input facts, its actions fire.
   ],
   "mutexGroup": null,
   "mutexMode": "NONE",
-  "mutexStrategy": "FIRST_MATCH",
+  "mutexStrategy": "HIGHEST_PRIORITY",
   "mutexLimit": null,
   "isEnabled": true
 }
@@ -175,21 +178,71 @@ Do **not** use `CONTAINS` on a list fact — that idiom works in some rule engin
 
 Each rule can have multiple actions. Actions fire sequentially.
 
-| Type                | Description                                              | Key Parameters                                                                                      |
-|---------------------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| `MUTATE_FACT`       | Mutate a fact value (arithmetic)                         | `refVar`, `method` (PERCENTAGE/AMOUNT), `operator` (ADD/SUB/MUL/DIV), `rate` or `value`, `rounding` |
-| `INCREMENT_FACT`    | Increment a fact (cumulative add)                        | `targetVar`, `refVar`, `method`, `value` or `rate`, `rounding`                                      |
-| `EMIT_EVENT`        | Emit an event to an external integration (coupons, etc.) | `integrationId`, `eventPayload` (Map)                                                               |
-| `BLOCK`             | Block the transaction                                    | `reason`, `code`                                                                                    |
-| `EMIT_NOTIFICATION` | Send a notification                                      | `integrationId`, `targetVar`, `notificationPayload` (Map)                                           |
-| `EMIT_WEBHOOK`      | Call an external URL                                     | `url`, `payloadTemplate`                                                                            |
-| `SET_FACT`          | Set a fact value (literal assignment)                    | `key`, `value`                                                                                      |
-| `ADD_TAG`           | Append a tag to a list fact                              | `tag`, `targetVar` (optional, default `user_tags`)                                                  |
+| Type          | Description                                | Key Parameters                                                       |
+|---------------|--------------------------------------------|----------------------------------------------------------------------|
+| `MUTATE_FACT` | Arithmetic change to a numeric fact        | `targetVar`, `operator`, `method`, `operand`, `refVar?`, `rounding?` |
+| `SET_FACT`    | Assign a literal value — creates if absent | `targetVar`, `value`                                                 |
+| `BLOCK`       | Record a rejection decision                | `reason`                                                             |
 
-**Two different `targetVar` meanings.** `EMIT_NOTIFICATION.targetVar` is a **read** — it names the
-fact holding the recipient (`phone_number`, `email`, `device_token`), and the action throws if that
-fact is absent from the request. `ADD_TAG.targetVar` is a **write** — the list is created if absent,
-and adding a tag that is already present is a no-op.
+### `MUTATE_FACT` parameters
+
+| Parameter   | Required | Meaning                                                                       |
+|-------------|----------|-------------------------------------------------------------------------------|
+| `targetVar` | always   | The fact this action **reads and writes**. Must already exist as a number.    |
+| `operator`  | always   | `ASSIGN` \| `ADD` \| `SUB` \| `MUL` \| `DIV`                                  |
+| `method`    | always   | `PERCENTAGE` \| `AMOUNT` — dictates the unit of `operand`                     |
+| `operand`   | always   | The arithmetic operand. Percent when PERCENTAGE, absolute amount when AMOUNT. |
+| `refVar`    | optional | Base for percentage calculation. Omit to use `targetVar` itself.              |
+| `rounding`  | optional | `{ scale: 0..16, mode?: HALF_UP \| ... }`. Omit for lossless full precision.  |
+
+**operator × method matrix**
+
+| operator | `AMOUNT`               | `PERCENTAGE`                        |
+|----------|------------------------|-------------------------------------|
+| `ASSIGN` | `targetVar = operand`  | `targetVar = refVar × operand/100`  |
+| `ADD`    | `targetVar += operand` | `targetVar += refVar × operand/100` |
+| `SUB`    | `targetVar -= operand` | `targetVar -= refVar × operand/100` |
+| `MUL`    | `targetVar *= operand` | `targetVar *= (operand/100 + 1)`    |
+| `DIV`    | `targetVar /= operand` | **invalid**                         |
+
+`DIV` + `PERCENTAGE` is rejected — use `MUL` with the inverse. `DIV` + `AMOUNT` requires
+`operand !== 0`.
+
+**`refVar` is only meaningful in `PERCENTAGE` × {`ASSIGN`, `ADD`, `SUB`}.** Specifying it in any
+other cell is an error, not a silent no-op. `AMOUNT` has no base concept, and `MUL` × `PERCENTAGE`
+is a multiplier shorthand that does not read a base.
+
+Use `refVar` when the base differs from the target:
+
+```json
+{
+  "type": "MUTATE_FACT",
+  "parameters": {
+    "targetVar": "loyalty_point",
+    "refVar": "order_total",
+    "operator": "ADD",
+    "method": "PERCENTAGE",
+    "operand": 5
+  }
+}
+```
+
+`loyalty_point += order_total × 5%` — two different facts. Omitting `refVar` would compute
+`loyalty_point += loyalty_point × 5%` instead.
+
+**Ranges are not constrained.** Negative operands and percentages above 100 are valid — refunds
+(`-5`), surcharges (`150`), risk scores, and game points all need them.
+
+### `SET_FACT` vs `MUTATE_FACT`
+
+`SET_FACT` creates the fact if it does not exist. `MUTATE_FACT` requires the target to already be
+present as a number and throws otherwise. "Make something that wasn't there" is `SET_FACT`'s job.
+
+### `BLOCK` does not halt execution
+
+`BLOCK` records a rejection decision by writing the `is_blocked` fact. Subsequent actions in the
+same rule and subsequent winning rules still run. Enforcement is the caller's responsibility —
+read `is_blocked` from the response.
 
 ### Action Example: 10% Discount via MUTATE_FACT
 
@@ -200,10 +253,10 @@ Reduces `payment_amount` by 10%. `__delta` is auto-generated in `generatedVariab
 {
   "type": "MUTATE_FACT",
   "parameters": {
-    "refVar": "payment_amount",
+    "targetVar": "payment_amount",
     "method": "PERCENTAGE",
     "operator": "SUB",
-    "rate": 10,
+    "operand": 10,
     "rounding": {
       "mode": "HALF_UP",
       "scale": 0
@@ -218,8 +271,7 @@ Reduces `payment_amount` by 10%. `__delta` is auto-generated in `generatedVariab
 {
   "type": "BLOCK",
   "parameters": {
-    "reason": "Suspected fraud",
-    "code": "FRAUD_DETECTED"
+    "reason": "Suspected fraud"
   }
 }
 ```
@@ -245,7 +297,6 @@ lexq rules get --group-id <gid> --version-id <vid> --id <ruleId>
 ```bash
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "VIP 10% Discount",
-  "priority": 0,
   "condition": {
     "type": "GROUP",
     "operator": "AND",
@@ -258,10 +309,10 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     {
       "type": "MUTATE_FACT",
       "parameters": {
-        "refVar": "payment_amount",
+        "targetVar": "payment_amount",
         "method": "PERCENTAGE",
         "operator": "SUB",
-        "rate": 10,
+        "operand": 10,
         "rounding": { "mode": "HALF_UP", "scale": 0 }
       }
     }
@@ -279,10 +330,10 @@ lexq rules update --group-id <gid> --version-id <vid> --id <ruleId> --json '{
     {
       "type": "MUTATE_FACT",
       "parameters": {
-        "refVar": "payment_amount",
+        "targetVar": "payment_amount",
         "method": "PERCENTAGE",
         "operator": "SUB",
-        "rate": 15,
+        "operand": 15,
         "rounding": { "mode": "HALF_UP", "scale": 0 }
       }
     }
@@ -299,7 +350,8 @@ lexq rules delete --group-id <gid> --version-id <vid> --id <ruleId> --force
 
 ### Reorder Rules
 
-Pass rule IDs in desired priority order (index 0 = highest priority):
+Pass rule IDs in desired order. The server assigns priority 1, 2, 3, … — the first ID becomes
+priority 1 (highest):
 
 ```bash
 lexq rules reorder --group-id <gid> --version-id <vid> \
@@ -319,18 +371,28 @@ lexq rules toggle --group-id <gid> --version-id <vid> --id <ruleId> --enabled fa
 
 Within a single version, rules can belong to a `mutexGroup` to limit how many fire.
 
-| mutexMode   | Behavior                                      |
-|-------------|-----------------------------------------------|
-| `NONE`      | All matching rules fire (default)             |
-| `EXCLUSIVE` | Only one rule per mutex group fires           |
-| `MAX_N`     | Up to `mutexLimit` rules per mutex group fire |
+| mutexMode   | Behavior                                                      |
+|-------------|---------------------------------------------------------------|
+| `NONE`      | All matching rules fire (default)                             |
+| `EXCLUSIVE` | Only one rule per mutex group fires                           |
+| `MAX_N`     | Up to `mutexLimit` rules fire. Omit it and the server sets 2. |
 
 ```bash
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Discount A",
-  "priority": 0,
   "mutexGroup": "discounts",
   "mutexMode": "EXCLUSIVE",
+  "mutexStrategy": "HIGHEST_PRIORITY",
+  "condition": { ... },
+  "actions": [ ... ]
+}'
+
+# Top two of the group fire
+lexq rules create --group-id <gid> --version-id <vid> --json '{
+  "name": "Stackable Promo A",
+  "mutexGroup": "promos",
+  "mutexMode": "MAX_N",
+  "mutexLimit": 2,
   "mutexStrategy": "HIGHEST_PRIORITY",
   "condition": { ... },
   "actions": [ ... ]
@@ -338,6 +400,14 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 ```
 
 **Constraint:** All rules in the same `mutexGroup` must use identical `mutexMode` and `mutexStrategy`.
+
+**`mutexGroup` is what turns mutex on.** Sending `mutexMode` without a `mutexGroup` is silently normalized to `NONE` —
+there is no group to be exclusive within. Conversely, setting a `mutexGroup` without a `mutexMode` defaults to
+`EXCLUSIVE`.
+
+`mutexStrategy` currently accepts only `HIGHEST_PRIORITY` — the rule with the lowest priority
+number in the group wins. `mutexMode: MAX_N` requires `mutexLimit`; omit it and the server
+sets 2.
 
 ## Pre-Create Checklist
 

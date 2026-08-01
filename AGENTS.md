@@ -7,7 +7,7 @@
 LexQ CLI (`@lexq/cli`, binary: `lexq`) manages a policy execution engine. Policies are business rules (if-then) that
 evaluate input facts and produce actions (discounts, blocks, notifications, etc.).
 
-The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose 63 tools to any MCP-compatible AI client.
+The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose 75 tools to any MCP-compatible AI client.
 
 This file tells you how to use the CLI as an AI agent.
 
@@ -30,14 +30,14 @@ lexq auth whoami
 
 Detailed documentation lives in the `skills/` directory. **Read the relevant skill before executing commands.**
 
-| Skill          | File                              | What it covers                                                    |
-|----------------|-----------------------------------|-------------------------------------------------------------------|
-| **Shared**     | `skills/lexq-shared/SKILL.md`     | Core concepts, auth, workflow, error codes. **Read first.**       |
-| **Groups**     | `skills/lexq-groups/SKILL.md`     | Policy groups, conflict resolution, A/B testing                   |
-| **Rules**      | `skills/lexq-rules/SKILL.md`      | Condition syntax, action types, mutex, examples                   |
-| **Simulation** | `skills/lexq-simulation/SKILL.md` | Dry run, Impact Simulation, compare                               |
-| **Execution**  | `skills/lexq-execution/SKILL.md`  | History, stats, failure logs, integrations, webhook subscriptions |
-| **Recipes**    | `skills/lexq-recipes/SKILL.md`    | End-to-end workflows (copy-paste ready)                           |
+| Skill          | File                              | What it covers                                                                           |
+|----------------|-----------------------------------|------------------------------------------------------------------------------------------|
+| **Shared**     | `skills/lexq-shared/SKILL.md`     | Core concepts, auth, workflow, error codes. **Read first.**                              |
+| **Groups**     | `skills/lexq-groups/SKILL.md`     | Policy groups, conflict resolution, A/B testing                                          |
+| **Rules**      | `skills/lexq-rules/SKILL.md`      | Condition syntax, action types, mutex, examples                                          |
+| **Simulation** | `skills/lexq-simulation/SKILL.md` | Dry run, Impact Simulation, compare                                                      |
+| **Execution**  | `skills/lexq-execution/SKILL.md`  | History, stats, failure logs, provenance, replay, latency profile, deployment monitoring |
+| **Recipes**    | `skills/lexq-recipes/SKILL.md`    | End-to-end workflows (copy-paste ready)                                                  |
 
 ## Agent Rules
 
@@ -48,27 +48,28 @@ Detailed documentation lives in the `skills/` directory. **Read the relevant ski
 5. **Use `--format json` for parsing.** This is the default. Don't change it.
 6. **Copy full UUIDs from output.** Never guess or truncate IDs.
 7. **Memo is required for all deploy operations.** `publish`, `live`, `rollback`, `undeploy` — every one needs `--memo`.
-8. **For deployment lifecycle notifications use webhook subscriptions, not integrations.** Integrations fire on rule
-   match; webhook subscriptions fire on platform events (VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED).
-9. **Handle errors gracefully.** Check the error code and follow the action table in `lexq-shared/SKILL.md`.
+8. **Handle errors gracefully.** Check the error code and follow the action table in `lexq-shared/SKILL.md`.
 
-## Complete Command Inventory (67 commands)
+## Complete Command Inventory
 
 ```
 lexq auth login|logout|whoami
 lexq status
 lexq serve --mcp                                              # MCP stdio server mode
-lexq groups list|get|create|update|delete
+lexq groups list|get|create|update|delete|reorder
 lexq groups ab-test start|stop|adjust
 lexq versions list|get|create|update|delete|clone
 lexq rules list|get|create|update|delete|reorder|toggle
-lexq facts list|create|update|delete|action-metadata
-lexq deploy publish|live|rollback|undeploy|history|detail|overview|deployable|diff
+lexq facts list|create|update|delete|action-metadata|unregistered
+lexq domain-templates list|preview|apply
+lexq deploy publish|live|rollback|undeploy|history|detail|overview|deployable|diff|schedule|unschedule|schedules
 lexq analytics dry-run|dry-run-compare|requirements
 lexq analytics simulation start|status|list|cancel|export
 lexq analytics dataset upload|template
+lexq profile <groupId>
 lexq history list|get|stats
-lexq integrations list|get|save|delete|config-spec
+lexq replay decision|start|list|get|cancel
+lexq provenance get|reveal-audits
 lexq logs list|get|action|bulk-action
 lexq webhook-subscriptions list|get|save|delete|test
 ```
@@ -77,7 +78,7 @@ lexq webhook-subscriptions list|get|save|delete|test
 
 ```bash
 # 1. Create group
-GROUP=$(lexq groups create --json '{"name":"my-policy","priority":0}')
+GROUP=$(lexq groups create --json '{"name":"my-policy"}')
 GID=$(echo $GROUP | jq -r '.id')
 
 # 2. Create version
@@ -90,13 +91,12 @@ lexq facts create --key age --name "User Age" --type NUMBER
 # 4. Add rule
 lexq rules create --group-id $GID --version-id $VID --json '{
   "name": "Adult Check",
-  "priority": 0,
   "condition": {"type":"SINGLE","field":"age","operator":"GREATER_THAN_OR_EQUAL","value":18,"valueType":"NUMBER"},
-  "actions": [{"type":"SET_FACT","parameters":{"key":"is_adult","value":"true"}}]
+  "actions": [{"type":"SET_FACT","parameters":{"targetVar":"is_adult","value":true}}]
 }'
 
 # 5. Test
-lexq analytics dry-run --version-id $VID --debug --mock --json '{"facts":{"age":25}}'
+lexq analytics dry-run --version-id $VID --debug --json '{"facts":{"age":25}}'
 
 # 6. Deploy
 lexq deploy publish --group-id $GID --version-id $VID --memo "v1"
@@ -112,7 +112,7 @@ Webhook subscriptions fire on platform events — separate from rule-level webho
 lexq webhook-subscriptions save --json '{
   "name": "Slack Deploy Notifications",
   "webhookUrl": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
-  "subscribedEvents": ["VERSION_PUBLISHED", "DEPLOYED", "ROLLED_BACK", "UNDEPLOYED"],
+  "subscribedEvents": ["VERSION_PUBLISHED", "DEPLOYED", "ROLLED_BACK", "UNDEPLOYED", "DEPLOY_SCHEDULED"],
   "payloadFormat": "SLACK"
 }'
 
@@ -142,16 +142,18 @@ Connect via:
 - **Cloud:** `https://mcp.lexq.io` (OAuth 2.1)
 - **Local stdio:** `npx @lexq/cli serve --mcp`
 
-63 tools mirror the CLI command inventory.
+75 tools mirror the CLI command inventory.
 
 ## Troubleshooting
 
-| Problem                      | Solution                                                                 |
-|------------------------------|--------------------------------------------------------------------------|
-| `Not authenticated`          | Run `lexq auth login`                                                    |
-| `ENTITY_NOT_FOUND`           | Verify the ID exists via the corresponding `list` command                |
-| `CANNOT_MODIFY`              | Version is not DRAFT. Clone it: `lexq versions clone`                    |
-| `EMPTY_RULES`                | Add at least one rule before publishing                                  |
-| `ACTIVATION_CONFIG_MISMATCH` | All groups in the same activationGroup must share the same mode/strategy |
-| `WH_URL_INVALID`             | Webhook URL must be HTTPS and return 2xx for a POST                      |
-| Network error                | Check `lexq status` for API health                                       |
+| Problem                     | Solution                                                            |
+|-----------------------------|---------------------------------------------------------------------|
+| `Not authenticated`         | Run `lexq auth login`                                               |
+| `P-` error on get/update    | Verify the ID exists via the corresponding `list` command           |
+| Version is not DRAFT        | Clone it: `lexq versions clone`                                     |
+| Publish rejected, 0 rules   | Add at least one rule before publishing                             |
+| `activationGroup` mismatch  | All groups in the same activationGroup must share mode and strategy |
+| `WH-` error on subscription | Webhook URL must be HTTPS and return 2xx for a POST                 |
+| Network error               | Check `lexq status` for API health                                  |
+
+`errorCode` is of the form `<domain>-<number>` (`P-002`, `ACT-016`). See `lexq-shared/SKILL.md` for the prefix table.

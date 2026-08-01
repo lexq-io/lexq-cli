@@ -116,7 +116,7 @@ export function registerGroupCommands(program: Command): void {
           description         string    Description (optional, max 255 chars)
           activationGroup     string    Execution Group — conflict-resolution cluster key (optional)
           activationMode      string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
-          activationStrategy  string    FIRST_MATCH | HIGHEST_PRIORITY | MAX_BENEFIT  [default: FIRST_MATCH]
+          activationStrategy  string    HIGHEST_PRIORITY  [default, and currently the only value]
           executionLimit      number    Max rules to fire in MAX_N mode (optional)
           status              string    ACTIVE | DISABLED  [default: ACTIVE]
         

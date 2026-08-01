@@ -78,16 +78,18 @@ lexq analytics dry-run --version-id <vid> --json '{
 | Flag            | Description                                         | Default |
 |-----------------|-----------------------------------------------------|---------|
 | `--debug`       | Include execution traces (which rules matched, why) | `false` |
-| `--mock`        | Mock external calls (webhooks, integrations)        | `false` |
 | `--file <path>` | Read request body from file instead of `--json`     | —       |
 
-### Recommended: Always Use `--debug --mock`
+### Recommended: Always Use `--debug`
 
 ```bash
-lexq analytics dry-run --version-id <vid> --debug --mock --json '{
+lexq analytics dry-run --version-id <vid> --debug --json '{
   "facts": { "payment_amount": 150000, "customer_tier": "VIP" }
 }'
 ```
+
+Dry run has no side effects — actions only mutate the fact map in memory. There is nothing
+external to mock.
 
 ### Response Structure
 
@@ -145,27 +147,32 @@ lexq analytics dry-run --version-id <vid> --debug --mock --json '{
 
 Each trace carries a `status` (what happened) and a `reasonCode` (why).
 
-| Status         | Meaning                                            |
-|----------------|----------------------------------------------------|
-| `SELECTED`     | Rule matched and its actions fired                 |
-| `NO_MATCH`     | Condition did not match, or could not be evaluated |
-| `NOT_SELECTED` | Matched but excluded by conflict resolution        |
-| `BLOCKED`      | Blocked by a mutex group or group activation limit |
-| `ERROR`        | Action execution failed                            |
+| Status     | Meaning                                                                         |
+|------------|---------------------------------------------------------------------------------|
+| `SELECTED` | Rule matched and its actions fired                                              |
+| `NO_MATCH` | Condition did not match, or could not be evaluated                              |
+| `BLOCKED`  | Matched but lost conflict resolution — see `reasonCode` for which round and why |
+| `ERROR`    | Action execution failed                                                         |
+
+`BLOCKED` is unrelated to the `BLOCK` action. A `BLOCK` action writes the `is_blocked` fact and its own rule stays
+`SELECTED`; `BLOCKED` means the rule was dropped by activation-group or mutex competition.
 
 ### Reading Reason Codes
 
-| Code                     | Meaning                                                  |
-|--------------------------|----------------------------------------------------------|
-| `FINAL_WINNER`           | Successfully executed                                    |
-| `CONDITION_MISMATCH`     | Condition not satisfied, or could not be evaluated       |
-| `EFFECTIVE_DATE_INVALID` | Outside the version's effective date range               |
-| `MUTEX_PRIORITY_LOST`    | Another rule in the same mutex group had higher priority |
-| `MUTEX_LIMIT_REACHED`    | Mutex group's max rules already fired                    |
-| `GROUP_PRIORITY_LOST`    | Another group in the same activation group won           |
-| `GROUP_LIMIT_REACHED`    | Group's `executionLimit` reached                         |
-| `ACTION_ERROR`           | Action execution failed (e.g., webhook timeout)          |
-| `ENGINE_ERROR`           | Internal engine failure                                  |
+| Code                  | Meaning                                                  |
+|-----------------------|----------------------------------------------------------|
+| `FINAL_WINNER`        | Successfully executed                                    |
+| `CONDITION_MISMATCH`  | Condition not satisfied, or could not be evaluated       |
+| `MUTEX_PRIORITY_LOST` | Another rule in the same mutex group had higher priority |
+| `MUTEX_LIMIT_REACHED` | Mutex group's max rules already fired                    |
+| `GROUP_PRIORITY_LOST` | Another group in the same activation group won           |
+| `GROUP_LIMIT_REACHED` | Group's `executionLimit` reached                         |
+| `ACTION_ERROR`        | Action execution failed (e.g. required fact absent)      |
+| `ENGINE_ERROR`        | Internal engine failure                                  |
+
+A version outside its effective date range is filtered **before** evaluation — no trace is produced for it at all. If a
+rule you expect never appears in `decisionTraces`, check the version's `effectiveFrom` / `effectiveTo` with
+`lexq versions get`.
 
 #### `reasonDetail` on unevaluable conditions
 
@@ -238,19 +245,19 @@ lexq analytics simulation start --json '{
 ```bash
 # 1. Download template (optional)
 lexq analytics dataset template \
-  --group-id  --version-id  --format csv --output template.csv
+  --group-id <gid> --version-id <vid> --format csv --output template.csv
 
 # 2. Upload dataset
 lexq analytics dataset upload --file ./my-data.csv
-# → path: datasets//a1b2c3d4e5f6.csv
+# → path: datasets/<tenantId>/a1b2c3d4e5f6.csv
 
 # 3. Start simulation with uploaded path
 lexq analytics simulation start --json '{
-  "policyVersionId": "",
+  "policyVersionId": "<vid>",
   "dataset": {
     "type": "UPLOADED",
     "source": "S3_BUCKET",
-    "path": "datasets//a1b2c3d4e5f6.csv"
+    "path": "<path returned by dataset upload>"
   },
   "options": { "includeRuleStats": true, "maxRecords": 10000 }
 }'
@@ -258,13 +265,6 @@ lexq analytics simulation start --json '{
 
 **CSV format:** Header row with fact keys, data rows with values. Types auto-detected.
 **JSON format:** Array of objects `[{"key": "value"}, ...]`
-
-### MCP — Dataset Tools
-
-```
-lexq_dataset_template  → Get sample CSV/JSON based on version's required facts
-lexq_dataset_upload    → Upload inline CSV/JSON content to S3, returns path
-```
 
 ### Check Status (Poll)
 
@@ -352,7 +352,7 @@ lexq analytics simulation export --id <simulationId> --format csv --output resul
 lexq analytics requirements --group-id <gid> --version-id <vid>
 
 # 2. Dry-run with representative inputs
-lexq analytics dry-run --version-id <vid> --debug --mock --json '{
+lexq analytics dry-run --version-id <vid> --debug --json '{
   "facts": { "payment_amount": 150000, "customer_tier": "VIP" }
 }'
 

@@ -5,7 +5,7 @@
 LexQ CLI (`@lexq/cli`) is a TypeScript CLI for managing the LexQ policy execution engine. It covers the full lifecycle:
 define facts → create groups → author rules → simulate → deploy → monitor → notify.
 
-The same binary also runs as an **MCP server** (`lexq serve --mcp`), exposing 63 tools to MCP-compatible AI clients via
+The same binary also runs as an **MCP server** (`lexq serve --mcp`), exposing 75 tools to MCP-compatible AI clients via
 stdio.
 
 ## Tech Stack
@@ -25,7 +25,7 @@ stdio.
 src/
 ├── cli.ts                 # Command registration
 ├── index.ts               # Entry point
-├── commands/              # 13 command files
+├── commands/              # CLI command groups
 │   ├── auth.ts
 │   ├── status.ts
 │   ├── serve.ts           # `lexq serve --mcp` (stdio MCP server)
@@ -33,10 +33,13 @@ src/
 │   ├── versions.ts
 │   ├── rules.ts
 │   ├── facts.ts
+│   ├── domain-templates.ts
 │   ├── deploy.ts
 │   ├── analytics.ts
+│   ├── profile.ts         # per-rule latency profile (§28)
 │   ├── history.ts
-│   ├── integrations.ts
+│   ├── replay.ts          # decision replay (§11)
+│   ├── provenance.ts      # decision provenance + PII reveal audit
 │   ├── logs.ts
 │   └── webhook-subscriptions.ts
 ├── lib/                   # Shared utilities
@@ -45,7 +48,7 @@ src/
 │   ├── output.ts          # JSON + table formatters
 │   └── errors.ts          # Error handling
 ├── mcp/                   # MCP server mode (stdio + HTTP library)
-│   ├── register.ts        # registerAllTools() — registers all 63 tools
+│   ├── register.ts        # registerAllTools() — 75 tools
 │   └── tools/             # Tool definitions by domain
 │       ├── _shared.ts     # CallApi abstraction, createCallApiFromConfig()
 │       ├── status.ts
@@ -53,24 +56,30 @@ src/
 │       ├── versions.ts
 │       ├── rules.ts
 │       ├── facts.ts
+│       ├── domain-templates.ts
 │       ├── deploy.ts
 │       ├── analytics.ts
+│       ├── profile.ts
 │       ├── history.ts
-│       ├── integrations.ts
+│       ├── replay.ts
+│       ├── provenance.ts
 │       ├── logs.ts
 │       └── webhook-subscriptions.ts
-└── types/                 # TypeScript type definitions (13 files)
+└── types/                 # TypeScript type definitions
     ├── api.ts                    # PageResponse, ApiEnvelope
-    ├── enums.ts                  # All enum types (incl. PlatformEventType)
+    ├── enums.ts                  # All enum types
     ├── auth.ts                   # WhoAmIResponse
     ├── groups.ts
     ├── versions.ts
     ├── rules.ts                  # ConditionNode + ActionDefinition
+    ├── facts.ts
+    ├── domain-templates.ts
     ├── deploy.ts
     ├── analytics.ts              # DryRun, Simulation, Requirements
-    ├── facts.ts
-    ├── execution.ts              # ExecutionHistory types
-    ├── integrations.ts
+    ├── profile.ts
+    ├── history.ts                # ExecutionHistory types
+    ├── replay.ts
+    ├── provenance.ts
     ├── logs.ts
     └── webhook-subscriptions.ts
 
@@ -103,7 +112,8 @@ bash tests/test-engine-api.sh   # Engine API integration — requires deployed t
    mode) uses `createCallApiFromConfig()` which reads `~/.lexq/config.json`; the HTTP server (`lexq-mcp` separate repo)
    injects a Bearer-token-based caller.
 6. **Types mirror engine DTOs exactly.** Request types use optional fields (`?`), response types use `| null` for
-   nullable fields. Never deviate from the engine's actual response shape.
+   nullable fields. Never deviate from the engine's actual response shape. `knip` ignores `src/types/**`, so unused type
+   files are not detected — check by hand when removing a feature.
 7. **JSON body input:** Create/update commands accept `--json '<body>'`. Analytics commands also accept `--file <path>`.
 8. **Multi-line strings:** Use `dedent` tagged templates for CLI `addHelpText` and MCP tool `description` fields. Never
    rely on template literal indentation.
@@ -114,26 +124,25 @@ bash tests/test-engine-api.sh   # Engine API integration — requires deployed t
 - **Base URL:** `https://api.lexq.io/api/v1/partners`
 - **Auth:** `X-API-KEY` header
 - **Envelope:** `{ "result": "SUCCESS" | "ERROR", "data": T, "message": string }`
-- **Pagination:** `pageNo` / `pageSize` (NOT `page` / `size`). Pages are 0-indexed.
+- **Pagination:** request uses `page` / `size` (CLI flags `--page` / `--size`); the response envelope returns `pageNo` /
+  `pageSize`. Pages are 0-indexed.
 - **Fact keys:** Always `snake_case`, case-sensitive.
 
 ## Feature Domains
 
-Two distinct webhook concepts — do not conflate them:
-
-| Feature                        | Fires on                           | Configured at   | Command group                |
-|--------------------------------|------------------------------------|-----------------|------------------------------|
-| **Integration** (WEBHOOK type) | Rule match during execution        | Per-rule action | `lexq integrations`          |
-| **Webhook Subscription**       | Platform events (deploy lifecycle) | Per-tenant      | `lexq webhook-subscriptions` |
+**Actions never call external systems.** The engine mutates facts and records decisions; the caller reads the result and
+acts on it. Platform event webhooks (`lexq webhook-subscriptions`) are the one push channel, and they fire on deployment
+lifecycle events — not on rule matches.
 
 ## Common Pitfalls
 
 - **Don't add `.js` to imports.** The build system handles this.
-- **Don't use `page`/`size` in response types.** Use `pageNo`/`pageSize`.
+- **Response types use `pageNo`/`pageSize`; request params use `page`/`size`.** Don't mix them.
 - **Don't hardcode IDs.** Always parse from previous command output.
 - **Don't skip dry-run before publish.** Validate first.
 - **Don't modify non-DRAFT versions.** Clone first.
-- **Don't confuse Integrations and WebhookSubscriptions.** See the table above.
+- **Don't expect actions to call out.** There is no webhook/coupon/notification action. Read the decision from the
+  response.
 - **Don't use template literal indentation in MCP descriptions.** Use `dedent` — indentation leaks into the LLM context.
 - **Don't forget `--memo`** on deploy operations. All four (publish/live/rollback/undeploy) require it.
 
@@ -141,8 +150,9 @@ Two distinct webhook concepts — do not conflate them:
 
 1. Run `pnpm typecheck` after any change — zero errors required.
 2. If adding a new command, follow the exact pattern in an existing `commands/*.ts` file.
-3. If adding a new MCP tool, add it to the corresponding `mcp/tools/*.ts` file, register in `mcp/register.ts`, and
-   update the tool count in comments.
+3. If adding a new MCP tool, add it to the corresponding `mcp/tools/*.ts` file and register in `mcp/register.ts`.
+   `lexq-mcp` shares this build output — a schema change there requires redeploying that repo (CONVENTIONS §35.1). CI
+   does not catch it.
 4. If adding a new type, add it to the corresponding `types/*.ts` file and ensure it matches the engine DTO.
 5. If adding a new command, mirror it as an MCP tool — CLI and MCP should stay in lock-step.
 6. Run `bash tests/e2e.sh` for full regression before committing.

@@ -59,7 +59,7 @@ lexq domain-templates apply --template ECOMMERCE
 # Returns: policyGroupId, policyVersionId, factsCreated, rulesCreated
 
 # 4. Test a rule against your data before shipping
-lexq analytics dry-run --version-id <VERSION_ID> --debug --mock \
+lexq analytics dry-run --version-id <VERSION_ID> --debug \
   --json '{"facts":{"loyalty_tier":"PLATINUM","purchase_subtotal_usd":150}}'
 
 # 5. Deploy
@@ -159,7 +159,7 @@ skills/
 ├── lexq-groups/SKILL.md       Policy groups, conflict resolution, A/B testing
 ├── lexq-rules/SKILL.md        Condition syntax, action types, mutex
 ├── lexq-simulation/SKILL.md   Dry run, Impact Simulation, compare
-├── lexq-execution/SKILL.md    Execution history, stats, failure logs
+├── lexq-execution/SKILL.md    History, stats, failure logs, provenance, replay, latency profile
 └── lexq-recipes/SKILL.md      End-to-end recipes
 
 .claude/CLAUDE.md              Claude Code project context
@@ -181,19 +181,21 @@ node_modules/@lexq/cli/CONTEXT.md
 lexq auth                  login | logout | whoami
 lexq status                API health check
 lexq serve                 Run as MCP stdio server (--mcp)
-lexq groups                list | get | create | update | delete
+lexq groups                list | get | create | update | delete | reorder
 lexq groups ab-test        start | stop | adjust
 lexq versions              list | get | create | update | delete | clone
 lexq rules                 list | get | create | update | delete | reorder | toggle
-lexq facts                 list | create | update | delete | action-metadata
+lexq facts                 list | create | update | delete | action-metadata | unregistered
 lexq domain-templates      list | preview | apply
-lexq deploy                publish | live | rollback | undeploy | history | detail | overview | deployable | diff
+lexq deploy                publish | live | rollback | undeploy | history | detail | overview | deployable | diff | schedule | unschedule | schedules
 lexq analytics             dry-run | dry-run-compare | requirements
 lexq analytics simulation  start | status | list | cancel | export
 lexq analytics dataset     upload | template
+lexq profile               <groupId> — per-rule latency profile
 lexq history               list | get | stats
-lexq integrations          list | get | save | delete | config-spec
+lexq replay                decision | start | list | get | cancel
 lexq logs                  list | get | action | bulk-action
+lexq provenance            get | reveal-audits
 lexq webhook-subscriptions list | get | save | delete | test
 ```
 

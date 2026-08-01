@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
+import { ConflictResolutionMode, ConflictResolutionStrategy } from '@/types/enums';
 
 export function registerGroupTools(server: McpServer, callApi: CallApi): void {
   // ── CRUD ──
@@ -37,11 +38,11 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         name: z.string().describe('Group name (unique among non-ARCHIVED)'),
         description: z.string().optional().describe('Group description'),
         activationMode: z
-          .enum(['NONE', 'EXCLUSIVE', 'MAX_N'])
+          .enum(ConflictResolutionMode)
           .optional()
           .describe('Conflict resolution mode'),
         activationStrategy: z
-          .enum(['FIRST_MATCH', 'HIGHEST_PRIORITY', 'MAX_BENEFIT'])
+          .enum(ConflictResolutionStrategy)
           .optional()
           .describe('Strategy when mode is EXCLUSIVE or MAX_N'),
         executionLimit: z
@@ -85,13 +86,10 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
           .optional()
           .describe('Activation group (Execution Group) cluster key'),
         activationMode: z
-          .enum(['NONE', 'EXCLUSIVE', 'MAX_N'])
+          .enum(ConflictResolutionMode)
           .optional()
           .describe('Conflict resolution mode'),
-        activationStrategy: z
-          .enum(['FIRST_MATCH', 'HIGHEST_PRIORITY', 'MAX_BENEFIT'])
-          .optional()
-          .describe('Strategy'),
+        activationStrategy: z.enum(ConflictResolutionStrategy).optional().describe('Strategy'),
         executionLimit: z.number().int().min(1).optional().describe('Max rule executions'),
       },
     },

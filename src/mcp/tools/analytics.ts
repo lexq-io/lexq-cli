@@ -30,13 +30,12 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           .boolean()
           .default(true)
           .describe('Include execution and decision traces'),
-        mockExternalCalls: z.boolean().default(true).describe('Mock external integration calls'),
       },
     },
-    async ({ versionId, facts, includeDebugInfo, mockExternalCalls }) => {
+    async ({ versionId, facts, includeDebugInfo }) => {
       const parsedFacts: unknown = JSON.parse(facts);
       return callApi('POST', `analytics/dry-run/versions/${versionId}`, {
-        body: { facts: parsedFacts, includeDebugInfo, mockExternalCalls },
+        body: { facts: parsedFacts, includeDebugInfo },
       });
     },
   );

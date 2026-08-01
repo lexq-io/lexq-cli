@@ -14,17 +14,15 @@ export function registerLogCommands(program: Command): void {
       'after',
       dedent`
 
-        System failure logs (DLQ) for background tasks — webhook calls, coupon issuance,
-        point operations, notifications, and platform event webhooks.
+        System failure logs (DLQ) for background tasks — platform event webhooks and scheduled deployments.
 
         Commands:
           list         List failure logs with filters
-          get          Get failure log detail (includes payload for retry)
-          action       Process a single log (RETRY, IGNORE, RESOLVE)
+          get          Get failure log detail (includes the original payload)
+          action       Process a single log (IGNORE, RESOLVE)
           bulk-action  Process multiple logs at once
 
         Statuses: PENDING (needs attention), RESOLVED, IGNORED
-        Categories: INTEGRATION (external), INTERNAL (system)
       `,
     );
 
@@ -32,7 +30,6 @@ export function registerLogCommands(program: Command): void {
   logs
     .command('list')
     .description('List failure logs')
-    .option('--category <category>', 'Filter by category (INTEGRATION, INTERNAL)')
     .option('--task-type <taskType>', `Filter by task type (${TaskType.join(', ')})`)
     .option('--status <status>', 'Filter by status (PENDING, RESOLVED, IGNORED)')
     .option('--keyword <keyword>', 'Search keyword')
@@ -46,7 +43,7 @@ export function registerLogCommands(program: Command): void {
 
         Examples:
           $ lexq logs list --status PENDING --format table
-          $ lexq logs list --task-type PLATFORM_WEBHOOK --category INTERNAL
+          $ lexq logs list --task-type PLATFORM_WEBHOOK
           $ lexq logs list --keyword "timeout" --start-date 2026-04-01
       `,
     )
@@ -56,7 +53,6 @@ export function registerLogCommands(program: Command): void {
         const format: OutputFormat = globalOpts.format ?? 'json';
 
         const params: Record<string, string> = { page: opts.page, size: opts.size };
-        if (opts.category) params.category = opts.category;
         if (opts.taskType) params.taskType = opts.taskType;
         if (opts.status) params.status = opts.status;
         if (opts.keyword) params.searchKeyword = opts.keyword;
@@ -73,13 +69,11 @@ export function registerLogCommands(program: Command): void {
 
         if (format === 'table') {
           printTable(
-            ['ID', 'Category', 'Task', 'Status', 'Retries', 'Error', 'Created'],
+            ['ID', 'Task', 'Status', 'Error', 'Created'],
             data.content.map((l) => [
               l.id.substring(0, 8),
-              l.category,
               l.taskType,
               l.status,
-              String(l.retryCount),
               l.errorMessage?.substring(0, 24) ?? '–',
               l.createdAt.substring(0, 16),
             ]),
@@ -105,7 +99,7 @@ export function registerLogCommands(program: Command): void {
       dedent`
 
         Includes the full payload that was used for the failed operation.
-        Use this to inspect what went wrong before deciding to RETRY or RESOLVE.
+        Use this to inspect what went wrong before deciding to IGNORE or RESOLVE.
       `,
     )
     .action(async (opts) => {
@@ -127,20 +121,19 @@ export function registerLogCommands(program: Command): void {
   // ── action ──
   logs
     .command('action')
-    .description('Process a failure log action (RETRY, IGNORE, RESOLVE)')
+    .description('Process a failure log action (IGNORE, RESOLVE)')
     .requiredOption('--id <logId>', 'Log ID')
-    .requiredOption('--action <action>', 'Action: RETRY, IGNORE, or RESOLVE')
+    .requiredOption('--action <action>', 'Action: IGNORE or RESOLVE')
     .addHelpText(
       'after',
       dedent`
 
         Actions:
-          RETRY    Re-execute the failed operation with the original payload
           IGNORE   Mark as intentionally skipped (won't appear in PENDING)
           RESOLVE  Mark as manually resolved (e.g., fixed via external system)
 
         Example:
-          $ lexq logs action --id <logId> --action RETRY
+          $ lexq logs action --id <logId> --action RESOLVE
       `,
     )
     .action(async (opts) => {
@@ -169,7 +162,7 @@ export function registerLogCommands(program: Command): void {
     .command('bulk-action')
     .description('Bulk process failure logs')
     .requiredOption('--ids <logIds>', 'Comma-separated log IDs')
-    .requiredOption('--action <action>', 'Action: RETRY, IGNORE, or RESOLVE')
+    .requiredOption('--action <action>', 'Action: IGNORE or RESOLVE')
     .addHelpText(
       'after',
       dedent`

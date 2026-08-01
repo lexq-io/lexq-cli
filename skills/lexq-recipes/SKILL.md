@@ -10,7 +10,6 @@
 # 1. Create group
 lexq groups create --json '{
   "name": "tiered-discount",
-  "priority": 0,
   "description": "Apply discount based on payment amount tiers"
 }'
 # → Save the group ID
@@ -23,10 +22,9 @@ lexq versions create --group-id <gid> --json '{"commitMessage": "Initial tiered 
 lexq facts create --key payment_amount --name "Payment Amount" --type NUMBER --required
 lexq facts create --key customer_tier --name "Customer Tier" --type STRING
 
-# 4. Add rules (highest priority first)
+# 4. Add rules — creation order becomes priority order (first created = priority 1 = highest)
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Premium Tier - 20%",
-  "priority": 0,
   "condition": {
     "type": "SINGLE",
     "field": "payment_amount",
@@ -37,10 +35,10 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "actions": [{
     "type": "MUTATE_FACT",
     "parameters": {
-      "refVar": "payment_amount",
+      "targetVar": "payment_amount",
       "method": "PERCENTAGE",
       "operator": "SUB",
-      "rate": 20,
+      "operand": 20,
       "rounding": { "mode": "HALF_UP", "scale": 0 }
     }
   }]
@@ -48,7 +46,6 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Gold Tier - 10%",
-  "priority": 1,
   "condition": {
     "type": "GROUP",
     "operator": "AND",
@@ -60,10 +57,10 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "actions": [{
     "type": "MUTATE_FACT",
     "parameters": {
-      "refVar": "payment_amount",
+      "targetVar": "payment_amount",
       "method": "PERCENTAGE",
       "operator": "SUB",
-      "rate": 10,
+      "operand": 10,
       "rounding": { "mode": "HALF_UP", "scale": 0 }
     }
   }]
@@ -71,7 +68,6 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Base Tier - 5%",
-  "priority": 2,
   "condition": {
     "type": "SINGLE",
     "field": "payment_amount",
@@ -82,20 +78,20 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "actions": [{
     "type": "MUTATE_FACT",
     "parameters": {
-      "refVar": "payment_amount",
+      "targetVar": "payment_amount",
       "method": "PERCENTAGE",
       "operator": "SUB",
-      "rate": 5,
+      "operand": 5,
       "rounding": { "mode": "HALF_UP", "scale": 0 }
     }
   }]
 }'
 
 # 5. Validate
-lexq analytics dry-run --version-id <vid> --debug --mock --json '{"facts":{"payment_amount":600000}}'
+lexq analytics dry-run --version-id <vid> --debug --json '{"facts":{"payment_amount":600000}}'
 # Expected: mutatedFacts.payment_amount = 480000, generatedVariables.payment_amount__delta = -120000
 
-lexq analytics dry-run --version-id <vid> --debug --mock --json '{"facts":{"payment_amount":200000}}'
+lexq analytics dry-run --version-id <vid> --debug --json '{"facts":{"payment_amount":200000}}'
 # Expected: mutatedFacts.payment_amount = 180000, generatedVariables.payment_amount__delta = -20000
 
 # 6. Deploy
@@ -112,7 +108,6 @@ lexq deploy live --group-id <gid> --version-id <vid> --memo "Go live"
 ```bash
 lexq groups create --json '{
   "name": "fraud-detection",
-  "priority": 0,
   "description": "Block suspicious transactions"
 }'
 
@@ -125,7 +120,6 @@ lexq facts create --key country_code --name "Country Code" --type STRING
 # High-value + high-frequency
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "High Risk - Large + Frequent",
-  "priority": 0,
   "condition": {
     "type": "GROUP",
     "operator": "AND",
@@ -135,15 +129,13 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     ]
   },
   "actions": [
-    { "type": "BLOCK", "parameters": { "reason": "High value + high frequency", "code": "FRAUD_HIGH_RISK" } },
-    { "type": "ADD_TAG", "parameters": { "tag": "fraud_review" } }
+    { "type": "BLOCK", "parameters": { "reason": "High value + high frequency" } }
   ]
 }'
 
 # Sanctioned country
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Sanctioned Country Block",
-  "priority": 1,
   "condition": {
     "type": "SINGLE",
     "field": "country_code",
@@ -152,12 +144,12 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "valueType": "LIST_STRING"
   },
   "actions": [
-    { "type": "BLOCK", "parameters": { "reason": "Sanctioned country", "code": "COUNTRY_BLOCKED" } }
+    { "type": "BLOCK", "parameters": { "reason": "Sanctioned country" } }
   ]
 }'
 
 # Validate
-lexq analytics dry-run --version-id <vid> --debug --mock --json '{
+lexq analytics dry-run --version-id <vid> --debug --json '{
   "facts": { "transaction_amount": 10000000, "transaction_count_24h": 15, "country_code": "KR" }
 }'
 ```
@@ -180,17 +172,17 @@ lexq rules update --group-id <gid> --version-id <v2id> --id <ruleId> --json '{
   "actions": [{
     "type": "MUTATE_FACT",
     "parameters": {
-      "refVar": "payment_amount",
+      "targetVar": "payment_amount",
       "method": "PERCENTAGE",
       "operator": "SUB",
-      "rate": 15,
+      "operand": 15,
       "rounding": { "mode": "HALF_UP", "scale": 0 }
     }
   }]
 }'
 
 # 3. Validate with dry-run
-lexq analytics dry-run --version-id <v2id> --debug --mock --json '{
+lexq analytics dry-run --version-id <v2id> --debug --json '{
   "facts": { "payment_amount": 100000, "customer_tier": "VIP" }
 }'
 
@@ -218,10 +210,13 @@ lexq groups ab-test stop --group-id <gid> --force
 
 **Goal:** Award loyalty points based on purchase behavior.
 
+**Note:** `total_points` must be present in the request facts. The engine is stateless — it does
+not read your database. Send the customer's current balance (or `0` for a new customer) and apply
+the returned value yourself. `MUTATE_FACT` throws if the target fact is absent.
+
 ```bash
 lexq groups create --json '{
   "name": "loyalty-points",
-  "priority": 1,
   "activationMode": "NONE"
 }'
 
@@ -229,12 +224,11 @@ lexq versions create --group-id <gid> --json '{"commitMessage": "Points program 
 
 lexq facts create --key purchase_amount --name "Purchase Amount" --type NUMBER --required
 lexq facts create --key is_first_purchase --name "First Purchase" --type BOOLEAN
-lexq facts create --key total_points --name "Total Points" --type NUMBER
+lexq facts create --key total_points --name "Total Points" --type NUMBER --required
 
 # Bonus points for first purchase (fixed 200)
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "First Purchase Bonus Points",
-  "priority": 0,
   "condition": {
     "type": "SINGLE",
     "field": "is_first_purchase",
@@ -244,23 +238,12 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   },
   "actions": [
     {
-      "type": "INCREMENT_FACT",
+      "type": "MUTATE_FACT",
       "parameters": {
         "targetVar": "total_points",
+        "operator": "ADD",
         "method": "AMOUNT",
-        "value": 200,
-        "rounding": { "mode": "HALF_UP", "scale": 0 }
-      }
-    },
-    {
-      "type": "EMIT_NOTIFICATION",
-      "parameters": {
-        "integrationId": "<notification-integration-uuid>",
-        "targetVar": "user_id",
-        "notificationPayload": {
-          "channel": "PUSH",
-          "templateId": "welcome_points"
-        }
+        "operand": 200
       }
     }
   ]
@@ -269,7 +252,6 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 # Standard points: 0.1% of purchase_amount = 1 point per 1000 KRW
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Standard Purchase Points",
-  "priority": 1,
   "condition": {
     "type": "SINGLE",
     "field": "purchase_amount",
@@ -279,72 +261,39 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   },
   "actions": [
     {
-      "type": "INCREMENT_FACT",
+      "type": "MUTATE_FACT",
       "parameters": {
         "targetVar": "total_points",
         "refVar": "purchase_amount",
+        "operator": "ADD",
         "method": "PERCENTAGE",
-        "rate": 0.1,
+        "operand": 0.1,
         "rounding": { "mode": "FLOOR", "scale": 0 }
       }
     }
   ]
 }'
-```
 
----
-
-## Recipe 5: Webhook Integration
-
-**Goal:** Call an external API when a rule matches.
-
-```bash
-# 1. Create webhook integration
-lexq integrations save --json '{
-  "type": "WEBHOOK",
-  "name": "Order Processing Webhook",
-  "baseUrl": "https://api.example.com/webhooks/orders",
-  "isActive": true
-}'
-
-# 2. Use WEBHOOK action in a rule
-lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "Large Order Alert",
-  "priority": 0,
-  "condition": {
-    "type": "SINGLE",
-    "field": "order_total",
-    "operator": "GREATER_THAN",
-    "value": 1000000,
-    "valueType": "NUMBER"
-  },
-  "actions": [
-    {
-      "type": "EMIT_WEBHOOK",
-      "parameters": {
-        "url": "https://api.example.com/webhooks/orders",
-        "payloadTemplate": {
-          "event": "rule_matched",
-          "rule": "{{ruleName}}",
-          "amount": "{{output.order_total}}"
-        }
-      }
-    },
-    { "type": "ADD_TAG", "parameters": { "tag": "large_order" } }
-  ]
+# Verify — new customer, 50,000 KRW purchase → 200 bonus + 50 standard = 250
+lexq analytics dry-run --version-id <vid> --debug --json '{
+  "facts": { "purchase_amount": 50000, "is_first_purchase": true, "total_points": 0 }
 }'
 ```
 
+`total_points` and `refVar: purchase_amount` are two different facts — this is exactly what
+`refVar` exists for. Omitting it would compute `total_points += total_points × 0.1%`.
+
+Read `total_points` and `total_points__delta` from `generatedVariables` in the response.
+
 ---
 
-## Recipe 6: Exclusive Discount (Mutex)
+## Recipe 5: Exclusive Discount (Mutex)
 
 **Goal:** Ensure only the best discount applies when multiple rules match.
 
 ```bash
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "VIP Discount 20%",
-  "priority": 0,
   "mutexGroup": "best-discount",
   "mutexMode": "EXCLUSIVE",
   "mutexStrategy": "HIGHEST_PRIORITY",
@@ -354,10 +303,10 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "actions": [{
     "type": "MUTATE_FACT",
     "parameters": {
-      "refVar": "payment_amount",
+      "targetVar": "payment_amount",
       "method": "PERCENTAGE",
       "operator": "SUB",
-      "rate": 20,
+      "operand": 20,
       "rounding": { "mode": "HALF_UP", "scale": 0 }
     }
   }]
@@ -365,7 +314,6 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 
 lexq rules create --group-id <gid> --version-id <vid> --json '{
   "name": "Seasonal Sale 15%",
-  "priority": 1,
   "mutexGroup": "best-discount",
   "mutexMode": "EXCLUSIVE",
   "mutexStrategy": "HIGHEST_PRIORITY",
@@ -375,67 +323,26 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
   "actions": [{
     "type": "MUTATE_FACT",
     "parameters": {
-      "refVar": "payment_amount",
+      "targetVar": "payment_amount",
       "method": "PERCENTAGE",
       "operator": "SUB",
-      "rate": 15,
+      "operand": 15,
       "rounding": { "mode": "HALF_UP", "scale": 0 }
     }
   }]
 }'
 
-# If a VIP customer pays 50000+, only the 20% VIP discount fires (priority 0 wins).
+# Rules are appended in creation order. Confirm the order with `lexq rules list`,
+# or set it explicitly:
+#   lexq rules reorder --group-id <gid> --version-id <vid> --rule-ids "<vipRuleId>,<seasonalRuleId>"
+#
+# If a VIP customer pays 50000+, only the 20% VIP discount fires — HIGHEST_PRIORITY
+# picks the rule with the lower priority number within the mutex group.
 ```
 
 ---
 
-## Recipe 7: Region-Based Coupon
-
-**Goal:** Issue different coupons by region.
-
-```bash
-lexq facts create --key user_region --name "User Region" --type STRING --required
-
-lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "Korea Welcome Coupon",
-  "priority": 0,
-  "condition": {
-    "type": "SINGLE", "field": "user_region", "operator": "IN", "value": ["KR"], "valueType": "LIST_STRING"
-  },
-  "actions": [{
-    "type": "EMIT_EVENT",
-    "parameters": {
-      "integrationId": "<coupon-integration-uuid>",
-      "eventPayload": {
-        "couponId": "KR_WELCOME_2025",
-        "expiryDays": 30
-      }
-    }
-  }]
-}'
-
-lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "US Welcome Coupon",
-  "priority": 1,
-  "condition": {
-    "type": "SINGLE", "field": "user_region", "operator": "IN", "value": ["US"], "valueType": "LIST_STRING"
-  },
-  "actions": [{
-    "type": "EMIT_EVENT",
-    "parameters": {
-      "integrationId": "<coupon-integration-uuid>",
-      "eventPayload": {
-        "couponId": "US_WELCOME_2025",
-        "expiryDays": 14
-      }
-    }
-  }]
-}'
-```
-
----
-
-## Recipe 8: Version Rollback
+## Recipe 6: Version Rollback
 
 **Goal:** Something went wrong in production — revert to the previous version.
 
@@ -453,27 +360,37 @@ lexq history stats
 
 ---
 
-## Recipe 9: Monitoring + Auto-Resolve Failures
+## Recipe 7: Monitoring + Failure Triage
 
-**Goal:** Check for pending failures and resolve them.
+**Goal:** Check for pending failures and clear the queue.
+
+Failure logs are a dead-letter record for background tasks — platform event webhooks and scheduled
+deployments. There is no retry action: the engine does not re-execute a failed task on request.
+Fix the cause at the source (webhook endpoint, version state), then mark the log.
 
 ```bash
 # 1. List pending failures
 lexq logs list --status PENDING --page 0 --size 50
 
-# 2. Retry transient failures
-lexq logs bulk-action --ids "id1,id2,id3" --action RETRY
+# 2. Inspect one to see the original payload and error
+lexq logs get --id <logId>
 
-# 3. Resolve permanent failures (after manual review)
-lexq logs bulk-action --ids "id4,id5" --action RESOLVE
+# 3. Mark as resolved after fixing the cause externally
+lexq logs bulk-action --ids "id1,id2,id3" --action RESOLVE
 
-# 4. Verify clean state
+# 4. Mark as intentionally skipped (won't appear in PENDING again)
+lexq logs bulk-action --ids "id4,id5" --action IGNORE
+
+# 5. Verify clean state
 lexq logs list --status PENDING --page 0 --size 10
 ```
 
+`RESOLVE` and `IGNORE` differ only in intent — both remove the log from PENDING. Use `RESOLVE`
+when the underlying problem was fixed, `IGNORE` when it does not need fixing.
+
 ---
 
-## Recipe 10: Full Policy Migration Workflow
+## Recipe 8: Full Policy Migration Workflow
 
 **Goal:** Create an entirely new version of a policy with different logic.
 
@@ -490,7 +407,7 @@ lexq rules delete --group-id <gid> --version-id <newVid> --id <obsoleteRuleId> -
 lexq rules create --group-id <gid> --version-id <newVid> --json '{...}'
 
 # 4. Dry-run test multiple scenarios
-lexq analytics dry-run --version-id <newVid> --debug --mock --json '{"facts":{...}}'
+lexq analytics dry-run --version-id <newVid> --debug --json '{"facts":{...}}'
 
 # 5. Run simulation against live baseline
 lexq deploy publish --group-id <gid> --version-id <newVid> --memo "v2 migration"
@@ -506,69 +423,56 @@ lexq deploy live --group-id <gid> --version-id <newVid> --memo "Migration comple
 
 ---
 
-## Recipe 11: Tag-Based Segmentation
+## Recipe 9: Flag-Based Segmentation
 
-**Goal:** Write tags in one rule, branch on them in another.
+**Goal:** Set segment flags that downstream systems read from the decision response.
 
-`user_tags` is a `LIST_STRING` fact seeded automatically for every tenant. `ADD_TAG` appends to
-it; `HAS_ANY` / `HAS_ALL` / `HAS_NONE` read it.
+`SET_FACT` assigns a value — it does not append. To accumulate into a `LIST_STRING` fact, send the
+current list in the request facts and assign the full new list. For most segmentation, separate
+boolean or string flags are simpler and easier to query.
 
 ```bash
-# Tags are written by earlier rules (or supplied as input facts).
+lexq groups create --json '{"name": "segmentation", "activationMode": "NONE"}'
+lexq versions create --group-id <gid> --json '{"commitMessage": "Segments v1"}'
+
+lexq facts create --key lifetime_value --name "Lifetime Value" --type NUMBER --required
+lexq facts create --key signup_days --name "Days Since Signup" --type NUMBER --required
+lexq facts create --key support_tier --name "Support Tier" --type STRING
+lexq facts create --key beta_enabled --name "Beta Access" --type BOOLEAN
+
+# High-value customer → priority support
 lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "Tag High-Value Customers",
+  "name": "High Value Segment",
   "condition": {
-    "type": "SINGLE", "field": "lifetime_value", "operator": "GREATER_THAN_OR_EQUAL",
-    "value": 1000000, "valueType": "NUMBER"
+    "type": "SINGLE", "field": "lifetime_value",
+    "operator": "GREATER_THAN_OR_EQUAL", "value": 1000000, "valueType": "NUMBER"
   },
   "actions": [
-    { "type": "ADD_TAG", "parameters": { "tag": "high_value" } }
+    { "type": "SET_FACT", "parameters": { "targetVar": "support_tier", "value": "PRIORITY" } }
   ]
 }'
 
-# Branch on any one of several tags
+# Long-tenured customer → beta access
 lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "Priority Support for VIP or High Value",
+  "name": "Veteran Beta Access",
   "condition": {
-    "type": "SINGLE", "field": "user_tags", "operator": "HAS_ANY",
-    "value": ["VIP", "high_value"], "valueType": "LIST_STRING"
+    "type": "SINGLE", "field": "signup_days",
+    "operator": "GREATER_THAN", "value": 365, "valueType": "NUMBER"
   },
-  "actions": [{ "type": "SET_FACT", "parameters": { "key": "support_tier", "value": "PRIORITY" } }]
+  "actions": [
+    { "type": "SET_FACT", "parameters": { "targetVar": "beta_enabled", "value": true } }
+  ]
 }'
 
-# Require every tag
-lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "Beta Feature for Verified VIP",
-  "condition": {
-    "type": "SINGLE", "field": "user_tags", "operator": "HAS_ALL",
-    "value": ["VIP", "verified"], "valueType": "LIST_STRING"
-  },
-  "actions": [{ "type": "SET_FACT", "parameters": { "key": "beta_enabled", "value": true } }]
-}'
-
-# Exclude tagged users
-lexq rules create --group-id <gid> --version-id <vid> --json '{
-  "name": "Promo Excludes Fraud Review",
-  "condition": {
-    "type": "SINGLE", "field": "user_tags", "operator": "HAS_NONE",
-    "value": ["fraud_review", "suspended"], "valueType": "LIST_STRING"
-  },
-  "actions": [{ "type": "MUTATE_FACT", "parameters": {
-    "refVar": "payment_amount", "method": "PERCENTAGE", "operator": "SUB", "rate": 5,
-    "rounding": { "mode": "HALF_UP", "scale": 0 }
-  }}]
-}'
-
-# Verify
-lexq analytics dry-run --version-id <vid> --debug --mock --json '{
-  "facts": { "user_tags": ["VIP", "verified"], "payment_amount": 100000, "lifetime_value": 500000 }
+lexq analytics dry-run --version-id <vid> --debug --json '{
+  "facts": { "lifetime_value": 1500000, "signup_days": 400 }
 }'
 ```
 
 **Notes**
 
-- The `value` is always an array, even for a single tag: `"value": ["VIP"]`.
-- `ADD_TAG` writes to `user_tags` by default. Pass `targetVar` to append to a different `LIST_STRING` fact. The list is
-  created if absent, and re-adding an existing tag is a no-op.
-- An empty array makes `HAS_ALL` and `HAS_NONE` always true — they never look at the fact.
-- Rules fire in priority order, so a tag written by rule 0 is visible to rule 1.
+- `SET_FACT` creates the fact if it does not exist. `MUTATE_FACT` requires the target to already
+  be present — that is the division of labor between them.
+- Flags appear in `generatedVariables` in the response. `SET_FACT` produces no `__delta` because
+  it is an assignment, not an arithmetic change.
+- Segment on a `LIST_STRING` fact with `HAS_ANY` / `HAS_ALL` / `HAS_NONE`, not `CONTAINS`.

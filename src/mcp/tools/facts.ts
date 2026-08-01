@@ -91,7 +91,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Get Action Runtime Fact Metadata',
       description:
-        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload (e.g. MUTATE_FACT requires its refVar fact; INCREMENT_FACT always requires targetVar, plus refVar when method is PERCENTAGE). A required fact absent at runtime throws — the engine never defaults to 0. Facts are supplied as input or written by a prior action in the same rule; Actions never create a fact from nothing. Static data, safe to cache in-session.',
+        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. Facts are supplied as input or written by a prior action in the same rule; only SET_FACT creates a fact from nothing. Static data, safe to cache in-session.',
       inputSchema: {},
     },
     async () => callApi('GET', 'schema/action-metadata'),

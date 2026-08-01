@@ -1,4 +1,4 @@
-import type { FailureAction, FailureStatus, TaskCategory, TaskType } from './enums';
+import type { FailureAction, FailureStatus, TaskType } from './enums';
 
 // ══════════════════════════════════════════
 // Response
@@ -7,14 +7,12 @@ import type { FailureAction, FailureStatus, TaskCategory, TaskType } from './enu
 export interface FailureLogResponse {
   id: string;
   tenantId: string;
-  category: TaskCategory;
   taskType: TaskType;
   refId: string | null;
   refSubId: string | null;
   errorCode: string | null;
   errorMessage: string | null;
   payload: Record<string, unknown> | null;
-  retryCount: number;
   status: FailureStatus;
   createdAt: string;
   updatedAt: string;
@@ -25,7 +23,6 @@ export interface FailureLogResponse {
 // ══════════════════════════════════════════
 
 export interface FailureLogSearchRequest {
-  category?: TaskCategory;
   taskType?: TaskType;
   status?: FailureStatus;
   searchKeyword?: string;
