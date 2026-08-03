@@ -23,3 +23,8 @@ Thumbs.db
 
 # LexQ
 .lexq/
+
+# 작업 지침 — 공개 레포이므로 커밋하지 않는다.
+# 외부용 에이전트 문서는 AGENTS.md / CONTEXT.md 이고 npm 으로 배포된다.
+CLAUDE.md
+.claude/settings.local.json
