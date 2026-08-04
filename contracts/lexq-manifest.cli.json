@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "note": "Subset of the lexq-engine manifest limited to ORDER in scripts/gen-enums.mjs. Generated; do not edit.",
+  "enums": {
+    "PolicyGroupStatus": {
+      "values": ["ACTIVE", "DISABLED", "ARCHIVED"]
+    },
+    "PolicyVersionStatus": {
+      "values": ["DRAFT", "ACTIVE", "ARCHIVED", "EXPIRED"]
+    },
+    "ConditionOperator": {
+      "values": [
+        "EQUALS",
+        "NOT_EQUALS",
+        "GREATER_THAN",
+        "GREATER_THAN_OR_EQUAL",
+        "LESS_THAN",
+        "LESS_THAN_OR_EQUAL",
+        "CONTAINS",
+        "IN",
+        "NOT_IN",
+        "HAS_ANY",
+        "HAS_ALL",
+        "HAS_NONE"
+      ]
+    },
+    "LogicalOperator": {
+      "values": ["AND", "OR"]
+    },
+    "ActionType": {
+      "values": ["SET_FACT", "MUTATE_FACT", "BLOCK"]
+    },
+    "ValueType": {
+      "values": ["STRING", "NUMBER", "BOOLEAN", "LIST_STRING", "LIST_NUMBER"]
+    },
+    "ConflictResolutionMode": {
+      "values": ["NONE", "EXCLUSIVE", "MAX_N"]
+    },
+    "ConflictResolutionStrategy": {
+      "values": ["HIGHEST_PRIORITY"]
+    },
+    "DeploymentType": {
+      "values": ["DEPLOY", "ROLLBACK", "UNDEPLOY"]
+    },
+    "ApiExecutionStatus": {
+      "values": ["SUCCESS", "NO_MATCH", "ERROR", "TIMEOUT"]
+    },
+    "ApiExecutionType": {
+      "values": ["SINGLE_GROUP", "SPECIFIC_VERSION", "BATCH", "COMPOSITE"]
+    },
+    "ProfileCacheState": {
+      "values": ["HIT", "MISS"]
+    },
+    "ProfilePhase": {
+      "values": ["TOTAL", "CONDITION", "ACTION"]
+    },
+    "BaselineStatus": {
+      "values": ["OK", "INSUFFICIENT_COHORT"]
+    },
+    "DecisionStatus": {
+      "values": ["SELECTED", "NO_MATCH", "NOT_SELECTED", "BLOCKED", "ERROR"]
+    },
+    "DecisionReasonCode": {
+      "values": [
+        "FINAL_WINNER",
+        "EFFECTIVE_DATE_INVALID",
+        "CONDITION_MISMATCH",
+        "MUTEX_PRIORITY_LOST",
+        "MUTEX_LIMIT_REACHED",
+        "GROUP_PRIORITY_LOST",
+        "GROUP_LIMIT_REACHED",
+        "ACTION_ERROR",
+        "ENGINE_ERROR"
+      ]
+    },
+    "SimulationStatus": {
+      "values": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELED"]
+    },
+    "SimulationDatasetType": {
+      "values": ["HISTORICAL", "UPLOADED", "MANUAL"]
+    },
+    "SimulationDatasetSource": {
+      "values": ["EXECUTION_LOGS", "S3_BUCKET", "REQUEST_BODY"]
+    },
+    "SimulationMetricType": {
+      "values": ["COUNT", "SUM", "AVG"]
+    },
+    "Role": {
+      "values": ["SYSTEM_MANAGER", "ADMIN", "USER", "VIEWER", "API_CLIENT"]
+    },
+    "FailureStatus": {
+      "values": ["PENDING", "RESOLVED", "IGNORED"]
+    },
+    "FailureAction": {
+      "values": ["IGNORE", "RESOLVE"]
+    },
+    "TaskType": {
+      "values": ["PLATFORM_WEBHOOK", "SCHEDULED_DEPLOYMENT"]
+    },
+    "PlatformEventType": {
+      "values": [
+        "VERSION_PUBLISHED",
+        "DEPLOYED",
+        "ROLLED_BACK",
+        "UNDEPLOYED",
+        "DEPLOY_SCHEDULED",
+        "DEPLOY_SCHEDULE_CANCELED"
+      ]
+    },
+    "WebhookPayloadFormat": {
+      "values": ["GENERIC", "SLACK"]
+    },
+    "Confidence": {
+      "values": ["EXACT", "AMBIGUOUS"]
+    },
+    "SourceKind": {
+      "values": ["CONDITION", "ACTION"]
+    },
+    "SkipReason": {
+      "values": ["ALREADY_EXISTS", "INVALID_KEY", "RESERVED"]
+    },
+    "DeploymentScheduleStatus": {
+      "values": ["PENDING", "EXECUTED", "CANCELED", "FAILED"]
+    },
+    "ScheduleCancelReason": {
+      "values": [
+        "MANUAL_DEPLOY",
+        "ROLLBACK",
+        "UNDEPLOY",
+        "AB_TEST_STARTED",
+        "GROUP_ARCHIVED",
+        "USER_REQUEST"
+      ]
+    },
+    "ScheduleFailureReason": {
+      "values": ["HASH_MISMATCH", "VERSION_NOT_ACTIVE", "DEPLOY_ERROR"]
+    }
+  }
+}

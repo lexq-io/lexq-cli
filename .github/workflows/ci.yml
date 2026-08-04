@@ -26,6 +26,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # §34 — src/types/enums.ts is generated from the engine contract manifest.
+      # Fails if it was hand-edited, or if the committed subset was not regenerated.
+      - name: Contract enums
+        run: pnpm enums:check
+
       - name: Type Check
         run: pnpm typecheck
 

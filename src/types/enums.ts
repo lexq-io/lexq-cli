@@ -1,3 +1,12 @@
+// Generated file. Do not edit by hand.
+//
+//   regenerate  node scripts/gen-enums.mjs      (needs the engine-delivered manifest)
+//   verify      node scripts/gen-enums.mjs --check
+//   source      lexq-engine, via contracts/lexq-manifest.cli.json
+//
+// To change a value, change the enum in the engine. To change which enums are
+// exposed here, edit ORDER in scripts/gen-enums.mjs.
+
 // ── Policy Engine ──
 export const PolicyGroupStatus = ['ACTIVE', 'DISABLED', 'ARCHIVED'] as const;
 export type PolicyGroupStatus = (typeof PolicyGroupStatus)[number];
@@ -6,6 +15,8 @@ export const PolicyVersionStatus = ['DRAFT', 'ACTIVE', 'ARCHIVED', 'EXPIRED'] as
 export type PolicyVersionStatus = (typeof PolicyVersionStatus)[number];
 
 // ── Condition & Action ──
+// HAS_ANY/HAS_ALL/HAS_NONE are LIST-typed facts only (CONVENTIONS §26). Mirror of IN/NOT_IN:
+// IN takes a scalar fact and a list value; HAS_* takes a list on both sides.
 export const ConditionOperator = [
   'EQUALS',
   'NOT_EQUALS',
@@ -16,8 +27,6 @@ export const ConditionOperator = [
   'CONTAINS',
   'IN',
   'NOT_IN',
-  // LIST-typed facts only (CONVENTIONS §26). Mirror of IN/NOT_IN:
-  // IN takes a scalar fact and a list value; HAS_* takes a list on both sides.
   'HAS_ANY',
   'HAS_ALL',
   'HAS_NONE',
@@ -27,7 +36,7 @@ export type ConditionOperator = (typeof ConditionOperator)[number];
 export const LogicalOperator = ['AND', 'OR'] as const;
 export type LogicalOperator = (typeof LogicalOperator)[number];
 
-export const ActionType = ['MUTATE_FACT', 'BLOCK', 'SET_FACT'] as const;
+export const ActionType = ['SET_FACT', 'MUTATE_FACT', 'BLOCK'] as const;
 export type ActionType = (typeof ActionType)[number];
 
 export const ValueType = ['STRING', 'NUMBER', 'BOOLEAN', 'LIST_STRING', 'LIST_NUMBER'] as const;
@@ -56,7 +65,7 @@ export type ApiExecutionType = (typeof ApiExecutionType)[number];
 export const ProfileCacheState = ['HIT', 'MISS'] as const;
 export type ProfileCacheState = (typeof ProfileCacheState)[number];
 
-export const ProfilePhase = ['CONDITION', 'ACTION'] as const;
+export const ProfilePhase = ['TOTAL', 'CONDITION', 'ACTION'] as const;
 export type ProfilePhase = (typeof ProfilePhase)[number];
 
 export const BaselineStatus = ['OK', 'INSUFFICIENT_COHORT'] as const;

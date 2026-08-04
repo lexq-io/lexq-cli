@@ -28,6 +28,8 @@
     "build": "tsup",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
+    "enums": "node scripts/gen-enums.mjs",
+    "enums:check": "node scripts/gen-enums.mjs --check",
     "start": "node dist/index.js",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
