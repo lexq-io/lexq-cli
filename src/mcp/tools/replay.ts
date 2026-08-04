@@ -9,7 +9,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Replay a Decision',
       description:
-        'Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous and free of charge (TPS throttle only). External effects (webhooks, notifications) are always mocked — nothing fires.',
+        'Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous and free of charge (TPS throttle only). A replay sends no webhook, notification, or event: rule actions produce no outward effects.',
       inputSchema: {
         traceId: z.string().describe('Trace ID of the past execution to replay'),
         candidateVersionId: z.string().uuid().describe('Version to re-evaluate against'),

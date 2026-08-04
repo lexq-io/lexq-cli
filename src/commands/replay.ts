@@ -26,7 +26,7 @@ export function registerReplayCommands(program: Command): void {
           get       Poll a job's status, summary, and changed samples
           cancel    Cancel a PENDING/RUNNING job
 
-        External effects (webhooks, notifications) are always mocked during replay.
+        A replay sends no webhook, notification, or event: rule actions produce no outward effects.
       `,
     );
 
