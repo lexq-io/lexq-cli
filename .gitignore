@@ -28,3 +28,8 @@ Thumbs.db
 # 외부용 에이전트 문서는 AGENTS.md / CONTEXT.md 이고 npm 으로 배포된다.
 CLAUDE.md
 .claude/settings.local.json
+
+# 엔진이 배달하는 전체 계약 매니페스트 (§34).
+# 이 레포가 노출하는 범위보다 넓으므로 커밋하지 않는다.
+# 커밋되는 것은 ORDER 범위로 줄인 contracts/lexq-manifest.cli.json 뿐이다.
+contracts/lexq-manifest.json

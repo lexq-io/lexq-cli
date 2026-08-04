@@ -15,15 +15,24 @@ export interface GroupSummary {
   total: PercentileStats;
 }
 
+/**
+ * Rule-scoped phase. TOTAL never appears here.
+ *
+ * The engine enforces the shape in ProfileKey: GROUP scope has no ruleId and phase TOTAL,
+ * RULE scope has a ruleId and phase CONDITION or ACTION. Group-wide timing is not a phase
+ * label at all — it comes back as GroupSummary.total.
+ */
+export type RuleProfilePhase = Exclude<ProfilePhase, 'TOTAL'>;
+
 export interface BaselineInfo {
-  phase: ProfilePhase;
+  phase: RuleProfilePhase;
   baselineP50Nanos: number | null;
   cohortSize: number;
   status: BaselineStatus;
 }
 
 export interface RulePhaseStats {
-  phase: ProfilePhase;
+  phase: RuleProfilePhase;
   stats: PercentileStats;
   baselineMultiple: number | null;
   flagged: boolean;
@@ -47,7 +56,7 @@ export interface ProfileOverview {
 }
 
 export interface PhaseCacheDistribution {
-  phase: ProfilePhase;
+  phase: RuleProfilePhase;
   cacheState: ProfileCacheState;
   stats: PercentileStats;
 }
@@ -62,7 +71,7 @@ export interface WindowPoint {
 }
 
 export interface WindowSeries {
-  phase: ProfilePhase;
+  phase: RuleProfilePhase;
   cacheState: ProfileCacheState;
   points: WindowPoint[];
 }
