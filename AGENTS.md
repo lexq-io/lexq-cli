@@ -7,7 +7,8 @@
 LexQ CLI (`@lexq/cli`, binary: `lexq`) manages a policy execution engine. Policies are business rules (if-then) that
 evaluate input facts and produce actions (discounts, blocks, notifications, etc.).
 
-The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose 75 tools to any MCP-compatible AI client.
+The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose the full command inventory as MCP tools to
+any MCP-compatible AI client.
 
 This file tells you how to use the CLI as an AI agent.
 
@@ -128,8 +129,8 @@ Place this file in the project root. The IDE will auto-discover it.
 
 ### Claude Code
 
-See `.claude/CLAUDE.md` for additional project-specific context (code structure, build commands, architecture
-principles).
+Reads this file via the root `CLAUDE.md` pointer. No separate context file — this document and `skills/` are the whole
+guide.
 
 ### Gemini CLI
 
@@ -142,7 +143,17 @@ Connect via:
 - **Cloud:** `https://mcp.lexq.io` (OAuth 2.1)
 - **Local stdio:** `npx @lexq/cli serve --mcp`
 
-75 tools mirror the CLI command inventory.
+The MCP toolset mirrors the CLI command inventory one-to-one.
+
+## API Shape
+
+- Base URL `https://api.lexq.io/api/v1/partners`, auth via the `X-API-KEY` header.
+- Every response is an envelope: the success branch carries `data`; the failure branch carries `errorCode` +
+  `message`. Surface both — never a bare "request failed".
+- Pagination is asymmetric: requests send `page`/`size`, responses return `pageNo`/`pageSize`. Pages are 0-indexed.
+- Fact keys are `snake_case` and case-sensitive.
+- Actions never call external systems. The engine mutates facts and records the decision — read the response and
+  act on it yourself. Deployment lifecycle webhooks (`lexq webhook-subscriptions`) are the one push channel.
 
 ## Troubleshooting
 
@@ -157,3 +168,13 @@ Connect via:
 | Network error               | Check `lexq status` for API health                                  |
 
 `errorCode` is of the form `<domain>-<number>` (`P-002`, `ACT-016`). See `lexq-shared/SKILL.md` for the prefix table.
+
+## Contributing in This Repo (coding agents)
+
+- CLI commands and MCP tools stay in lock-step — a new command lands with its MCP tool in the same PR, sharing
+  the single api-client layer.
+- The hosted MCP server consumes this package from npm. Publish (`v*` tag) **before** redeploying it — CI cannot
+  catch that ordering.
+- Gates before commit: `pnpm typecheck` (zero errors), `pnpm lint` (zero warnings), `bash tests/e2e.sh`.
+- Multi-line CLI help and MCP tool descriptions use `dedent` — template-literal indentation leaks into LLM context.
+- Types mirror engine DTOs exactly; never invent response shapes.
