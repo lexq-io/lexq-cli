@@ -86,7 +86,7 @@
       "values": ["COUNT", "SUM", "AVG"]
     },
     "Role": {
-      "values": ["SYSTEM_MANAGER", "ADMIN", "USER", "VIEWER", "API_CLIENT"]
+      "values": ["SYSTEM_MANAGER", "ADMIN", "USER", "VIEWER", "API_CLIENT", "API_ADMIN"]
     },
     "FailureStatus": {
       "values": ["PENDING", "RESOLVED", "IGNORED"]
