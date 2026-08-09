@@ -102,7 +102,14 @@ export const SimulationMetricType = ['COUNT', 'SUM', 'AVG'] as const;
 export type SimulationMetricType = (typeof SimulationMetricType)[number];
 
 // ── Auth ──
-export const Role = ['SYSTEM_MANAGER', 'ADMIN', 'USER', 'VIEWER', 'API_CLIENT'] as const;
+export const Role = [
+  'SYSTEM_MANAGER',
+  'ADMIN',
+  'USER',
+  'VIEWER',
+  'API_CLIENT',
+  'API_ADMIN',
+] as const;
 export type Role = (typeof Role)[number];
 
 // ── Failure Log ──
