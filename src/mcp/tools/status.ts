@@ -6,7 +6,7 @@ export function registerStatusTools(server: McpServer, callApi: CallApi): void {
     'lexq_whoami',
     {
       title: 'Who Am I',
-      description: 'Show current authentication info (tenant name, role, API key mask).',
+      description: 'Show current authentication info (tenant ID, user ID, role).',
       inputSchema: {},
     },
     async () => callApi('GET', 'whoami'),
