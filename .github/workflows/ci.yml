@@ -39,3 +39,6 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Exact decimals
+        run: pnpm test:decimals

@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import { parseJson, stringifyJson } from '@/lib/lossless-json';
+import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
@@ -316,10 +316,10 @@ export function registerAnalyticsCommands(program: Command): void {
             console.log(
               `\n── Metric: ${data.metricSummary.targetVariable} (${data.metricSummary.aggregationType}) ──`,
             );
-            console.log(`Baseline:   ${data.metricSummary.baselineValue.toLocaleString()}`);
-            console.log(`Simulated:  ${data.metricSummary.simulatedValue.toLocaleString()}`);
+            console.log(`Baseline:   ${String(data.metricSummary.baselineValue)}`);
+            console.log(`Simulated:  ${String(data.metricSummary.simulatedValue)}`);
             console.log(
-              `Delta:      ${data.metricSummary.delta > 0 ? '+' : ''}${data.metricSummary.delta.toLocaleString()}`,
+              `Delta:      ${signPrefix(data.metricSummary.delta)}${String(data.metricSummary.delta)}`,
             );
             console.log(
               `Change:     ${data.metricSummary.deltaPercentage > 0 ? '+' : ''}${data.metricSummary.deltaPercentage.toFixed(1)}%`,
@@ -336,20 +336,22 @@ export function registerAnalyticsCommands(program: Command): void {
               `Rate Δ:     ${diff.matchedRateDelta > 0 ? '+' : ''}${diff.matchedRateDelta.toFixed(1)}%`,
             );
             console.log(
-              `Metric Δ:   ${diff.metricValueDelta > 0 ? '+' : ''}${diff.metricValueDelta.toLocaleString()}`,
+              `Metric Δ:   ${signPrefix(diff.metricValueDelta)}${String(diff.metricValueDelta)}`,
             );
           }
 
           if (data.ruleStats?.length) {
             console.log('');
+            // No `truncate` here: it applies to every column, and a metric value long
+            // enough to be preserved exactly is always longer than the cap, so the table
+            // would print a silently shortened number. Only the rule name is capped.
             printTable(
               ['Rule', 'Matched', 'Metric'],
               data.ruleStats.map((r) => [
-                r.ruleName,
+                r.ruleName.length > 30 ? r.ruleName.substring(0, 30) + '…' : r.ruleName,
                 r.matchedCount.toLocaleString(),
-                r.metricValue.toLocaleString(),
+                String(r.metricValue),
               ]),
-              { truncate: 30 },
             );
           }
         } else {
@@ -656,6 +658,24 @@ export function registerAnalyticsCommands(program: Command): void {
 }
 
 // ── Helpers ──
+
+/**
+ * The '+' shown in front of a positive metric value, or '' for zero and negatives — a negative
+ * already prints its own '-'.
+ *
+ * The sign is read from the value's digits rather than compared with `> 0`. A metric value is
+ * an exact decimal, so one too long for an IEEE-754 double arrives as a preserved number whose
+ * text is exact but which is not a `number`: comparing it converts first, which rounds, and
+ * throws outright when the exponent is out of a double's range.
+ */
+function signPrefix(value: number | LosslessNumber): string {
+  const text = String(value);
+  if (text.startsWith('-')) return '';
+  // Zero in every spelling — "0", "0.000", "0e10" — has no significant digit before the
+  // exponent, and gets no '+'.
+  const significand = text.split(/[eE]/)[0] ?? '';
+  return /[1-9]/.test(significand) ? '+' : '';
+}
 
 function resolveBody(opts: Record<string, string | boolean | undefined>): Record<string, unknown> {
   if (opts.file) {
