@@ -43,3 +43,9 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
 export type { CallApi, McpToolResult } from './tools/_shared';
 export { paginationParams, formatUnregisteredFactWarning } from './tools/_shared';
 export { ApiError } from '@/lib/api-client';
+
+/**
+ * JSON helpers that preserve long decimals. Exported so a host embedding these tools
+ * serializes tool arguments and results the same way the CLI does.
+ */
+export { parseJson, stringifyJson, isLosslessNumber, LosslessNumber } from '@/lib/lossless-json';

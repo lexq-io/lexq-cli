@@ -193,7 +193,7 @@ Each rule can have multiple actions. Actions fire sequentially.
 | `method`    | always   | `PERCENTAGE` \| `AMOUNT` — dictates the unit of `operand`                     |
 | `operand`   | always   | The arithmetic operand. Percent when PERCENTAGE, absolute amount when AMOUNT. |
 | `refVar`    | optional | Base for percentage calculation. Omit to use `targetVar` itself.              |
-| `rounding`  | optional | `{ scale: 0..16, mode?: HALF_UP \| ... }`. Omit for lossless full precision.  |
+| `rounding`  | optional | `{ scale: 0..34, mode?: HALF_UP \| ... }`. Omit for lossless full precision.  |
 
 **operator × method matrix**
 

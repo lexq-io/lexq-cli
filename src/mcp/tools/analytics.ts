@@ -3,6 +3,7 @@ import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { parseJson, stringifyJson } from '@/lib/lossless-json';
 
 export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
   // ── Dry Run ──
@@ -33,7 +34,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       },
     },
     async ({ versionId, facts, includeDebugInfo }) => {
-      const parsedFacts: unknown = JSON.parse(facts);
+      const parsedFacts: unknown = parseJson(facts);
       return callApi('POST', `analytics/dry-run/versions/${versionId}`, {
         body: { facts: parsedFacts, includeDebugInfo },
       });
@@ -60,7 +61,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       },
     },
     async ({ versionIdA, versionIdB, facts }) => {
-      const parsedFacts: unknown = JSON.parse(facts);
+      const parsedFacts: unknown = parseJson(facts);
       return callApi('POST', 'analytics/dry-run/compare', {
         body: { versionIdA, versionIdB, facts: parsedFacts },
       });
@@ -123,7 +124,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       },
     },
     async ({ body }) => {
-      const parsed: unknown = JSON.parse(body);
+      const parsed: unknown = parseJson(body);
       return callApi('POST', 'analytics/simulations', { body: parsed });
     },
   );
@@ -228,14 +229,14 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
 
       if (!result.isError) {
         try {
-          const uploaded = JSON.parse(result.content[0]?.text ?? '{}') as { path?: string };
+          const uploaded = parseJson(result.content[0]?.text ?? '{}') as { path?: string };
           if (uploaded.path) {
             const dataset = { type: 'UPLOADED', source: 'S3_BUCKET', path: uploaded.path };
             result.content.push({
               type: 'text',
               text:
                 'Ready-to-use dataset block for lexq_simulation_start:\n' +
-                JSON.stringify({ dataset }, null, 2),
+                stringifyJson({ dataset }, 2),
             });
           }
         } catch {

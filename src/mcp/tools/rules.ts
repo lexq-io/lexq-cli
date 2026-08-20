@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
+import { parseJson } from '@/lib/lossless-json';
 
 // Condition/Action are deeply nested JSON — accept as opaque object via z.record.
 // The engine validates structure. MCP schema describes the shape in descriptions.
@@ -100,7 +101,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           subsequent actions and subsequent winning rules still run. Enforcement is the caller's
           responsibility; the decision surfaces as the is_blocked fact.
 
-        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..16), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
+        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..34), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -113,7 +114,8 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       },
     },
     async ({ groupId, versionId, rule }) => {
-      const body: unknown = JSON.parse(rule);
+      // `rule` arrives as text, so long decimals are still intact at this point.
+      const body: unknown = parseJson(rule);
       return callApi('POST', `policy-groups/${groupId}/versions/${versionId}/rules`, { body });
     },
   );
@@ -135,7 +137,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       },
     },
     async ({ groupId, versionId, ruleId, rule }) => {
-      const body: unknown = JSON.parse(rule);
+      const body: unknown = parseJson(rule);
       return callApi('PUT', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}`, {
         body,
       });
