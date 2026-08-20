@@ -1,10 +1,12 @@
 import Table from 'cli-table3';
+import { stringifyJson } from '@/lib/lossless-json';
 import type { UnregisteredFact } from '@/types/api';
 
 export type OutputFormat = 'json' | 'table';
 
+/** Every command's JSON output. Long decimals are printed as they came from the engine. */
 export function printJson(data: unknown): void {
-  console.log(JSON.stringify(data, null, 2));
+  console.log(stringifyJson(data, 2));
 }
 
 export function printTable(

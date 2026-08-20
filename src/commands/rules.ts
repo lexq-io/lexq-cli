@@ -1,6 +1,7 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest, apiRequestWithMeta } from '@/lib/api-client';
+import { parseJson } from '@/lib/lossless-json';
 import {
   printJson,
   printTable,
@@ -182,7 +183,7 @@ export function registerRuleCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
-        const body = JSON.parse(opts.json) as CreateRuleRequest;
+        const body = parseJson(opts.json) as CreateRuleRequest;
         const { data, meta } = await apiRequestWithMeta<PolicyRuleDetail>(
           'POST',
           `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules`,
@@ -228,7 +229,7 @@ export function registerRuleCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
-        const body = JSON.parse(opts.json) as UpdateRuleRequest;
+        const body = parseJson(opts.json) as UpdateRuleRequest;
         const { data, meta } = await apiRequestWithMeta<PolicyRuleDetail>(
           'PUT',
           `policy-groups/${opts.groupId}/versions/${opts.versionId}/rules/${opts.id}`,

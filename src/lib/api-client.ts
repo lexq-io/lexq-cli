@@ -1,4 +1,5 @@
 import { loadConfig } from './config';
+import { parseJson, stringifyJson } from './lossless-json';
 import type { ApiResponse, ResponseMeta } from '@/types/api';
 
 export interface ApiClientOptions {
@@ -51,7 +52,8 @@ async function doFetch(method: string, path: string, options: RequestOptions): P
     console.log(`  Content-Type: application/json`);
     if (options.body) {
       console.log('Body:');
-      console.log(`  ${JSON.stringify(options.body, null, 2)}`);
+      // What is printed here must be what would be sent.
+      console.log(`  ${stringifyJson(options.body, 2) ?? ''}`);
     }
     console.log('\n(Use without --dry-run to execute)');
     process.exit(0);
@@ -62,7 +64,7 @@ async function doFetch(method: string, path: string, options: RequestOptions): P
   const response = await fetch(url.toString(), {
     method,
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: options.body ? stringifyJson(options.body) : undefined,
   });
   if (options.verbose) {
     console.error(`← ${response.status} ${response.statusText} (${Date.now() - startTime}ms)`);
@@ -107,7 +109,8 @@ export async function apiRequestWithMeta<T>(
     return { data: undefined as T, meta: null };
   }
 
-  const json = (await response.json()) as ApiResponse<T>;
+  // response.json() would round long decimals; every enveloped response passes through here.
+  const json = parseJson(await response.text()) as ApiResponse<T>;
   assertOk(response, json);
   return { data: json.data, meta: json.meta ?? null };
 }

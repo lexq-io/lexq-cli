@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
+import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
@@ -184,7 +185,7 @@ export function registerAnalyticsCommands(program: Command): void {
             ]),
           );
           console.log('\nExample request:');
-          console.log(JSON.stringify(data.exampleRequest, null, 2));
+          console.log(stringifyJson(data.exampleRequest, 2));
         } else {
           printJson(data);
         }
@@ -492,7 +493,8 @@ export function registerAnalyticsCommands(program: Command): void {
         );
 
         if (opts.output) {
-          const text = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+          const text =
+            typeof response === 'string' ? response : (stringifyJson(response, 2) ?? '');
           writeFileSync(opts.output, text, 'utf-8');
           console.log(`✓ Exported to ${opts.output}`);
         } else {
@@ -658,10 +660,10 @@ export function registerAnalyticsCommands(program: Command): void {
 function resolveBody(opts: Record<string, string | boolean | undefined>): Record<string, unknown> {
   if (opts.file) {
     const raw = readFileSync(opts.file as string, 'utf-8');
-    return JSON.parse(raw);
+    return parseJson(raw) as Record<string, unknown>;
   }
   if (opts.json) {
-    return JSON.parse(opts.json as string);
+    return parseJson(opts.json as string) as Record<string, unknown>;
   }
   return {};
 }

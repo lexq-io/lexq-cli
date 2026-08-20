@@ -1,5 +1,6 @@
 import { apiRequestWithMeta, type ApiClientOptions } from '@/lib/api-client';
 import { loadConfig } from '@/lib/config';
+import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import type { ResponseMeta } from '@/types/api';
 
 export interface McpToolResult {
@@ -68,8 +69,8 @@ export function createCallApiFromConfig(): CallApi {
           body: formData,
         });
 
-        const data = await response.json();
-        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+        const data = parseJson(await response.text());
+        return { content: [{ type: 'text', text: stringifyJson(data, 2) ?? '' }] };
       }
 
       const clientOpts: ApiClientOptions = {
@@ -82,7 +83,7 @@ export function createCallApiFromConfig(): CallApi {
         params: opts?.params,
       });
       const content: Array<{ type: 'text'; text: string }> = [
-        { type: 'text', text: JSON.stringify(data, null, 2) },
+        { type: 'text', text: stringifyJson(data, 2) ?? '' },
       ];
       const warning = formatUnregisteredFactWarning(meta);
       if (warning) content.push({ type: 'text', text: warning });
