@@ -27,9 +27,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Same source as CI (.nvmrc). The published artifact must be built by the
+      # runtime the checks ran on.
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: .nvmrc
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
