@@ -5,6 +5,7 @@ import type {
   SimulationStatus,
 } from './enums';
 import type { ActionDefinition } from './rules';
+import type { LosslessNumber } from '@/lib/lossless-json';
 
 // ══════════════════════════════════════════
 // Shared Trace Types
@@ -135,12 +136,28 @@ export interface SimulationSummary {
   matchRate: number;
 }
 
+/**
+ * Aggregated metric values for one simulation.
+ *
+ * `baselineValue`, `simulatedValue` and `delta` are exact decimals. An average over a
+ * repeating fraction, for one, carries more significant digits than an IEEE-754 double holds,
+ * and reading the response preserves such a literal as a `LosslessNumber` rather than rounding
+ * it. Render these three with `String()` or a template literal. A preserved number has no
+ * `toFixed()`, and arithmetic on it silently rounds or throws.
+ *
+ * `toLocaleString()` is not interchangeable here. It is exact on a preserved number but rounds
+ * a plain one to three decimal places, so mixing the two makes the printed precision depend on
+ * how long the value happens to be.
+ *
+ * `deltaPercentage` is a ratio the engine reports as a floating-point value, so it is always a
+ * plain `number`.
+ */
 export interface MetricSummary {
   targetVariable: string;
   aggregationType: SimulationMetricType;
-  baselineValue: number;
-  simulatedValue: number;
-  delta: number;
+  baselineValue: number | LosslessNumber;
+  simulatedValue: number | LosslessNumber;
+  delta: number | LosslessNumber;
   deltaPercentage: number;
 }
 
@@ -164,14 +181,16 @@ export interface Comparison {
 export interface ImpactDifference {
   matchedCountDelta: number;
   matchedRateDelta: number;
-  metricValueDelta: number;
+  /** An exact decimal, with the same handling as {@link MetricSummary}'s values. */
+  metricValueDelta: number | LosslessNumber;
 }
 
 export interface RuleStat {
   ruleId: string;
   ruleName: string;
   matchedCount: number;
-  metricValue: number;
+  /** An exact decimal, with the same handling as {@link MetricSummary}'s values. */
+  metricValue: number | LosslessNumber;
 }
 
 // ══════════════════════════════════════════
