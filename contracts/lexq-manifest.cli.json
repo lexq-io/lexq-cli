@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "note": "Subset of the lexq-engine manifest limited to ORDER in scripts/gen-enums.mjs. Generated; do not edit.",
+  "schemaVersion": 2,
+  "note": "Subset of the engine contract manifest limited to ORDER and CONSTANTS in scripts/gen-enums.mjs. Generated; do not edit.",
   "enums": {
     "PolicyGroupStatus": {
       "values": ["ACTIVE", "DISABLED", "ARCHIVED"]
@@ -135,5 +135,18 @@
     "ScheduleFailureReason": {
       "values": ["HASH_MISMATCH", "VERSION_NOT_ACTIVE", "DEPLOY_ERROR"]
     }
+  },
+  "constants": {
+    "MAX_ROUNDING_SCALE": 34,
+    "MIN_TRAFFIC_RATE": 1,
+    "MAX_TRAFFIC_RATE": 99,
+    "REPLAY_WINDOW_MAX_RECORDS": 50000,
+    "PROFILE_SAMPLE_PERMILLE": 10,
+    "LATENCY_WINDOW_MILLIS": 60000,
+    "TAIL_MIN_OBS": 3,
+    "SLOW_MULTIPLIER": 10,
+    "MIN_SAMPLES": 100,
+    "MIN_COHORT_SIZE": 3,
+    "PROFILE_DEFAULT_WINDOW_HOURS": 24
   }
 }

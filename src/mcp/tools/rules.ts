@@ -1,3 +1,4 @@
+import { MAX_ROUNDING_SCALE } from '@/types/constants';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import dedent from 'dedent';
@@ -101,7 +102,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           subsequent actions and subsequent winning rules still run. Enforcement is the caller's
           responsibility; the decision surfaces as the is_blocked fact.
 
-        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..34), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
+        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),

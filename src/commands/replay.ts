@@ -1,3 +1,4 @@
+import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
@@ -71,7 +72,7 @@ export function registerReplayCommands(program: Command): void {
     .requiredOption('--version-id <versionId>', 'Candidate version to re-evaluate against')
     .requiredOption('--from <date>', 'Window start date (yyyy-MM-dd)')
     .requiredOption('--to <date>', 'Window end date (yyyy-MM-dd)')
-    .option('--max-records <number>', 'Sample cap (hard cap 50k)')
+    .option('--max-records <number>', `Sample cap (hard cap ${REPLAY_WINDOW_MAX_RECORDS / 1000}k)`)
     .addHelpText(
       'after',
       dedent`

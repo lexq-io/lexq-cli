@@ -29,6 +29,7 @@
     "typecheck": "tsc --noEmit",
     "enums": "node scripts/gen-enums.mjs",
     "enums:check": "node scripts/gen-enums.mjs --check",
+    "constants:check": "node scripts/check-constants.mjs",
     "start": "node dist/index.js",
     "test:decimals": "pnpm build && node tests/exact-decimals.mjs",
     "prepublishOnly": "pnpm build",
