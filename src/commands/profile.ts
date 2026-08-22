@@ -1,3 +1,8 @@
+import {
+  LATENCY_WINDOW_MILLIS,
+  PROFILE_DEFAULT_WINDOW_HOURS,
+  SLOW_MULTIPLIER,
+} from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
@@ -13,16 +18,22 @@ export function registerProfileCommands(program: Command): void {
   program
     .command('profile <groupId>')
     .description('Per-rule latency profile with relative slow-rule flags')
-    .option('--rule <ruleId>', 'Single-rule detail (distributions + 60s window series)')
+    .option(
+      '--rule <ruleId>',
+      `Single-rule detail (distributions + ${LATENCY_WINDOW_MILLIS / 1000}s window series)`,
+    )
     .option('--version <versionId>', 'Version to inspect (default: live version)')
-    .option('--from <instant>', 'Window start, ISO-8601 instant (default: 24h ago)')
+    .option(
+      '--from <instant>',
+      `Window start, ISO-8601 instant (default: ${PROFILE_DEFAULT_WINDOW_HOURS}h ago)`,
+    )
     .option('--to <instant>', 'Window end, ISO-8601 instant (default: now)')
     .option('--cache <state>', 'Cache dimension for the rule table: HIT | MISS (default: HIT)')
     .addHelpText(
       'after',
       dedent`
 
-        Slow-rule judgment is relative only: flagged = p50 ≥ 10× the median of
+        Slow-rule judgment is relative only: flagged = p50 ≥ ${SLOW_MULTIPLIER}× the median of
         per-rule p50s within the group. Absolute ms thresholds are intentionally
         not supported. Each percentile is withheld (–) unless n×(1−q) ≥ 3 —
         p50 from n ≥ 6, p95 from n ≥ 60, p99 from n ≥ 300. TOTAL is recorded

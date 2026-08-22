@@ -1,3 +1,4 @@
+import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
@@ -34,7 +35,9 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
           .int()
           .min(1)
           .optional()
-          .describe('Sample cap (server default applies; hard cap 50k)'),
+          .describe(
+            `Sample cap (server default applies; hard cap ${REPLAY_WINDOW_MAX_RECORDS / 1000}k)`,
+          ),
       },
     },
     async ({ candidateVersionId, from, to, maxRecords }) =>

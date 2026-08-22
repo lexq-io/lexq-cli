@@ -1,3 +1,4 @@
+import { MAX_TRAFFIC_RATE, MIN_TRAFFIC_RATE } from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
@@ -279,7 +280,7 @@ export function registerGroupCommands(program: Command): void {
           stop      Stop the test and revert to 100% live version
           adjust    Change the traffic percentage
 
-        The traffic rate (1-99) determines what percentage goes to the challenger.
+        The traffic rate (${MIN_TRAFFIC_RATE}-${MAX_TRAFFIC_RATE}) determines what percentage goes to the challenger.
         The remaining traffic continues to the current live version.
       `,
     );
@@ -290,7 +291,10 @@ export function registerGroupCommands(program: Command): void {
     .description('Start an A/B test')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Challenger version ID')
-    .requiredOption('--traffic-rate <rate>', 'Traffic rate for challenger (1-99)')
+    .requiredOption(
+      '--traffic-rate <rate>',
+      `Traffic rate for challenger (${MIN_TRAFFIC_RATE}-${MAX_TRAFFIC_RATE})`,
+    )
     .addHelpText(
       'after',
       dedent`
@@ -365,7 +369,10 @@ export function registerGroupCommands(program: Command): void {
     .command('adjust')
     .description('Adjust A/B test traffic rate')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
-    .requiredOption('--traffic-rate <rate>', 'New traffic rate (1-99)')
+    .requiredOption(
+      '--traffic-rate <rate>',
+      `New traffic rate (${MIN_TRAFFIC_RATE}-${MAX_TRAFFIC_RATE})`,
+    )
     .addHelpText(
       'after',
       dedent`

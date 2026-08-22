@@ -33,6 +33,11 @@ jobs:
       - name: Contract enums
         run: pnpm enums:check
 
+      # Numbers stated as prose. The compiler keeps imported constants honest; skill docs,
+      # CONTEXT.md and comments have no such guard, and this package ships all of them.
+      - name: Contract constants in prose
+        run: pnpm constants:check
+
       - name: Type Check
         run: pnpm typecheck
 

@@ -495,8 +495,7 @@ export function registerAnalyticsCommands(program: Command): void {
         );
 
         if (opts.output) {
-          const text =
-            typeof response === 'string' ? response : (stringifyJson(response, 2) ?? '');
+          const text = typeof response === 'string' ? response : (stringifyJson(response, 2) ?? '');
           writeFileSync(opts.output, text, 'utf-8');
           console.log(`✓ Exported to ${opts.output}`);
         } else {
