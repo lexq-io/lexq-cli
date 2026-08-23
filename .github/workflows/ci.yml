@@ -16,6 +16,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the public-surface check can read the commits on this branch.
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
 
@@ -28,7 +31,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # §34 — src/types/enums.ts is generated from the engine contract manifest.
+      # src/types/enums.ts is generated from the engine contract manifest.
       # Fails if it was hand-edited, or if the committed subset was not regenerated.
       - name: Contract enums
         run: pnpm enums:check
@@ -37,6 +40,16 @@ jobs:
       # CONTEXT.md and comments have no such guard, and this package ships all of them.
       - name: Contract constants in prose
         run: pnpm constants:check
+
+      # Files always. On a pull request also the commit messages: a squash merge writes
+      # the pull request body into this repository's history, so a cleanup that quotes
+      # what it removed would put it back.
+      - name: Public surface
+        run: pnpm surface:check
+
+      - name: Public surface (commit messages)
+        if: github.event_name == 'pull_request'
+        run: pnpm surface:check --commits origin/${{ github.base_ref }}
 
       - name: Type Check
         run: pnpm typecheck

@@ -24,12 +24,10 @@ Thumbs.db
 # LexQ
 .lexq/
 
-# 작업 지침 — 공개 레포이므로 커밋하지 않는다.
-# 외부용 에이전트 문서는 AGENTS.md / CONTEXT.md 이고 npm 으로 배포된다.
+# Local working notes. The agent-facing docs that ship are AGENTS.md and CONTEXT.md.
 CLAUDE.local.md
 .claude/settings.local.json
 
-# 엔진이 배달하는 전체 계약 매니페스트 (§34).
-# 이 레포가 노출하는 범위보다 넓으므로 커밋하지 않는다.
-# 커밋되는 것은 ORDER 범위로 줄인 contracts/lexq-manifest.cli.json 뿐이다.
+# The full contract manifest the engine delivers. It is wider than what this repo
+# exposes, so only the ORDER subset (contracts/lexq-manifest.cli.json) is committed.
 contracts/lexq-manifest.json

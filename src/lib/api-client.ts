@@ -104,7 +104,7 @@ export async function apiRequestWithMeta<T>(
     return { data: response as unknown as T, meta: null };
   }
 
-  // No-content responses (DELETE 204 등) — no envelope, no meta.
+  // No-content responses (DELETE 204 and friends) — no envelope, no meta.
   if (response.status === 204 || contentType === '') {
     return { data: undefined as T, meta: null };
   }

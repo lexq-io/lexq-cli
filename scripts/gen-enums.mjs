@@ -4,7 +4,7 @@
  * engine contract manifest.
  *
  * Why:
- *   These enums used to be hand-copied from lexq-engine. Copies drift. At conversion
+ *   These enums used to be hand-copied from the server. Copies drift. At conversion
  *   time ActionType had a different member order and ProfilePhase was missing TOTAL.
  *
  * Split of responsibility:
@@ -27,7 +27,8 @@
  * Exit:   0 = ok, 1 = violation. Wired into CI.
  *
  * Formatting is delegated to prettier so that .prettierrc stays the single source of
- * truth. Restating printWidth here would be the very kind of copy §34 exists to remove.
+ * truth. Restating printWidth here would be another hand-kept copy, which is the thing
+ * this generator exists to remove.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -111,7 +112,7 @@ const NOTES = {
   PolicyGroupStatus: ['── Policy Engine ──'],
   ConditionOperator: [
     '── Condition & Action ──',
-    'HAS_ANY/HAS_ALL/HAS_NONE are LIST-typed facts only (CONVENTIONS §26). Mirror of IN/NOT_IN:',
+    'HAS_ANY/HAS_ALL/HAS_NONE are LIST-typed facts only. Mirror of IN/NOT_IN:',
     'IN takes a scalar fact and a list value; HAS_* takes a list on both sides.',
   ],
   ConflictResolutionMode: ['── Conflict Resolution ──'],
@@ -133,7 +134,7 @@ const HEADER = `// Generated file. Do not edit by hand.
 //
 //   regenerate  node scripts/gen-enums.mjs      (needs the engine-delivered manifest)
 //   verify      node scripts/gen-enums.mjs --check
-//   source      lexq-engine, via contracts/lexq-manifest.cli.json
+//   source      the engine contract manifest, via contracts/lexq-manifest.cli.json
 //
 // To change a value, change the enum in the engine. To change which enums are
 // exposed here, edit ORDER in scripts/gen-enums.mjs.

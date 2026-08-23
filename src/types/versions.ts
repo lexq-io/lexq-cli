@@ -3,7 +3,7 @@ import type { ConditionNode, ActionDefinition } from './rules';
 import type { ConflictResolutionMode, ConflictResolutionStrategy } from './enums';
 
 // ══════════════════════════════════════════
-// Compiled Rule (스냅샷 내 룰)
+// Compiled Rule (a rule inside a version snapshot)
 // ══════════════════════════════════════════
 
 export interface CompiledRule {

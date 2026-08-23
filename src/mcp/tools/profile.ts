@@ -11,7 +11,13 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 
-/** §28.4 relative-threshold philosophy — surfaced verbatim on every profile tool. */
+/**
+ * The relative-threshold rule, surfaced verbatim on every profile tool.
+ *
+ * A rule is slow relative to its neighbours, never against a fixed millisecond budget:
+ * budgets go stale as traffic and hardware move, and a group whose rules are all slow
+ * would report nothing under one.
+ */
 const RELATIVE_THRESHOLD = `flagged = p50 ≥ ${SLOW_MULTIPLIER}× median of per-rule p50s within the group; absolute thresholds are intentionally not supported.`;
 
 function profileParams(opts: {

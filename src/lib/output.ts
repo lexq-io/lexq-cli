@@ -51,7 +51,10 @@ export function printError(error: unknown): void {
   }
 }
 
-/** 미등록 fact 경고 — stderr 로(stdout JSON 비오염), 비차단. 복붙용 create 힌트 포함. */
+/**
+ * Unregistered-fact warning. Goes to stderr so it never pollutes JSON on stdout,
+ * and is advisory only. Includes a copy-paste create hint.
+ */
 export function printUnregisteredFactsWarning(facts: UnregisteredFact[]): void {
   if (facts.length === 0) return;
   const s = facts.length === 1 ? '' : 's';

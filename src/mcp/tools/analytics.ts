@@ -240,7 +240,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
             });
           }
         } catch {
-          // path 추출 실패는 무시 — 업로드 원본 응답은 그대로 반환된다.
+          // If the path cannot be read, ignore it: the upload response is returned as is.
         }
       }
 

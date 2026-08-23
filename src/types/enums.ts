@@ -2,7 +2,7 @@
 //
 //   regenerate  node scripts/gen-enums.mjs      (needs the engine-delivered manifest)
 //   verify      node scripts/gen-enums.mjs --check
-//   source      lexq-engine, via contracts/lexq-manifest.cli.json
+//   source      the engine contract manifest, via contracts/lexq-manifest.cli.json
 //
 // To change a value, change the enum in the engine. To change which enums are
 // exposed here, edit ORDER in scripts/gen-enums.mjs.
@@ -15,7 +15,7 @@ export const PolicyVersionStatus = ['DRAFT', 'ACTIVE', 'ARCHIVED', 'EXPIRED'] as
 export type PolicyVersionStatus = (typeof PolicyVersionStatus)[number];
 
 // ── Condition & Action ──
-// HAS_ANY/HAS_ALL/HAS_NONE are LIST-typed facts only (CONVENTIONS §26). Mirror of IN/NOT_IN:
+// HAS_ANY/HAS_ALL/HAS_NONE are LIST-typed facts only. Mirror of IN/NOT_IN:
 // IN takes a scalar fact and a list value; HAS_* takes a list on both sides.
 export const ConditionOperator = [
   'EQUALS',

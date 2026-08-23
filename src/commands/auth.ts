@@ -89,7 +89,7 @@ export function registerAuthCommands(program: Command): void {
         const globalOpts = program.opts();
         const config = loadConfig();
 
-        // 우선순위: --api-key flag > 저장된 config
+        // Precedence: --api-key flag over the stored config.
         const apiKey = (globalOpts.apiKey as string | undefined) ?? config.apiKey;
         const baseUrl = (globalOpts.baseUrl as string | undefined) ?? config.baseUrl;
 
