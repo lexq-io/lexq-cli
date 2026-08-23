@@ -235,8 +235,8 @@ pnpm start -- groups list
 ```bash
 pnpm typecheck                  # Type check
 pnpm lint                       # ESLint
-bash tests/e2e.sh               # CLI E2E tests (requires API key)
-bash tests/test-engine-api.sh   # Engine API integration tests
+pnpm test:fact-key              # Fact key grammar
+pnpm test:decimals              # Metric precision display
 ```
 
 ## License

@@ -176,6 +176,7 @@ The MCP toolset mirrors the CLI command inventory one-to-one.
   the single api-client layer.
 - The hosted MCP server consumes this package from npm. Publish (`v*` tag) **before** redeploying it — CI cannot
   catch that ordering.
-- Gates before commit: `pnpm typecheck` (zero errors), `pnpm lint` (zero warnings), `bash tests/e2e.sh`.
+- Gates before commit: `pnpm typecheck` (zero errors), `pnpm lint` (zero warnings), `pnpm test:fact-key`,
+  `pnpm test:decimals`.
 - Multi-line CLI help and MCP tool descriptions use `dedent` — template-literal indentation leaks into LLM context.
 - Types mirror engine DTOs exactly; never invent response shapes.
