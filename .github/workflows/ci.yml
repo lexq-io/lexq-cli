@@ -44,6 +44,9 @@ jobs:
       # Files always. On a pull request also the commit messages: a squash merge writes
       # the pull request body into this repository's history, so a cleanup that quotes
       # what it removed would put it back.
+      - name: A/B identity key contract
+        run: pnpm ab-key:check
+
       - name: Public surface
         run: pnpm surface:check
 
