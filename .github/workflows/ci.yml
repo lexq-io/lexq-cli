@@ -47,5 +47,8 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Fact key grammar
+        run: pnpm test:fact-key
+
       - name: Exact decimals
         run: pnpm test:decimals

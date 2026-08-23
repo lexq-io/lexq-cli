@@ -17,16 +17,16 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         
         Returns:
           inputFacts        — normalized input facts
-          mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates payment_amount)
-          generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {fact_name}__delta key (signed difference)
+          mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)
+          generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)
           executionTraces   — per-rule match status
           decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)
         
-        Example input: { "facts": { "payment_amount": 100000, "customer_tier": "VIP" } }
+        Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }
         Always dry-run before publishing to validate rule behavior.`,
       inputSchema: {
         versionId: z.string().uuid().describe('Policy version ID to test against'),
-        facts: z.string().describe('JSON string of facts object, e.g. {"payment_amount":100000}'),
+        facts: z.string().describe('JSON string of facts object, e.g. {"paymentAmount":100000}'),
         includeDebugInfo: z
           .boolean()
           .default(true)
@@ -208,11 +208,11 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
 
         CSV example:
-        user_id,payment_amount
+        userId,paymentAmount
         user_001,150000
         user_002,50000
 
-        JSON example: [{"user_id":"user_001","payment_amount":150000}, {"user_id":"user_002","payment_amount":50000}]
+        JSON example: [{"userId":"user_001","paymentAmount":150000}, {"userId":"user_002","paymentAmount":50000}]
       `,
       inputSchema: {
         content: z.string().describe('CSV or JSON content as string'),

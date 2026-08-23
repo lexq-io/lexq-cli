@@ -32,6 +32,7 @@
     "constants:check": "node scripts/check-constants.mjs",
     "start": "node dist/index.js",
     "test:decimals": "pnpm build && node tests/exact-decimals.mjs",
+    "test:fact-key": "node tests/fact-key.mjs",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.ts\"",

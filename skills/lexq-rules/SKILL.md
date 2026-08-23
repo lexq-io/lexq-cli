@@ -39,7 +39,7 @@ Conditions use a tree structure with two node types: `SINGLE` and `GROUP`.
 ```json
 {
   "type": "SINGLE",
-  "field": "payment_amount",
+  "field": "paymentAmount",
   "operator": "GREATER_THAN_OR_EQUAL",
   "value": 100000,
   "valueType": "NUMBER"
@@ -55,14 +55,14 @@ Conditions use a tree structure with two node types: `SINGLE` and `GROUP`.
   "children": [
     {
       "type": "SINGLE",
-      "field": "customer_tier",
+      "field": "customerTier",
       "operator": "EQUALS",
       "value": "VIP",
       "valueType": "STRING"
     },
     {
       "type": "SINGLE",
-      "field": "payment_amount",
+      "field": "paymentAmount",
       "operator": "GREATER_THAN",
       "value": 50000,
       "valueType": "NUMBER"
@@ -109,7 +109,7 @@ by the server — check `lexq facts list` before choosing.
 
 // list fact, list value
 {
-  "field": "user_tags",
+  "field": "userTags",
   "operator": "HAS_ANY",
   "value": [
     "VIP",
@@ -133,7 +133,7 @@ Do **not** use `CONTAINS` on a list fact — that idiom works in some rule engin
 
 ### Nested Conditions Example
 
-`(customer_tier = "VIP" AND payment_amount >= 100000) OR region IN ["KR", "JP"]`:
+`(customerTier = "VIP" AND paymentAmount >= 100000) OR region IN ["KR", "JP"]`:
 
 ```json
 {
@@ -146,14 +146,14 @@ Do **not** use `CONTAINS` on a list fact — that idiom works in some rule engin
       "children": [
         {
           "type": "SINGLE",
-          "field": "customer_tier",
+          "field": "customerTier",
           "operator": "EQUALS",
           "value": "VIP",
           "valueType": "STRING"
         },
         {
           "type": "SINGLE",
-          "field": "payment_amount",
+          "field": "paymentAmount",
           "operator": "GREATER_THAN_OR_EQUAL",
           "value": 100000,
           "valueType": "NUMBER"
@@ -218,8 +218,8 @@ Use `refVar` when the base differs from the target:
 {
   "type": "MUTATE_FACT",
   "parameters": {
-    "targetVar": "loyalty_point",
-    "refVar": "order_total",
+    "targetVar": "loyaltyPoint",
+    "refVar": "orderTotal",
     "operator": "ADD",
     "method": "PERCENTAGE",
     "operand": 5
@@ -227,8 +227,8 @@ Use `refVar` when the base differs from the target:
 }
 ```
 
-`loyalty_point += order_total × 5%` — two different facts. Omitting `refVar` would compute
-`loyalty_point += loyalty_point × 5%` instead.
+`loyaltyPoint += orderTotal × 5%` — two different facts. Omitting `refVar` would compute
+`loyaltyPoint += loyaltyPoint × 5%` instead.
 
 **Ranges are not constrained.** Negative operands and percentages above 100 are valid — refunds
 (`-5`), surcharges (`150`), risk scores, and game points all need them.
@@ -240,20 +240,20 @@ present as a number and throws otherwise. "Make something that wasn't there" is 
 
 ### `BLOCK` does not halt execution
 
-`BLOCK` records a rejection decision by writing the `is_blocked` fact. Subsequent actions in the
+`BLOCK` records a rejection decision by writing the `isBlocked` fact. Subsequent actions in the
 same rule and subsequent winning rules still run. Enforcement is the caller's responsibility —
-read `is_blocked` from the response.
+read `isBlocked` from the response.
 
 ### Action Example: 10% Discount via MUTATE_FACT
 
-Reduces `payment_amount` by 10%. `__delta` is auto-generated in `generatedVariables` (e.g.,
-`payment_amount__delta: -10000` for a 100,000 input).
+Reduces `paymentAmount` by 10%. `__delta` is auto-generated in `generatedVariables` (e.g.,
+`paymentAmount__delta: -10000` for a 100,000 input).
 
 ```json
 {
   "type": "MUTATE_FACT",
   "parameters": {
-    "targetVar": "payment_amount",
+    "targetVar": "paymentAmount",
     "method": "PERCENTAGE",
     "operator": "SUB",
     "operand": 10,
@@ -301,15 +301,15 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
     "type": "GROUP",
     "operator": "AND",
     "children": [
-      { "type": "SINGLE", "field": "customer_tier", "operator": "EQUALS", "value": "VIP", "valueType": "STRING" },
-      { "type": "SINGLE", "field": "payment_amount", "operator": "GREATER_THAN_OR_EQUAL", "value": 100000, "valueType": "NUMBER" }
+      { "type": "SINGLE", "field": "customerTier", "operator": "EQUALS", "value": "VIP", "valueType": "STRING" },
+      { "type": "SINGLE", "field": "paymentAmount", "operator": "GREATER_THAN_OR_EQUAL", "value": 100000, "valueType": "NUMBER" }
     ]
   },
   "actions": [
     {
       "type": "MUTATE_FACT",
       "parameters": {
-        "targetVar": "payment_amount",
+        "targetVar": "paymentAmount",
         "method": "PERCENTAGE",
         "operator": "SUB",
         "operand": 10,
@@ -330,7 +330,7 @@ lexq rules update --group-id <gid> --version-id <vid> --id <ruleId> --json '{
     {
       "type": "MUTATE_FACT",
       "parameters": {
-        "targetVar": "payment_amount",
+        "targetVar": "paymentAmount",
         "method": "PERCENTAGE",
         "operator": "SUB",
         "operand": 15,
@@ -415,6 +415,6 @@ Before creating rules, always:
 
 1. **Check available facts:** `lexq facts list`
 2. **Confirm the version is DRAFT:** `lexq versions get --group-id <gid> --id <vid>` → status must be `DRAFT`
-3. **Use exact fact keys** from the fact definitions (snake_case, case-sensitive)
+3. **Use exact fact keys** from the fact definitions (case-sensitive)
 4. **Match value types** — a fact defined as `NUMBER` must receive numeric values, not strings
 5. **Match the operator to the fact type** — list-typed facts accept only `HAS_ANY` / `HAS_ALL` / `HAS_NONE`

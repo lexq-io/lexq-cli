@@ -129,13 +129,13 @@ export function registerRuleCommands(program: Command): void {
               "name": "VIP 20% Discount",
               "condition": {
                 "type": "SINGLE",
-                "field": "customer_tier",
+                "field": "customerTier",
                 "operator": "EQUALS",
                 "value": "VIP",
                 "valueType": "STRING"
               },
               "actions": [
-                { "type": "MUTATE_FACT", "parameters": { "targetVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "operand": 20 } }
+                { "type": "MUTATE_FACT", "parameters": { "targetVar": "paymentAmount", "operator": "SUB", "method": "PERCENTAGE", "operand": 20 } }
               ]
             }'
 
@@ -155,7 +155,7 @@ export function registerRuleCommands(program: Command): void {
           HAS_NONE   fact has none of the given values
 
           Example:
-            { "type": "SINGLE", "field": "user_tags", "operator": "HAS_ANY",
+            { "type": "SINGLE", "field": "userTags", "operator": "HAS_ANY",
               "value": ["VIP", "GOLD"], "valueType": "LIST_STRING" }
 
           CONTAINS is substring match on STRING facts, not list membership.
@@ -221,7 +221,7 @@ export function registerRuleCommands(program: Command): void {
           $ lexq rules update --group-id <gid> --version-id <vid> --id <rid> --json '{
               "name": "VIP 25% Discount",
               "actions": [
-                { "type": "MUTATE_FACT", "parameters": { "targetVar": "payment_amount", "operator": "SUB", "method": "PERCENTAGE", "operand": 25 } }
+                { "type": "MUTATE_FACT", "parameters": { "targetVar": "paymentAmount", "operator": "SUB", "method": "PERCENTAGE", "operand": 25 } }
               ]
             }'
       `,

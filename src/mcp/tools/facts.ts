@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { FACT_KEY_PATTERN } from '../../types/facts';
 
 export function registerFactTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -28,12 +29,12 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Create Fact Definition',
       description:
-        'Register a new input variable. Key must be lowercase with underscores (e.g. payment_amount). Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER.',
+        'Register a new input variable. Key starts with a letter, then letters, numbers, and underscores (e.g. paymentAmount). Casing is not enforced. Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER.',
       inputSchema: {
         key: z
           .string()
-          .regex(/^[a-z][a-z0-9_]*$/)
-          .describe('Variable key (snake_case)'),
+          .regex(FACT_KEY_PATTERN)
+          .describe('Variable key. Any casing; must start with a letter.'),
         name: z.string().describe('Display name'),
         type: z
           .enum(['STRING', 'NUMBER', 'BOOLEAN', 'LIST_STRING', 'LIST_NUMBER'])

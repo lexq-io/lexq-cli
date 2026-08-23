@@ -149,7 +149,8 @@ Prefixes you will encounter through the CLI:
 
 ## Important Conventions
 
-1. **Fact keys use `snake_case`.** Example: `payment_amount`, `customer_tier`. Always lowercase.
+1. **Fact keys start with a letter,** then letters, numbers, and underscores. Casing is yours to
+   choose and keys are case-sensitive. These docs use `camelCase`: `paymentAmount`, `customerTier`.
 2. **IDs are UUIDs.** Always copy the full ID from list/create output — do not guess.
 3. **Dates use ISO 8601.** Example: `2025-01-01T00:00:00Z`. Time zone is UTC.
 4. **JSON bodies via `--json`.** Most create/update commands accept `--json '<body>'` for the request body.
