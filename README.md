@@ -60,7 +60,7 @@ lexq domain-templates apply --template ECOMMERCE
 
 # 4. Test a rule against your data before shipping
 lexq analytics dry-run --version-id <VERSION_ID> --debug \
-  --json '{"facts":{"loyalty_tier":"PLATINUM","purchase_subtotal_usd":150}}'
+  --json '{"facts":{"loyaltyTier":"PLATINUM","purchaseSubtotalUsd":150}}'
 
 # 5. Deploy
 lexq deploy publish --group-id <GROUP_ID> --version-id <VERSION_ID> --memo "v1"

@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
-import { FACT_KEY_PATTERN } from '../../types/facts';
+import { FACT_KEY_PATTERN } from '@/types/facts';
 
 export function registerFactTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(

@@ -110,5 +110,60 @@ check(
   'found the narrower pattern again',
 );
 
+// ── Prose that agents read ────────────────────────────────────────────────
+//
+// The first version of this suite checked two source files. It passed while AGENTS.md and
+// CONTEXT.md — both listed in package.json `files`, both named in README.md as agent read
+// paths — still said "Fact keys are `snake_case`". A gate that only guards the code lets the
+// instructions drift instead, and the instructions are what an agent acts on.
+
+console.log('\nProse that ships\n');
+
+const DOCS = ['../AGENTS.md', '../CONTEXT.md', '../README.md'];
+for (const dir of ['lexq-shared', 'lexq-rules', 'lexq-recipes', 'lexq-execution', 'lexq-groups', 'lexq-simulation']) {
+  DOCS.push(`../skills/${dir}/SKILL.md`);
+}
+
+// Text that tells the reader a fact key must have a particular casing. `case-sensitive` is
+// fine and stays — that is a fact about lookup, not an instruction about naming.
+const PRESCRIBES = [
+  /fact\s+keys?[^.\n]*\bsnake_case\b/i,
+  /\bkeys?\b[^.\n]*\bmust be lowercase\b/i,
+  /\bkeys?\b[^.\n]*\blowercase (?:letters|only|with)/i,
+  /key \(snake_case\)/i,
+];
+
+for (const rel of DOCS) {
+  let text;
+  try {
+    text = read(rel);
+  } catch {
+    check(`${rel} exists`, false, 'listed here but missing on disk');
+    continue;
+  }
+  const hit = PRESCRIBES.find((re) => re.test(text));
+  const line = hit
+    ? text.split('\n').findIndex((l) => hit.test(l)) + 1
+    : 0;
+  check(
+    `${rel.replace('../', '')} does not prescribe a casing`,
+    !hit,
+    hit ? `line ${line}: ${hit}` : undefined,
+  );
+}
+
+// The narrower pattern must not come back as prose either.
+check(
+  'no doc spells out the old lowercase-only grammar',
+  !DOCS.some((rel) => {
+    try {
+      return /lowercase letters, numbers, and underscores/i.test(read(rel));
+    } catch {
+      return false;
+    }
+  }),
+  'a doc restates the pre-0.1.51 rule',
+);
+
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail === 0 ? 0 : 1);
