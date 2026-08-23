@@ -9,7 +9,7 @@ import { paginationParams } from './_shared';
  * Deliberately NOT exposed: the PII reveal endpoint (POST provenance/{traceId}/reveal).
  * Revealing routes PII plaintext into the calling agent's context (a third-party
  * surface), which violates the write-then-reveal contract's purpose of avoiding
- * plaintext replication (CONVENTIONS §12.6). Reveal is console-only, by design.
+ * plaintext replication. Reveal is console-only, by design.
  * Do not add a reveal tool here.
  */
 export function registerProvenanceTools(server: McpServer, callApi: CallApi): void {

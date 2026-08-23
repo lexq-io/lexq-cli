@@ -43,7 +43,7 @@ export function createCallApiFromConfig(): CallApi {
         apiKey: process.env.LEXQ_API_KEY ?? stored.apiKey,
       };
 
-      // ── Upload 처리 (multipart/form-data) ──
+      // ── Upload (multipart/form-data) ──
       if (opts?.upload) {
         const url = new URL(
           path,

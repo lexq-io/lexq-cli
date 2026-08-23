@@ -7,7 +7,7 @@ export default tseslint.config(
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.ts'],
         rules: {
-            'no-console': 'off', // CLI이므로 console 허용
+            'no-console': 'off', // stdout is this tool's output
             '@typescript-eslint/no-unused-vars': [
                 'error',
                 {

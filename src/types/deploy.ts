@@ -41,18 +41,18 @@ export interface DeploymentDetail {
   memo: string | null;
   deployedAt: string;
 
-  // 배포자
+  // Who deployed it
   deployedBy: string;
   deployedByName: string;
 
-  // 스냅샷 무결성
+  // Snapshot integrity
   snapshotHash: string;
   hashValid: boolean;
 
-  // 현재 버전 상태 (삭제되었을 수 있음)
+  // Current status of that version (it may since have been deleted)
   currentVersionStatus: PolicyVersionStatus | null;
 
-  // 이전 버전 정보 (최초 배포면 null)
+  // The version this replaced (null on a first deployment)
   previousVersionNo: number | null;
   previousVersionStatus: PolicyVersionStatus | null;
 }

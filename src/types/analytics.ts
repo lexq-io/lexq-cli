@@ -82,7 +82,7 @@ export interface RequirementsResponse {
 // Simulation
 // ══════════════════════════════════════════
 
-// POST /simulations — 생성 직후 (PENDING, 최소 정보)
+// POST /simulations — just created (PENDING, minimal fields)
 export interface SimulationStartResponse {
   simulationId: string;
   status: SimulationStatus;
@@ -90,7 +90,7 @@ export interface SimulationStartResponse {
   createdAt: string;
 }
 
-// GET /simulations/{id} — 상세 조회
+// GET /simulations/{id} — full detail
 export interface SimulationDetailResponse {
   simulationId: string;
   policyGroupId: string;

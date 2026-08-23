@@ -30,6 +30,7 @@
     "enums": "node scripts/gen-enums.mjs",
     "enums:check": "node scripts/gen-enums.mjs --check",
     "constants:check": "node scripts/check-constants.mjs",
+    "surface:check": "node scripts/check-public-surface.mjs",
     "start": "node dist/index.js",
     "test:decimals": "pnpm build && node tests/exact-decimals.mjs",
     "test:fact-key": "node tests/fact-key.mjs",

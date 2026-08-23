@@ -6,8 +6,8 @@ import { printJson, printTable, printError, type OutputFormat } from '@/lib/outp
 import type { RevealAuditItem } from '@/types/provenance';
 
 /**
- * PII reveal itself is console-only by contract (CONVENTIONS §12.6) —
- * no reveal subcommand here. See src/mcp/tools/provenance.ts header.
+ * PII reveal itself is console-only by contract, so there is no reveal subcommand here.
+ * See the header of src/mcp/tools/provenance.ts for why.
  */
 export function registerProvenanceCommands(program: Command): void {
   const provenance = program

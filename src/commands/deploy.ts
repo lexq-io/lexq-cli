@@ -564,7 +564,10 @@ export function registerDeployCommands(program: Command): void {
     });
 }
 
-/** publish/live 전 미등록 fact 사전 경고(비차단·best-effort). dry-run 시 실호출 금지 위해 생략. */
+/**
+ * Warn about unregistered facts before publish/live. Advisory and non-blocking.
+ * Skipped under --dry-run, which must not reach the network.
+ */
 async function warnUnregisteredFacts(
   globalOpts: { apiKey?: string; baseUrl?: string; dryRun?: boolean; verbose?: boolean },
   groupId: string,
@@ -579,6 +582,6 @@ async function warnUnregisteredFacts(
     );
     printUnregisteredFactsWarning(facts);
   } catch {
-    // 사전 경고 실패가 배포를 막지 않는다 (INV-4)
+    // A failed advisory warning never blocks the deployment.
   }
 }
