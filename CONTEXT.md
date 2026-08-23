@@ -142,7 +142,7 @@ implemented).
 | **Policy Version**       | An immutable snapshot of rules. Only DRAFT versions can be modified.                                                                                           |
 | **Policy Rule**          | A condition → actions pair. Evaluated in priority order within a version.                                                                                      |
 | **Fact**                 | An input variable passed during execution. Declared via Fact Definitions with key, type, and name.                                                             |
-| **Fact Definition**      | Schema declaration for a fact — its key (snake_case), value type, display name, and description.                                                               |
+| **Fact Definition**      | Schema declaration for a fact — its key, value type, display name, and description.                                                                            |
 | **Dry Run**              | Single-input test execution. Returns which rules matched, what actions would fire, and decision traces.                                                        |
 | **Simulation**           | Batch test replaying historical executions against a version. Compares with a baseline.                                                                        |
 | **Activation Group**     | A logical grouping of Policy Groups for cross-group conflict resolution.                                                                                       |

@@ -93,7 +93,7 @@ lexq facts create --key age --name "User Age" --type NUMBER
 lexq rules create --group-id $GID --version-id $VID --json '{
   "name": "Adult Check",
   "condition": {"type":"SINGLE","field":"age","operator":"GREATER_THAN_OR_EQUAL","value":18,"valueType":"NUMBER"},
-  "actions": [{"type":"SET_FACT","parameters":{"targetVar":"is_adult","value":true}}]
+  "actions": [{"type":"SET_FACT","parameters":{"targetVar":"isAdult","value":true}}]
 }'
 
 # 5. Test
@@ -151,7 +151,8 @@ The MCP toolset mirrors the CLI command inventory one-to-one.
 - Every response is an envelope: the success branch carries `data`; the failure branch carries `errorCode` +
   `message`. Surface both — never a bare "request failed".
 - Pagination is asymmetric: requests send `page`/`size`, responses return `pageNo`/`pageSize`. Pages are 0-indexed.
-- Fact keys are `snake_case` and case-sensitive.
+- Fact keys start with a letter, then letters, numbers, and underscores. Casing is yours to choose
+  and keys are case-sensitive. These docs use `camelCase`.
 - Actions never call external systems. The engine mutates facts and records the decision — read the response and
   act on it yourself. Deployment lifecycle webhooks (`lexq webhook-subscriptions`) are the one push channel.
 
@@ -175,6 +176,7 @@ The MCP toolset mirrors the CLI command inventory one-to-one.
   the single api-client layer.
 - The hosted MCP server consumes this package from npm. Publish (`v*` tag) **before** redeploying it — CI cannot
   catch that ordering.
-- Gates before commit: `pnpm typecheck` (zero errors), `pnpm lint` (zero warnings), `bash tests/e2e.sh`.
+- Gates before commit: `pnpm typecheck` (zero errors), `pnpm lint` (zero warnings), `pnpm test:fact-key`,
+  `pnpm test:decimals`.
 - Multi-line CLI help and MCP tool descriptions use `dedent` — template-literal indentation leaks into LLM context.
 - Types mirror engine DTOs exactly; never invent response shapes.

@@ -54,7 +54,7 @@ export function registerAnalyticsCommands(program: Command): void {
 
         Examples:
           $ lexq analytics dry-run --version-id <vid> --debug \\
-              --json '{"facts": {"payment_amount": 150000, "customer_tier": "VIP"}}'
+              --json '{"facts": {"paymentAmount": 150000, "customerTier": "VIP"}}'
 
           $ lexq analytics dry-run --version-id <vid> --file test-input.json
 
@@ -107,7 +107,7 @@ export function registerAnalyticsCommands(program: Command): void {
           $ lexq analytics dry-run-compare --json '{
               "versionIdA": "<version-a-id>",
               "versionIdB": "<version-b-id>",
-              "facts": {"payment_amount": 100000, "customer_tier": "VIP"}
+              "facts": {"paymentAmount": 100000, "customerTier": "VIP"}
             }'
 
         Shows side-by-side which rules matched and what actions fired for each version.

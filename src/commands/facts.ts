@@ -24,7 +24,7 @@ export function registerFactCommands(program: Command): void {
           delete           Remove a fact definition
           action-metadata  Show action runtime fact metadata
 
-        System facts (user_id, user_tags) are auto-created.
+        System facts (userId, userTags) are auto-created.
       `,
     );
 
@@ -134,7 +134,7 @@ export function registerFactCommands(program: Command): void {
   facts
     .command('create')
     .description('Create a new fact definition')
-    .option('--key <key>', 'Fact key (lowercase, underscores)')
+    .option('--key <key>', 'Fact key (letters, numbers, underscores)')
     .option('--name <n>', 'Display name')
     .option('--type <type>', 'Value type: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER')
     .option('--description <desc>', 'Description')
@@ -146,11 +146,11 @@ export function registerFactCommands(program: Command): void {
       dedent`
 
         Examples:
-          $ lexq facts create --key customer_tier --name "Customer Tier" --type STRING
-          $ lexq facts create --key order_total --name "Order Total" --type NUMBER --required
+          $ lexq facts create --key customerTier --name "Customer Tier" --type STRING
+          $ lexq facts create --key orderTotal --name "Order Total" --type NUMBER --required
 
           $ lexq facts create --json '{
-              "key": "user_region",
+              "key": "userRegion",
               "name": "User Region",
               "type": "STRING",
               "description": "ISO country code",
@@ -158,7 +158,8 @@ export function registerFactCommands(program: Command): void {
             }'
 
         Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
-        Key Format:  lowercase letters, numbers, underscores only (e.g., payment_amount)
+        Key Format:  starts with a letter, then letters, numbers, and underscores.
+                     Casing is yours to choose (e.g., paymentAmount, payment_amount)
       `,
     )
     .action(async (opts) => {

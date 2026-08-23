@@ -31,7 +31,7 @@ Response includes:
   "versionNo": 3,
   "requiredFacts": [
     {
-      "key": "payment_amount",
+      "key": "paymentAmount",
       "type": "NUMBER",
       "required": true,
       "usedBy": [
@@ -40,7 +40,7 @@ Response includes:
       ]
     },
     {
-      "key": "customer_tier",
+      "key": "customerTier",
       "type": "STRING",
       "required": true,
       "usedBy": [
@@ -50,8 +50,8 @@ Response includes:
   ],
   "exampleRequest": {
     "facts": {
-      "payment_amount": 0,
-      "customer_tier": ""
+      "paymentAmount": 0,
+      "customerTier": ""
     },
     "context": {}
   }
@@ -67,8 +67,8 @@ Test a single set of facts against a version:
 ```bash
 lexq analytics dry-run --version-id <vid> --json '{
   "facts": {
-    "payment_amount": 150000,
-    "customer_tier": "VIP"
+    "paymentAmount": 150000,
+    "customerTier": "VIP"
   }
 }'
 ```
@@ -84,7 +84,7 @@ lexq analytics dry-run --version-id <vid> --json '{
 
 ```bash
 lexq analytics dry-run --version-id <vid> --debug --json '{
-  "facts": { "payment_amount": 150000, "customer_tier": "VIP" }
+  "facts": { "paymentAmount": 150000, "customerTier": "VIP" }
 }'
 ```
 
@@ -98,22 +98,22 @@ external to mock.
   "result": "SUCCESS",
   "data": {
     "inputFacts": {
-      "payment_amount": 150000,
-      "customer_tier": "VIP"
+      "paymentAmount": 150000,
+      "customerTier": "VIP"
     },
     "mutatedFacts": {
-      "payment_amount": 135000,
-      "customer_tier": "VIP"
+      "paymentAmount": 135000,
+      "customerTier": "VIP"
     },
     "generatedVariables": {
-      "payment_amount__delta": -15000
+      "paymentAmount__delta": -15000
     },
     "executionTraces": [
       {
         "ruleId": "...",
         "ruleName": "VIP 10% Discount",
         "matched": true,
-        "matchExpression": "(customer_tier == 'VIP') && (payment_amount >= 100000)",
+        "matchExpression": "(customerTier == 'VIP') && (paymentAmount >= 100000)",
         "generatedActions": [
           {
             "type": "MUTATE_FACT",
@@ -139,8 +139,8 @@ external to mock.
 }
 ```
 
-- `mutatedFacts` — input facts changed by rule actions (e.g., `MUTATE_FACT` reduces `payment_amount`)
-- `generatedVariables` — for every fact in `mutatedFacts`, a paired `{fact_name}__delta` key is auto-generated with the
+- `mutatedFacts` — input facts changed by rule actions (e.g., `MUTATE_FACT` reduces `paymentAmount`)
+- `generatedVariables` — for every fact in `mutatedFacts`, a paired `{factName}__delta` key is auto-generated with the
   signed difference (negative = decrease, positive = increase)
 
 ### Reading Decision Traces
@@ -154,7 +154,7 @@ Each trace carries a `status` (what happened) and a `reasonCode` (why).
 | `BLOCKED`  | Matched but lost conflict resolution — see `reasonCode` for which round and why |
 | `ERROR`    | Action execution failed                                                         |
 
-`BLOCKED` is unrelated to the `BLOCK` action. A `BLOCK` action writes the `is_blocked` fact and its own rule stays
+`BLOCKED` is unrelated to the `BLOCK` action. A `BLOCK` action writes the `isBlocked` fact and its own rule stays
 `SELECTED`; `BLOCKED` means the rule was dropped by activation-group or mutex competition.
 
 ### Reading Reason Codes
@@ -197,7 +197,7 @@ Compare how two versions evaluate the same input:
 
 ```bash
 lexq analytics dry-run-compare --json '{
-  "facts": { "payment_amount": 150000, "customer_tier": "VIP" },
+  "facts": { "paymentAmount": 150000, "customerTier": "VIP" },
   "versionIdA": "<baselineVersionId>",
   "versionIdB": "<candidateVersionId>"
 }'
@@ -225,7 +225,7 @@ lexq analytics simulation start --json '{
     "maxRecords": 10000,
     "baselinePolicyVersionId": "<currentLiveVersionId>",
     "metricConfig": {
-      "targetVariable": "payment_amount__delta",
+      "targetVariable": "paymentAmount__delta",
       "aggregationType": "SUM"
     }
   }
@@ -316,7 +316,7 @@ lexq analytics simulation export --id <simulationId> --format csv --output resul
     "matchRate": 0.85
   },
   "metricSummary": {
-    "targetVariable": "payment_amount__delta",
+    "targetVariable": "paymentAmount__delta",
     "aggregationType": "SUM",
     "baselineValue": 5000000,
     "simulatedValue": 4500000,
@@ -353,7 +353,7 @@ lexq analytics requirements --group-id <gid> --version-id <vid>
 
 # 2. Dry-run with representative inputs
 lexq analytics dry-run --version-id <vid> --debug --json '{
-  "facts": { "payment_amount": 150000, "customer_tier": "VIP" }
+  "facts": { "paymentAmount": 150000, "customerTier": "VIP" }
 }'
 
 # 3. If dry-run looks good, publish
@@ -366,7 +366,7 @@ lexq analytics simulation start --json '{
   "options": {
     "baselinePolicyVersionId": "<currentLiveVersionId>",
     "includeRuleStats": true,
-    "metricConfig": { "targetVariable": "payment_amount__delta", "aggregationType": "SUM" }
+    "metricConfig": { "targetVariable": "paymentAmount__delta", "aggregationType": "SUM" }
   }
 }'
 

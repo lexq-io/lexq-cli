@@ -191,7 +191,7 @@ Returns the decision, per-rule reason codes (`FINAL_WINNER`, `CONDITION_MISMATCH
 `GROUP_LIMIT_REACHED`, …), and the sealed version snapshot hash.
 
 A rule that lost conflict resolution has status `BLOCKED` — unrelated to the `BLOCK` action, which writes the
-`is_blocked` fact while its own rule stays `SELECTED`.
+`isBlocked` fact while its own rule stays `SELECTED`.
 
 ### PII Reveal Audit
 

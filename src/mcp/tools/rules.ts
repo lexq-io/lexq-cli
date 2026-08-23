@@ -68,7 +68,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         - HAS_ANY: fact has at least one of the given values
         - HAS_ALL: fact has all of the given values
         - HAS_NONE: fact has none of the given values
-        Example: { "type": "SINGLE", "field": "user_tags", "operator": "HAS_ANY", "value": ["VIP","GOLD"], "valueType": "LIST_STRING" }
+        Example: { "type": "SINGLE", "field": "userTags", "operator": "HAS_ANY", "value": ["VIP","GOLD"], "valueType": "LIST_STRING" }
 
         Do NOT use CONTAINS on a list fact — CONTAINS is substring match on STRING facts only.
         IN is the mirror of HAS_*: IN takes a scalar fact with a list value; HAS_* takes lists on both sides.
@@ -86,7 +86,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           refVar is the base for percentage calculation and is OPTIONAL — omit it to use targetVar
           itself. It is only meaningful in PERCENTAGE × {ASSIGN, ADD, SUB}; specifying it in any
           other cell is an error. Use it when the base differs from the target, e.g.
-          "points += order_total × 5%" → { targetVar: "points", refVar: "order_total",
+          "points += orderTotal × 5%" → { targetVar: "points", refVar: "orderTotal",
           operator: "ADD", method: "PERCENTAGE", operand: 5 }.
           operator × method matrix:
             ASSIGN  targetVar = operand              | targetVar = refVar × operand/100
@@ -100,7 +100,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           — this is the only action that does. MUTATE_FACT requires the target to already exist.
         - BLOCK: { reason: string } Records a rejection decision. It does NOT halt rule execution —
           subsequent actions and subsequent winning rules still run. Enforcement is the caller's
-          responsibility; the decision surfaces as the is_blocked fact.
+          responsibility; the decision surfaces as the isBlocked fact.
 
         RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
