@@ -129,8 +129,9 @@ Place this file in the project root. The IDE will auto-discover it.
 
 ### Claude Code
 
-Reads this file via the root `CLAUDE.md` pointer. No separate context file — this document and `skills/` are the whole
-guide.
+Reads this file through the root `CLAUDE.md`, which is a one-line import rather than a copy. There is no
+Claude-specific document to keep in sync. The CLI guide is this file plus `skills/`; `CONTEXT.md` covers platform
+architecture separately and ships alongside.
 
 ### Gemini CLI
 
