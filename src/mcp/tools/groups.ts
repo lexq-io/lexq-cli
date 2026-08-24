@@ -137,7 +137,9 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Start A/B Test',
       description:
-        'Start an A/B test on a policy group. Requires a challenger version ID and traffic rate.',
+        'Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. ' +
+        'The split is computed from context.trafficKey on each execution request; requests that ' +
+        'omit it never reach the challenger and the test stays at 0%.',
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         testVersionId: z.string().uuid().describe('Challenger version ID to test'),

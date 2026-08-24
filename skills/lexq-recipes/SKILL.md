@@ -190,6 +190,7 @@ lexq analytics dry-run --version-id <v2id> --debug --json '{
 lexq deploy publish --group-id <gid> --version-id <v2id> --memo "15% discount test"
 
 # 5. Start A/B test at 10% traffic
+#    Your execution requests must carry context.trafficKey, or the test stays at 0%.
 lexq groups ab-test start --group-id <gid> --version-id <v2id> --traffic-rate 10
 
 # 6. Monitor (check execution stats periodically)

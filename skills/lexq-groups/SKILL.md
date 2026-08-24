@@ -159,6 +159,33 @@ lexq groups create --json '{
 
 Split traffic between the current live version and a test version.
 
+### Traffic Identity Key
+
+**Every execution request has to carry `context.trafficKey`.** That value is what the split is
+computed from: the server hashes it together with the group ID and assigns the request to a
+bucket, so the same key value always reaches the same version for that group.
+
+Send it in `context`, not in `facts`. Routing never reads `facts`.
+
+```json
+{
+  "facts": { "paymentAmount": 150000, "customerTier": "VIP" },
+  "context": { "trafficKey": "customer-8f3a21" }
+}
+```
+
+If the key is missing or empty, no request is ever assigned to the test version. The test still
+reports as running and execution logs keep accumulating, so **the failure does not surface in the
+response** — only a server-side warning records it. This is the most common reason a test sits
+at 0%.
+
+Pick a value that is stable per experiment unit (a customer ID, a merchant ID, a session ID) and
+opaque — the whole `context` object is stored on the execution ledger, so send a hash or a
+surrogate key rather than an email address. A value that changes every request, such as a request
+ID, scatters one user across both versions and destroys the comparison.
+
+Batch calls read `sharedContext.trafficKey` instead, and the whole batch runs on one version.
+
 ### Start A/B Test
 
 ```bash
@@ -191,11 +218,12 @@ This reverts all traffic to the main version. The test version remains ACTIVE bu
 ```
 1. Create two versions (v1 live, v2 DRAFT with changes)
 2. Publish v2: lexq deploy publish --group-id <gid> --version-id <v2id>
-3. Start A/B: lexq groups ab-test start --group-id <gid> --version-id <v2id> --traffic-rate 10
-4. Monitor: lexq history stats  (compare metrics)
-5. Adjust traffic gradually: 10% → 30% → 50%
-6. Promote winner: lexq deploy live --group-id <gid> --version-id <v2id>
-7. Stop test: lexq groups ab-test stop --group-id <gid> --force
+3. Confirm your execution requests send context.trafficKey
+4. Start A/B: lexq groups ab-test start --group-id <gid> --version-id <v2id> --traffic-rate 10
+5. Monitor: lexq history stats  (compare metrics)
+6. Adjust traffic gradually: 10% → 30% → 50%
+7. Promote winner: lexq deploy live --group-id <gid> --version-id <v2id>
+8. Stop test: lexq groups ab-test stop --group-id <gid> --force
 ```
 
 ## Common Patterns
