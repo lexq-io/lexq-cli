@@ -3,6 +3,10 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { FACT_KEY_PATTERN } from '@/types/facts';
+import { ValueType } from '@/types/enums';
+
+/** Generated from the engine contract manifest. A literal here would drift. */
+const VALUE_TYPES = ValueType;
 
 export function registerFactTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -36,9 +40,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
           .regex(FACT_KEY_PATTERN)
           .describe('Variable key. Any casing; must start with a letter.'),
         name: z.string().describe('Display name'),
-        type: z
-          .enum(['STRING', 'NUMBER', 'BOOLEAN', 'LIST_STRING', 'LIST_NUMBER'])
-          .describe('Value type'),
+        type: z.enum(VALUE_TYPES).describe('Value type'),
         description: z.string().optional().describe('Description'),
         isRequired: z
           .boolean()
@@ -60,11 +62,17 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Fact Definition',
       description:
-        'Update a fact definition. Key and type cannot be changed. Only provided fields are updated. System facts only allow name, description, and PII changes.',
+        'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Only the fields you send are changed. System facts accept name, description, and PII only.',
       inputSchema: {
         factId: z.string().uuid().describe('Fact definition ID'),
         name: z.string().optional().describe('Display name'),
         description: z.string().optional().describe('Description'),
+        type: z
+          .enum(VALUE_TYPES)
+          .optional()
+          .describe(
+            'Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule references the fact.',
+          ),
         isRequired: z.boolean().optional().describe('Required flag'),
         isPii: z
           .boolean()
@@ -79,7 +87,8 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_delete',
     {
       title: 'Delete Fact Definition',
-      description: 'Delete a fact definition. System facts cannot be deleted.',
+      description:
+        'Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Remove the references first.',
       inputSchema: {
         factId: z.string().uuid().describe('Fact definition ID'),
       },
