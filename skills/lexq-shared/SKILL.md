@@ -141,7 +141,7 @@ Prefixes you will encounter through the CLI:
 | `A-`   | Auth                  | Invalid or missing API key                     |
 | `P-`   | Policy group/version  | Not found, wrong lifecycle state, already live |
 | `ACT-` | Action parameters     | Missing or invalid action parameter            |
-| `FD-`  | Fact definitions      | Duplicate key, system fact immutable           |
+| `FD-`  | Fact definitions      | Duplicate key, system fact immutable, fact still referenced by rules |
 | `AN-`  | Analytics             | Dry-run or simulation failure                  |
 | `FL-`  | Failure logs          | Log not found                                  |
 | `WH-`  | Webhook subscriptions | Invalid URL, delivery failure                  |
