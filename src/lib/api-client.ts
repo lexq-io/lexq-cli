@@ -72,6 +72,22 @@ async function doFetch(method: string, path: string, options: RequestOptions): P
   return response;
 }
 
+/**
+ * Does this response carry a file rather than an API envelope?
+ *
+ * Export endpoints set `Content-Disposition: attachment` for every format they emit.
+ * Everything else on this API is enveloped.
+ */
+function isFileResponse(response: Response): boolean {
+  const disposition = response.headers.get('content-disposition') ?? '';
+  if (disposition.toLowerCase().includes('attachment')) return true;
+
+  // Fallback for any endpoint that returns a file without announcing it in
+  // Content-Disposition.
+  const contentType = response.headers.get('content-type') ?? '';
+  return contentType.includes('text/csv') || contentType.includes('application/octet-stream');
+}
+
 function assertOk<T>(response: Response, json: ApiResponse<T>): void {
   if (!response.ok || json.result !== 'SUCCESS') {
     throw new ApiError(
@@ -98,11 +114,20 @@ export async function apiRequestWithMeta<T>(
 ): Promise<{ data: T; meta: ResponseMeta | null }> {
   const response = await doFetch(method, path, options);
 
-  // Blob responses (export endpoints) — no envelope, no meta.
-  const contentType = response.headers.get('content-type') ?? '';
-  if (contentType.includes('text/csv') || contentType.includes('application/octet-stream')) {
-    return { data: response as unknown as T, meta: null };
+  // File responses (export endpoints) — no envelope, no meta.
+  //
+  // Content-Disposition is the signal, not Content-Type. Exports come back as both
+  // text/csv and application/json, so keying on the type misses the JSON ones and they
+  // fall through to the envelope branch below, where `result !== 'SUCCESS'` throws on a
+  // perfectly good 200.
+  //
+  // The body is read here rather than handed back as a Response. A Response has no own
+  // enumerable properties, so a caller that stringifies it writes `{}` to the file.
+  if (isFileResponse(response)) {
+    return { data: (await response.text()) as unknown as T, meta: null };
   }
+
+  const contentType = response.headers.get('content-type') ?? '';
 
   // No-content responses (DELETE 204 and friends) — no envelope, no meta.
   if (response.status === 204 || contentType === '') {

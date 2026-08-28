@@ -121,4 +121,21 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     async ({ groupId, versionId }) =>
       callApi('GET', `policy-groups/${groupId}/versions/${versionId}/unregistered-facts`),
   );
+
+  server.registerTool(
+    'lexq_facts_export',
+    {
+      title: 'Export Fact Catalog',
+      description:
+        'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet; JSON matches the shape that batch create accepts, so it can be fed straight back in, which is why it leaves out the fields that endpoint does not take. Returns the file contents as text.',
+      inputSchema: {
+        format: z.enum(['csv', 'json']).default('csv').describe('Export format'),
+        keyword: z.string().optional().describe('Filter by key or name'),
+      },
+    },
+    async ({ format, keyword }) =>
+      callApi('GET', 'schema/facts/export', {
+        params: keyword ? { format, keyword } : { format },
+      }),
+  );
 }

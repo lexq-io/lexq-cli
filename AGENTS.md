@@ -61,7 +61,7 @@ lexq groups list|get|create|update|delete|reorder
 lexq groups ab-test start|stop|adjust
 lexq versions list|get|create|update|delete|clone
 lexq rules list|get|create|update|delete|reorder|toggle
-lexq facts list|create|update|delete|action-metadata|unregistered
+lexq facts list|create|update|delete|export|action-metadata|unregistered
 lexq domain-templates list|preview|apply
 lexq deploy publish|live|rollback|undeploy|history|detail|overview|deployable|diff|schedule|unschedule|schedules
 lexq analytics dry-run|dry-run-compare|requirements
@@ -69,7 +69,7 @@ lexq analytics simulation start|status|list|cancel|export
 lexq analytics dataset upload|template
 lexq profile <groupId>
 lexq history list|get|stats
-lexq replay decision|start|list|get|cancel
+lexq replay decision|start|list|get|cancel|export
 lexq provenance get|reveal-audits
 lexq logs list|get|action|bulk-action
 lexq webhook-subscriptions list|get|save|delete|test

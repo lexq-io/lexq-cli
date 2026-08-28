@@ -1,6 +1,7 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
+import { parseFormat, runExport } from '@/lib/export';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { CreateFactRequest, UpdateFactRequest, FactSchemaResponse } from '@/types/facts';
@@ -268,6 +269,46 @@ export function registerFactCommands(program: Command): void {
     });
 
   // ── action-metadata ──
+  // ── export ──
+  facts
+    .command('export')
+    .description('Export the fact catalog')
+    .option('--as <fmt>', 'Exported file format: csv or json', 'csv')
+    .option('--keyword <keyword>', 'Filter by key or name')
+    .option('--output <path>', 'Output file path')
+    .addHelpText(
+      'after',
+      dedent`
+
+        The two formats carry different things. CSV is the catalog as it stands, system
+        facts included, for reading in a spreadsheet. JSON matches the shape that
+        batch create accepts, so it can be fed straight back in — which is why it leaves
+        out the fields that endpoint does not take.
+
+        Examples:
+          $ lexq facts export --output facts.csv
+          $ lexq facts export --as json --output facts.json
+          $ lexq facts export --keyword user --as json
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+
+        await runExport('schema/facts/export', parseFormat(opts.as), {
+          apiKey: globalOpts.apiKey,
+          baseUrl: globalOpts.baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
+          output: opts.output,
+          params: opts.keyword ? { keyword: opts.keyword as string } : undefined,
+        });
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
   facts
     .command('action-metadata')
     .description('Get action runtime fact metadata')
