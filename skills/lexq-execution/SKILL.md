@@ -218,10 +218,18 @@ lexq replay start --version-id <candidateVid> --from 2025-01-01 --to 2025-01-31
 lexq replay get --id <jobId>
 lexq replay list
 lexq replay cancel --id <jobId>
+
+# Export a finished job
+lexq replay export --id <jobId> --as csv --output blast-radius.csv
 ```
 
 Replay reports whether the outcome is `DETERMINISTIC` or `REPLAY_MAY_DIFFER` — the latter when the
 original execution depended on values the replay cannot reproduce.
+
+Only a `COMPLETED` job can be exported; a running one has no full result yet, and a partial one reads
+as the whole thing on the receiving end. The two formats answer different questions — CSV carries the
+effect blast radius, whose columns are fixed, and JSON carries the changed samples and action
+parameters, which nest and whose keys differ per tenant.
 
 ## 6. Latency Profile
 

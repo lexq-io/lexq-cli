@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
+import { parseFormat, runExport } from '@/lib/export';
 import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -464,7 +465,7 @@ export function registerAnalyticsCommands(program: Command): void {
     .command('export')
     .description('Export simulation results')
     .requiredOption('--id <simulationId>', 'Simulation ID')
-    .option('--format <fmt>', 'Export format: csv or json', 'json')
+    .option('--as <fmt>', 'Exported file format: csv or json', 'json')
     .option('--output <path>', 'Output file path')
     .addHelpText(
       'after',
@@ -473,34 +474,25 @@ export function registerAnalyticsCommands(program: Command): void {
         Only COMPLETED simulations can be exported.
 
         Examples:
-          $ lexq analytics simulation export --id <simId> --format csv --output results.csv
-          $ lexq analytics simulation export --id <simId> --format json
+          $ lexq analytics simulation export --id <simId> --as csv --output results.csv
+          $ lexq analytics simulation export --id <simId> --as json
       `,
     )
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
-        const exportFormat = opts.format === 'csv' ? 'csv' : 'json';
 
-        const response = await apiRequest<unknown>(
-          'GET',
+        await runExport(
           `analytics/simulations/${opts.id}/export`,
+          parseFormat(opts.as),
           {
             apiKey: globalOpts.apiKey,
             baseUrl: globalOpts.baseUrl,
             dryRun: globalOpts.dryRun,
             verbose: globalOpts.verbose,
-            params: { format: exportFormat },
+            output: opts.output,
           },
         );
-
-        if (opts.output) {
-          const text = typeof response === 'string' ? response : (stringifyJson(response, 2) ?? '');
-          writeFileSync(opts.output, text, 'utf-8');
-          console.log(`✓ Exported to ${opts.output}`);
-        } else {
-          printJson(response);
-        }
       } catch (error) {
         printError(error);
         process.exit(1);
@@ -602,7 +594,7 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Download a dataset template based on version requirements')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Policy version ID')
-    .option('--format <fmt>', 'Template format: csv or json', 'csv')
+    .option('--as <fmt>', 'Template file format: csv or json', 'csv')
     .option('--output <path>', 'Output file path')
     .addHelpText(
       'after',
@@ -612,7 +604,7 @@ export function registerAnalyticsCommands(program: Command): void {
 
         Examples:
           $ lexq analytics dataset template --group-id <gid> --version-id <vid> --output template.csv
-          $ lexq analytics dataset template --group-id <gid> --version-id <vid> --format json
+          $ lexq analytics dataset template --group-id <gid> --version-id <vid> --as json
       `,
     )
     .action(async (opts) => {
@@ -626,7 +618,7 @@ export function registerAnalyticsCommands(program: Command): void {
           throw new Error('Not authenticated. Run "lexq auth login" first.');
         }
 
-        const fmt = opts.format === 'json' ? 'json' : 'csv';
+        const fmt = parseFormat(opts.as);
         const url = new URL(
           `analytics/groups/${opts.groupId}/versions/${opts.versionId}/dataset-template`,
           baseUrl.endsWith('/') ? baseUrl : baseUrl + '/',

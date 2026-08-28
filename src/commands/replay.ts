@@ -2,6 +2,7 @@ import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
+import { parseFormat, runExport } from '@/lib/export';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
@@ -186,6 +187,46 @@ export function registerReplayCommands(program: Command): void {
           verbose: globalOpts.verbose,
         });
         printJson(data);
+      } catch (error) {
+        printError(error);
+        process.exit(1);
+      }
+    });
+
+  // ── export ──
+  replay
+    .command('export')
+    .description('Export the result of a completed replay job')
+    .requiredOption('--id <jobId>', 'Replay job ID')
+    .option('--as <fmt>', 'Exported file format: csv or json', 'json')
+    .option('--output <path>', 'Output file path')
+    .addHelpText(
+      'after',
+      dedent`
+
+        Only COMPLETED jobs can be exported. A running job has no full result yet, and a
+        partial one reads as the whole thing on the receiving end.
+
+        The two formats carry different things. CSV holds the effect blast radius, whose
+        columns are fixed. JSON holds the changed samples and action parameters, which
+        nest and whose keys differ per tenant. JSON is not a superset of CSV.
+
+        Examples:
+          $ lexq replay export --id <jobId> --as csv --output blast-radius.csv
+          $ lexq replay export --id <jobId> --as json
+      `,
+    )
+    .action(async (opts) => {
+      try {
+        const globalOpts = program.opts();
+
+        await runExport(`replay/jobs/${opts.id}/export`, parseFormat(opts.as), {
+          apiKey: globalOpts.apiKey,
+          baseUrl: globalOpts.baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
+          output: opts.output,
+        });
       } catch (error) {
         printError(error);
         process.exit(1);

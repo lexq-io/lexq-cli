@@ -250,7 +250,7 @@ lexq analytics simulation start --json '{
 ```bash
 # 1. Download template (optional)
 lexq analytics dataset template \
-  --group-id <gid> --version-id <vid> --format csv --output template.csv
+  --group-id <gid> --version-id <vid> --as csv --output template.csv
 
 # 2. Upload dataset
 lexq analytics dataset upload --file ./my-data.csv
@@ -304,8 +304,8 @@ lexq analytics simulation cancel --id <simulationId> --force
 ### Export Results
 
 ```bash
-lexq analytics simulation export --id <simulationId> --format json
-lexq analytics simulation export --id <simulationId> --format csv --output results.csv
+lexq analytics simulation export --id <simulationId> --as json
+lexq analytics simulation export --id <simulationId> --as csv --output results.csv
 ```
 
 ## Simulation Response (COMPLETED)
