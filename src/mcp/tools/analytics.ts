@@ -4,6 +4,7 @@ import dedent from 'dedent';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
+import { EXPORT_FORMATS } from '@/lib/export';
 
 export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
   // ── Dry Run ──
@@ -185,7 +186,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       description: 'Export simulation results as JSON or CSV. Returns the raw data.',
       inputSchema: {
         simulationId: z.string().uuid().describe('Simulation ID'),
-        format: z.enum(['json', 'csv']).default('json').describe('Export format'),
+        format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),
       },
     },
     async ({ simulationId, format }) =>
@@ -259,7 +260,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       inputSchema: {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
-        format: z.enum(['csv', 'json']).default('csv').describe('Template format'),
+        format: z.enum(EXPORT_FORMATS).default('csv').describe('Template format'),
       },
     },
     async ({ groupId, versionId, format }) =>

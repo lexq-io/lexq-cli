@@ -2,7 +2,7 @@ import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import { parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
@@ -198,7 +198,7 @@ export function registerReplayCommands(program: Command): void {
     .command('export')
     .description('Export the result of a completed replay job')
     .requiredOption('--id <jobId>', 'Replay job ID')
-    .option('--as <fmt>', 'Exported file format: csv or json', 'json')
+    .option('--as <fmt>', `Exported file format: ${EXPORT_FORMATS.join(' or ')}`, 'json')
     .option('--output <path>', 'Output file path')
     .addHelpText(
       'after',

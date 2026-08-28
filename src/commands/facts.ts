@@ -1,7 +1,7 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import { parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { CreateFactRequest, UpdateFactRequest, FactSchemaResponse } from '@/types/facts';
@@ -273,7 +273,7 @@ export function registerFactCommands(program: Command): void {
   facts
     .command('export')
     .description('Export the fact catalog')
-    .option('--as <fmt>', 'Exported file format: csv or json', 'csv')
+    .option('--as <fmt>', `Exported file format: ${EXPORT_FORMATS.join(' or ')}`, 'csv')
     .option('--keyword <keyword>', 'Filter by key or name')
     .option('--output <path>', 'Output file path')
     .addHelpText(

@@ -85,6 +85,9 @@
     "SimulationMetricType": {
       "values": ["COUNT", "SUM", "AVG"]
     },
+    "ExportFormat": {
+      "values": ["CSV", "JSON"]
+    },
     "Role": {
       "values": ["SYSTEM_MANAGER", "ADMIN", "USER", "VIEWER", "API_CLIENT", "API_ADMIN"]
     },

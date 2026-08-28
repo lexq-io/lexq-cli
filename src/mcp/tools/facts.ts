@@ -4,6 +4,7 @@ import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { FACT_KEY_PATTERN } from '@/types/facts';
 import { ValueType } from '@/types/enums';
+import { EXPORT_FORMATS } from '@/lib/export';
 
 /** Generated from the engine contract manifest. A literal here would drift. */
 const VALUE_TYPES = ValueType;
@@ -129,7 +130,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       description:
         'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet; JSON matches the shape that batch create accepts, so it can be fed straight back in, which is why it leaves out the fields that endpoint does not take. Returns the file contents as text.',
       inputSchema: {
-        format: z.enum(['csv', 'json']).default('csv').describe('Export format'),
+        format: z.enum(EXPORT_FORMATS).default('csv').describe('Export format'),
         keyword: z.string().optional().describe('Filter by key or name'),
       },
     },

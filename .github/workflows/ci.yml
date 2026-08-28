@@ -66,5 +66,8 @@ jobs:
       - name: Fact key grammar
         run: pnpm test:fact-key
 
+      - name: Export format vocabulary
+        run: pnpm test:export-format
+
       - name: Exact decimals
         run: pnpm test:decimals

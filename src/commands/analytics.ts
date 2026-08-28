@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import { parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -465,7 +465,7 @@ export function registerAnalyticsCommands(program: Command): void {
     .command('export')
     .description('Export simulation results')
     .requiredOption('--id <simulationId>', 'Simulation ID')
-    .option('--as <fmt>', 'Exported file format: csv or json', 'json')
+    .option('--as <fmt>', `Exported file format: ${EXPORT_FORMATS.join(' or ')}`, 'json')
     .option('--output <path>', 'Output file path')
     .addHelpText(
       'after',
@@ -594,7 +594,7 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Download a dataset template based on version requirements')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--version-id <versionId>', 'Policy version ID')
-    .option('--as <fmt>', 'Template file format: csv or json', 'csv')
+    .option('--as <fmt>', `Template file format: ${EXPORT_FORMATS.join(' or ')}`, 'csv')
     .option('--output <path>', 'Output file path')
     .addHelpText(
       'after',
