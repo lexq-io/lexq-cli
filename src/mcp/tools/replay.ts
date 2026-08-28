@@ -3,6 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { EXPORT_FORMATS } from '@/lib/export';
 
 export function registerReplayTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -93,7 +94,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
         'Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text.',
       inputSchema: {
         jobId: z.string().describe('Replay job ID'),
-        format: z.enum(['json', 'csv']).default('json').describe('Export format'),
+        format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),
       },
     },
     async ({ jobId, format }) =>

@@ -101,6 +101,9 @@ export type SimulationDatasetSource = (typeof SimulationDatasetSource)[number];
 export const SimulationMetricType = ['COUNT', 'SUM', 'AVG'] as const;
 export type SimulationMetricType = (typeof SimulationMetricType)[number];
 
+export const ExportFormat = ['CSV', 'JSON'] as const;
+export type ExportFormat = (typeof ExportFormat)[number];
+
 // ── Auth ──
 export const Role = [
   'SYSTEM_MANAGER',

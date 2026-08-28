@@ -90,6 +90,7 @@ const ORDER = [
   'SimulationDatasetType',
   'SimulationDatasetSource',
   'SimulationMetricType',
+  'ExportFormat',
   'Role',
   'FailureStatus',
   'FailureAction',
