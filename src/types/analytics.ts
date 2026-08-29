@@ -159,6 +159,41 @@ export interface MetricSummary {
   simulatedValue: number | LosslessNumber;
   delta: number | LosslessNumber;
   deltaPercentage: number;
+  distribution: MetricDistribution | null;
+}
+
+/**
+ * How the change is spread across records.
+ *
+ * A single aggregate delta looks the same whether many records moved a little, one record moved
+ * a lot, or large moves in both directions cancelled out. Those three carry very different risk
+ * before a deploy, which is what these numbers separate.
+ *
+ * Every number here comes from one per-record difference: the target version's contribution
+ * minus the baseline version's. Even for `AVG` that difference is the raw value rather than the
+ * averaged one, because the record that moved most is a property of the variable itself.
+ *
+ * The field is `null` in two cases: when no baseline version was compared, and when the run
+ * completed before this field existed. A stored snapshot is replayed as-is, so older rows carry
+ * no such key.
+ *
+ * `measuredRecords` is not the denominator of the three change counts, because the two are
+ * counted over different populations. The change counts run over every processed record and
+ * treat an absent variable as zero. `measuredRecords` counts only records where the variable is
+ * genuinely present in both versions. A record that has it in one version only is therefore
+ * counted as changed but not as measured, so `changedRecords` can exceed `measuredRecords`.
+ */
+export interface MetricDistribution {
+  /** Derived from `increasedRecords + decreasedRecords`; the engine sends it already summed. */
+  changedRecords: number;
+  increasedRecords: number;
+  decreasedRecords: number;
+  /** A value, so it may arrive as a carrier. `null` when the aggregation is `COUNT`. */
+  largestIncrease: number | LosslessNumber | null;
+  /** Same axis, negative. `null` when the aggregation is `COUNT`. */
+  largestDecrease: number | LosslessNumber | null;
+  /** What `AVG` divided by. Not the denominator of the change counts, as above. */
+  measuredRecords: number;
 }
 
 export interface SimulationErrorSample {
