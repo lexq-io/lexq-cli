@@ -316,9 +316,11 @@ lexq analytics simulation export --id <simulationId> --as csv --output results.c
   "status": "COMPLETED",
   "summary": {
     "totalRecords": 10000,
+    "processedRecords": 10000,
+    "errorRecords": 0,
     "matchedRecords": 8500,
     "executionTimeMs": 3200,
-    "matchRate": 0.85
+    "matchRate": 85.0
   },
   "metricSummary": {
     "targetVariable": "paymentAmount__delta",
@@ -334,7 +336,7 @@ lexq analytics simulation export --id <simulationId> --as csv --output results.c
       "baselineVersionId": "...",
       "difference": {
         "matchedCountDelta": -200,
-        "matchedRateDelta": -0.02,
+        "matchedRateDelta": -2.0,
         "metricValueDelta": -500000
       }
     }
