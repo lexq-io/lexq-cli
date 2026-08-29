@@ -328,7 +328,15 @@ lexq analytics simulation export --id <simulationId> --as csv --output results.c
     "baselineValue": 5000000,
     "simulatedValue": 4500000,
     "delta": -500000,
-    "deltaPercentage": -10.0
+    "deltaPercentage": -10.0,
+    "distribution": {
+      "changedRecords": 8700,
+      "increasedRecords": 400,
+      "decreasedRecords": 8300,
+      "largestIncrease": 1500,
+      "largestDecrease": -2000,
+      "measuredRecords": 8300
+    }
   },
   "policyImpact": {
     "policyVersionId": "...",

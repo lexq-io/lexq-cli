@@ -279,7 +279,8 @@ export function registerAnalyticsCommands(program: Command): void {
       'after',
       dedent`
 
-        Shows progress, match rate, metric comparison (if baseline set), and per-rule stats.
+        Shows progress, match rate, metric comparison and its change distribution (if a
+        baseline is set), and per-rule stats.
 
         Example:
           $ lexq analytics simulation status --id <simId> --format table
@@ -325,6 +326,31 @@ export function registerAnalyticsCommands(program: Command): void {
             console.log(
               `Change:     ${data.metricSummary.deltaPercentage > 0 ? '+' : ''}${data.metricSummary.deltaPercentage.toFixed(1)}%`,
             );
+
+            // The extremes are null for COUNT: the per-record difference is only -1, 0 or +1,
+            // so "the record that moved most" is not a question that applies. Keep the row and
+            // blank the value, the way this package already renders an absent value elsewhere.
+            // The server's CSV keeps the column too, though it writes an empty cell rather than
+            // a dash.
+            //
+            // Measured sits with the values, not with the counts above it. It is what AVG
+            // divided by, not the denominator of Changed/Increased/Decreased — those run over
+            // every processed record while Measured counts only records where the variable is
+            // present in both versions, so Changed can exceed it.
+            const dist = data.metricSummary.distribution;
+            if (dist) {
+              console.log(`\n── Distribution ──`);
+              console.log(`Changed:    ${dist.changedRecords}`);
+              console.log(`Increased:  ${dist.increasedRecords}`);
+              console.log(`Decreased:  ${dist.decreasedRecords}`);
+              console.log(
+                `Largest +:  ${dist.largestIncrease === null ? '–' : `${signPrefix(dist.largestIncrease)}${String(dist.largestIncrease)}`}`,
+              );
+              console.log(
+                `Largest -:  ${dist.largestDecrease === null ? '–' : String(dist.largestDecrease)}`,
+              );
+              console.log(`Measured:   ${dist.measuredRecords}`);
+            }
           }
 
           if (data.policyImpact?.comparison) {
