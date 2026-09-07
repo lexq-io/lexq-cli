@@ -33,7 +33,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Create Policy Group',
       description:
-        'Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Groups sharing an activationGroup must share the same activationMode / activationStrategy / executionLimit.',
+        'Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Policy groups that share an activationGroup form a cluster and must share the same activationMode / activationStrategy / executionLimit; executionLimit is how many of those groups run, not how many rules.',
       inputSchema: {
         name: z.string().describe('Group name (unique among non-ARCHIVED)'),
         description: z.string().optional().describe('Group description'),
@@ -44,14 +44,21 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         activationStrategy: z
           .enum(ConflictResolutionStrategy)
           .optional()
-          .describe('Strategy when mode is EXCLUSIVE or MAX_N'),
+          .describe('Ranking used to pick the winning groups when mode is EXCLUSIVE or MAX_N'),
         executionLimit: z
           .number()
           .int()
           .min(1)
           .optional()
-          .describe('Max rule executions (required when mode is MAX_N)'),
-        activationGroup: z.string().optional().describe('Activation group name'),
+          .describe(
+            'How many policy groups sharing this activationGroup may run (required when mode is MAX_N). Counts groups, not rules: every rule of a winning group runs.',
+          ),
+        activationGroup: z
+          .string()
+          .optional()
+          .describe(
+            'Activation group (Execution Group) cluster key. Policy groups sharing this key compete, and group priority picks the winners.',
+          ),
       },
     },
     async (args) => {
@@ -84,13 +91,25 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         activationGroup: z
           .string()
           .optional()
-          .describe('Activation group (Execution Group) cluster key'),
+          .describe(
+            'Activation group (Execution Group) cluster key. Policy groups sharing this key compete, and group priority picks the winners.',
+          ),
         activationMode: z
           .enum(ConflictResolutionMode)
           .optional()
           .describe('Conflict resolution mode'),
-        activationStrategy: z.enum(ConflictResolutionStrategy).optional().describe('Strategy'),
-        executionLimit: z.number().int().min(1).optional().describe('Max rule executions'),
+        activationStrategy: z
+          .enum(ConflictResolutionStrategy)
+          .optional()
+          .describe('Ranking used to pick the winning groups'),
+        executionLimit: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe(
+            'How many policy groups sharing this activationGroup may run. Counts groups, not rules.',
+          ),
       },
     },
     async ({ groupId, ...body }) => callApi('PUT', `policy-groups/${groupId}`, { body }),
