@@ -177,6 +177,11 @@ The MCP toolset mirrors the CLI command inventory one-to-one.
   the single api-client layer.
 - The hosted MCP server consumes this package from npm. Publish (`v*` tag) **before** redeploying it — CI cannot
   catch that ordering.
+- Releasing is two steps, in this order. Raise `version` in package.json inside the pull request, so a reviewer
+  sees the number beside the change that justifies it. After it merges, push the matching `v<version>` tag — that
+  tag is what publishes. A tag that disagrees with package.json is rejected before anything reaches npm.
+- Pick the number by what breaks. On 0.x a breaking change is a minor bump (0.1 → 0.2), not a patch. Raising the
+  Node floor, a peer dependency major, or any change to what `tools/list` returns is breaking.
 - Gates before commit: `pnpm typecheck` (zero errors), `pnpm lint` (zero warnings), `pnpm test:fact-key`,
   `pnpm test:decimals`.
 - Multi-line CLI help and MCP tool descriptions use `dedent` — template-literal indentation leaks into LLM context.
