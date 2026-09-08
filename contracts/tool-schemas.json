@@ -1,0 +1,2455 @@
+{
+  "toolCount": 77,
+  "tools": [
+    {
+      "description": "Adjust traffic rate of a running A/B test.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "trafficRate": {
+            "description": "New traffic percentage for challenger (1-99)",
+            "maximum": 99,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "groupId",
+          "trafficRate"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_ab_test_adjust",
+      "title": "Adjust A/B Test"
+    },
+    {
+      "description": "Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. The split is computed from context.trafficKey on each execution request; requests that omit it never reach the challenger and the test stays at 0%.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "testVersionId": {
+            "description": "Challenger version ID to test",
+            "format": "uuid",
+            "type": "string"
+          },
+          "trafficRate": {
+            "description": "Traffic percentage routed to challenger (1-99)",
+            "maximum": 99,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "groupId",
+          "testVersionId",
+          "trafficRate"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_ab_test_start",
+      "title": "Start A/B Test"
+    },
+    {
+      "description": "Stop a running A/B test. All traffic is restored to the control (current) version.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_ab_test_stop",
+      "title": "Stop A/B Test"
+    },
+    {
+      "description": "Generate a sample CSV or JSON template based on the required facts of a version. Use this to understand the expected data format before uploading a dataset.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "csv",
+            "description": "Template format",
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_dataset_template",
+      "title": "Download Dataset Template"
+    },
+    {
+      "description": "Upload inline CSV or JSON content as a simulation dataset.\nThe content is uploaded to S3 and a path is returned in the \"path\" field.\n\nTo use the returned path in lexq_simulation_start, set:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<returned path>\" }\n\nCSV example:\nuserId,paymentAmount\nuser_001,150000\nuser_002,50000\n\nJSON example: [{\"userId\":\"user_001\",\"paymentAmount\":150000}, {\"userId\":\"user_002\",\"paymentAmount\":50000}]",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "description": "CSV or JSON content as string",
+            "type": "string"
+          },
+          "filename": {
+            "default": "dataset.csv",
+            "description": "Filename with extension (.csv or .json)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_dataset_upload",
+      "title": "Upload Dataset"
+    },
+    {
+      "description": "List ACTIVE (published) versions that can be deployed for a group. Use this to find which versions are available before calling deploy live.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_deployable",
+      "title": "List Deployable Versions"
+    },
+    {
+      "description": "Get detailed info about a specific deployment including snapshot hash and integrity check.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "deploymentId": {
+            "description": "Deployment ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deploymentId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_detail",
+      "title": "Deployment Detail"
+    },
+    {
+      "description": "Compare rule snapshots between two versions. Shows added, removed, and modified rules. Useful for reviewing changes before deploying a new version.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "baseVersionId": {
+            "description": "Base version ID (typically the current live)",
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetVersionId": {
+            "description": "Target version ID (the one you want to deploy)",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseVersionId",
+          "targetVersionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_diff",
+      "title": "Deployment Diff"
+    },
+    {
+      "description": "List deployment history across all groups.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "endDate": {
+            "description": "End date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Filter by group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startDate": {
+            "description": "Start date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "types": {
+            "description": "Filter by deployment types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_deploy_history",
+      "title": "Deployment History"
+    },
+    {
+      "description": "Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "memo": {
+            "description": "Deployment memo (required)",
+            "minLength": 1,
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID to deploy",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_live",
+      "title": "Deploy to Live"
+    },
+    {
+      "description": "Show current deployment status of all groups — which version is live, last deployment type, and deployer.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "lexq_deploy_overview",
+      "title": "Deployment Overview"
+    },
+    {
+      "description": "Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "memo": {
+            "description": "Publish memo (required)",
+            "minLength": 1,
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID to publish",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_publish",
+      "title": "Publish Version"
+    },
+    {
+      "description": "Rollback to the previous deployed version. Only available if there is a previous version.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "memo": {
+            "description": "Rollback reason (required)",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_rollback",
+      "title": "Rollback Deployment"
+    },
+    {
+      "description": "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "memo": {
+            "description": "Schedule memo (required)",
+            "minLength": 1,
+            "type": "string"
+          },
+          "versionId": {
+            "description": "ACTIVE version ID with a future effective start date",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_schedule",
+      "title": "Schedule Deployment"
+    },
+    {
+      "description": "List scheduled deployments across all groups (all statuses: PENDING, EXECUTED, CANCELED, FAILED), newest first.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_deploy_schedules",
+      "title": "List Scheduled Deployments"
+    },
+    {
+      "description": "Remove the live version from traffic. The version stays ACTIVE but no longer serves requests.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "memo": {
+            "description": "Undeploy reason (required)",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_undeploy",
+      "title": "Undeploy"
+    },
+    {
+      "description": "Cancel the pending scheduled deployment for a group. The version itself is not affected. Fails with P-039 if no pending schedule exists.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_deploy_unschedule",
+      "title": "Cancel Scheduled Deployment"
+    },
+    {
+      "description": "Apply a domain template to the current tenant. Creates the template's fact definitions and a new policy group pre-populated with its sample rules as a DRAFT version. Existing facts are skipped — apply is additive and never overwrites existing schema. Run lexq_domain_templates_preview first to review what will be created. Only ACTIVE templates can be applied.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "customName": {
+            "description": "Optional custom name for the policy group that gets created. If omitted, the template's default name is used.",
+            "type": "string"
+          },
+          "template": {
+            "description": "Domain template key to apply (e.g. ECOMMERCE).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_domain_templates_apply",
+      "title": "Apply Domain Template"
+    },
+    {
+      "description": "List all domain templates. A domain template is a curated, industry-specific starter pack of fact definitions and sample rules (e.g. ECOMMERCE). Each entry reports its key, status (ACTIVE or COMING_SOON), and a summary of what it provisions. Call this before preview or apply to discover which templates can currently be applied.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "lexq_domain_templates_list",
+      "title": "List Domain Templates"
+    },
+    {
+      "description": "Preview exactly what a domain template will provision before applying it: the fact definitions it registers, the sample rules it creates, and an apply plan. This is a read-only dry run — nothing is created. Only ACTIVE templates can be previewed.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "template": {
+            "description": "Domain template key (e.g. ECOMMERCE). Use lexq_domain_templates_list to see available keys — currently only ECOMMERCE is ACTIVE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_domain_templates_preview",
+      "title": "Preview Domain Template"
+    },
+    {
+      "description": "Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.\n\nReturns:\n  inputFacts        — normalized input facts\n  mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)\n  generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)\n  executionTraces   — per-rule match status\n  decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)\n\nExample input: { \"facts\": { \"paymentAmount\": 100000, \"customerTier\": \"VIP\" } }\nAlways dry-run before publishing to validate rule behavior.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "facts": {
+            "description": "JSON string of facts object, e.g. {\"paymentAmount\":100000}",
+            "type": "string"
+          },
+          "includeDebugInfo": {
+            "default": true,
+            "description": "Include execution and decision traces",
+            "type": "boolean"
+          },
+          "versionId": {
+            "description": "Policy version ID to test against",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "versionId",
+          "facts"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_dry_run",
+      "title": "Dry Run"
+    },
+    {
+      "description": "Compare dry run results between two versions using the same input facts. Useful for validating changes.\n\nReturns:\n  resultA / resultB — full DryRunResponse for each version\n  diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})\n  diff.generatedDiff — changes in generatedVariables between A and B",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "facts": {
+            "description": "JSON string of facts object",
+            "type": "string"
+          },
+          "versionIdA": {
+            "description": "Baseline version ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionIdB": {
+            "description": "Candidate version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "versionIdA",
+          "versionIdB",
+          "facts"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_dry_run_compare",
+      "title": "Dry Run Compare"
+    },
+    {
+      "description": "Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. Facts are supplied as input or written by a prior action in the same rule; only SET_FACT creates a fact from nothing. Static data, safe to cache in-session.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "lexq_facts_action_metadata",
+      "title": "Get Action Runtime Fact Metadata"
+    },
+    {
+      "description": "Register a new input variable. Key starts with a letter, then letters, numbers, and underscores (e.g. paymentAmount). Casing is not enforced. Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Description",
+            "type": "string"
+          },
+          "isPii": {
+            "default": false,
+            "description": "Mark as PII — masked on every read surface, revealable only in the console (audited)",
+            "type": "boolean"
+          },
+          "isRequired": {
+            "default": false,
+            "description": "Whether this fact is required for rule evaluation",
+            "type": "boolean"
+          },
+          "key": {
+            "description": "Variable key. Any casing; must start with a letter.",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name",
+            "type": "string"
+          },
+          "type": {
+            "description": "Value type",
+            "enum": [
+              "STRING",
+              "NUMBER",
+              "BOOLEAN",
+              "LIST_STRING",
+              "LIST_NUMBER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "type"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_facts_create",
+      "title": "Create Fact Definition"
+    },
+    {
+      "description": "Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Remove the references first.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "factId": {
+            "description": "Fact definition ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "factId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_facts_delete",
+      "title": "Delete Fact Definition"
+    },
+    {
+      "description": "Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet; JSON matches the shape that batch create accepts, so it can be fed straight back in, which is why it leaves out the fields that endpoint does not take. Returns the file contents as text.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "csv",
+            "description": "Export format",
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
+          },
+          "keyword": {
+            "description": "Filter by key or name",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_facts_export",
+      "title": "Export Fact Catalog"
+    },
+    {
+      "description": "List all fact definitions (input variable schema). Shows key, type, required, and PII status. Always check this before creating rules.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "keyword": {
+            "description": "Search keyword",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_facts_list",
+      "title": "List Fact Definitions"
+    },
+    {
+      "description": "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy, INV-4). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_facts_unregistered",
+      "title": "List Unregistered Facts"
+    },
+    {
+      "description": "Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Only the fields you send are changed. System facts accept name, description, and PII only.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Description",
+            "type": "string"
+          },
+          "factId": {
+            "description": "Fact definition ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isPii": {
+            "description": "PII flag — enables/disables masking (changeable even on system facts)",
+            "type": "boolean"
+          },
+          "isRequired": {
+            "description": "Required flag",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Display name",
+            "type": "string"
+          },
+          "type": {
+            "description": "Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule references the fact.",
+            "enum": [
+              "STRING",
+              "NUMBER",
+              "BOOLEAN",
+              "LIST_STRING",
+              "LIST_NUMBER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "factId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_facts_update",
+      "title": "Update Fact Definition"
+    },
+    {
+      "description": "Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Policy groups that share an activationGroup form a cluster and must share the same activationMode / activationStrategy / executionLimit; executionLimit is how many of those groups run, not how many rules.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "activationGroup": {
+            "description": "Activation group (Execution Group) cluster key. Policy groups sharing this key compete, and group priority picks the winners.",
+            "type": "string"
+          },
+          "activationMode": {
+            "description": "Conflict resolution mode",
+            "enum": [
+              "NONE",
+              "EXCLUSIVE",
+              "MAX_N"
+            ],
+            "type": "string"
+          },
+          "activationStrategy": {
+            "description": "Ranking used to pick the winning groups when mode is EXCLUSIVE or MAX_N",
+            "enum": [
+              "HIGHEST_PRIORITY"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "description": "Group description",
+            "type": "string"
+          },
+          "executionLimit": {
+            "description": "How many policy groups sharing this activationGroup may run (required when mode is MAX_N). Counts groups, not rules: every rule of a winning group runs.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "description": "Group name (unique among non-ARCHIVED)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_groups_create",
+      "title": "Create Policy Group"
+    },
+    {
+      "description": "Archive a policy group. Only non-live groups can be deleted. This is irreversible.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_groups_delete",
+      "title": "Delete Policy Group"
+    },
+    {
+      "description": "Get a single policy group by ID.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_groups_get",
+      "title": "Get Policy Group"
+    },
+    {
+      "description": "List all policy groups (tenant-wide, priority ASC).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "lexq_groups_list",
+      "title": "List Policy Groups"
+    },
+    {
+      "description": "Reorder policy groups by priority. Priority is tenant-wide and flat (1...N continuous); array index 0 = priority 1 (highest precedence). activationGroup is not affected — this only changes priority.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupIds": {
+            "description": "Group IDs in desired priority order (index 0 = priority 1)",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "groupIds"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_groups_reorder",
+      "title": "Reorder Policy Groups"
+    },
+    {
+      "description": "Update a policy group. Only provided fields are updated; omitted fields remain unchanged.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "activationGroup": {
+            "description": "Activation group (Execution Group) cluster key. Policy groups sharing this key compete, and group priority picks the winners.",
+            "type": "string"
+          },
+          "activationMode": {
+            "description": "Conflict resolution mode",
+            "enum": [
+              "NONE",
+              "EXCLUSIVE",
+              "MAX_N"
+            ],
+            "type": "string"
+          },
+          "activationStrategy": {
+            "description": "Ranking used to pick the winning groups",
+            "enum": [
+              "HIGHEST_PRIORITY"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "description": "New description",
+            "type": "string"
+          },
+          "executionLimit": {
+            "description": "How many policy groups sharing this activationGroup may run. Counts groups, not rules.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "New name",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status (DISABLED = emergency stop)",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_groups_update",
+      "title": "Update Policy Group"
+    },
+    {
+      "description": "Get full execution detail including inputFacts, mutatedFacts, generatedVariables, executionTraces, and decisionTraces.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "traceId": {
+            "description": "Trace ID from execution history",
+            "type": "string"
+          }
+        },
+        "required": [
+          "traceId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_history_get",
+      "title": "Get Execution Detail"
+    },
+    {
+      "description": "List policy execution history. Shows trace ID, group, version, status, match result, and latency.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "endDate": {
+            "description": "End date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Filter by policy group",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startDate": {
+            "description": "Start date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "status": {
+            "description": "Filter by execution status",
+            "enum": [
+              "SUCCESS",
+              "NO_MATCH",
+              "ERROR",
+              "TIMEOUT"
+            ],
+            "type": "string"
+          },
+          "traceId": {
+            "description": "Filter by trace ID",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Filter by version",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_history_list",
+      "title": "List Execution History"
+    },
+    {
+      "description": "Get execution KPIs: total executions, success/failure counts, success rate, and average latency.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "endDate": {
+            "description": "End date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Filter by policy group",
+            "format": "uuid",
+            "type": "string"
+          },
+          "startDate": {
+            "description": "Start date (yyyy-MM-dd)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_history_stats",
+      "title": "Execution Statistics"
+    },
+    {
+      "description": "Process a single failure log: RESOLVE (mark as manually fixed) or IGNORE (skip intentionally).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Action to take",
+            "enum": [
+              "IGNORE",
+              "RESOLVE"
+            ],
+            "type": "string"
+          },
+          "logId": {
+            "description": "Failure log ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "logId",
+          "action"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_logs_action",
+      "title": "Process Failure Log"
+    },
+    {
+      "description": "Process multiple failure logs at once. Provide an array of log IDs and the action.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Action to apply to all logs",
+            "enum": [
+              "IGNORE",
+              "RESOLVE"
+            ],
+            "type": "string"
+          },
+          "logIds": {
+            "description": "Array of failure log IDs",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "logIds",
+          "action"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_logs_bulk_action",
+      "title": "Bulk Process Failure Logs"
+    },
+    {
+      "description": "Get failure log detail by ID.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "logId": {
+            "description": "Failure log ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "logId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_logs_get",
+      "title": "Get Failure Log"
+    },
+    {
+      "description": "List system failure logs from background tasks (platform event webhooks, scheduled deployments).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "endDate": {
+            "description": "End date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "keyword": {
+            "description": "Search in refId, refSubId, errorMessage",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startDate": {
+            "description": "Start date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "status": {
+            "description": "Log status",
+            "enum": [
+              "PENDING",
+              "RESOLVED",
+              "IGNORED"
+            ],
+            "type": "string"
+          },
+          "taskType": {
+            "description": "Task type",
+            "enum": [
+              "PLATFORM_WEBHOOK",
+              "SCHEDULED_DEPLOYMENT"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_logs_list",
+      "title": "List Failure Logs"
+    },
+    {
+      "description": "List the PII reveal audit ledger — who revealed which fact of which trace, and when. Metadata only; revealed values are never stored or returned. Use for monthly access-log inspection and SIEM collection.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "endDate": {
+            "description": "End date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "factKey": {
+            "description": "Filter by fact key (partial match, case-insensitive)",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "revealedBy": {
+            "description": "Filter by operator ID (exact match)",
+            "type": "string"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startDate": {
+            "description": "Start date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "traceId": {
+            "description": "Filter by trace ID (exact match)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_pii_reveals_list",
+      "title": "List PII Reveal Audits"
+    },
+    {
+      "description": "Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cache state (HIT = compiled ruleset cache hit, MISS = deep-load + compile), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. flagged = p50 ≥ 10× median of per-rule p50s within the group; absolute thresholds are intentionally not supported. Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ 3 (p50 needs n ≥ 6, p95 n ≥ 60, p99 n ≥ 300 — display gate, separate from the n ≥ 100 judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than 3 rules qualify. Rule detail comes from a deterministic 1% sample of calls; TOTAL is recorded for every call. Defaults: last 24h, live version, cacheState HIT.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "cacheState": {
+            "description": "Cache dimension for the rule table and judgment (default: HIT)",
+            "enum": [
+              "HIT",
+              "MISS"
+            ],
+            "type": "string"
+          },
+          "from": {
+            "description": "Window start, ISO-8601 instant (e.g. 2026-07-01T00:00:00Z). Default: 24h ago",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "to": {
+            "description": "Window end, ISO-8601 instant. Default: now",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version to inspect (default: live version)",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_profile_overview",
+      "title": "Group Latency Profile"
+    },
+    {
+      "description": "Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (60s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) unless n×(1−q) ≥ 3 (p50 n ≥ 6, p95 n ≥ 60, p99 n ≥ 300). flagged = p50 ≥ 10× median of per-rule p50s within the group; absolute thresholds are intentionally not supported.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "description": "Window start, ISO-8601 instant. Default: 24h ago",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ruleId": {
+            "description": "Rule ID (from lexq_profile_overview)",
+            "format": "uuid",
+            "type": "string"
+          },
+          "to": {
+            "description": "Window end, ISO-8601 instant. Default: now",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version to inspect (default: live version)",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "ruleId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_profile_rule",
+      "title": "Rule Latency Detail"
+    },
+    {
+      "description": "Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "traceId": {
+            "description": "Trace ID of the execution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "traceId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_provenance_get",
+      "title": "Get Decision Provenance"
+    },
+    {
+      "description": "Cooperatively cancel a PENDING or RUNNING window replay job. Other states are rejected. VIEWER role cannot cancel.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "jobId": {
+            "description": "Replay job ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_replay_cancel",
+      "title": "Cancel Replay Job"
+    },
+    {
+      "description": "Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous and free of charge (TPS throttle only). A replay sends no webhook, notification, or event: rule actions produce no outward effects.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "candidateVersionId": {
+            "description": "Version to re-evaluate against",
+            "format": "uuid",
+            "type": "string"
+          },
+          "traceId": {
+            "description": "Trace ID of the past execution to replay",
+            "type": "string"
+          }
+        },
+        "required": [
+          "traceId",
+          "candidateVersionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_replay_decision",
+      "title": "Replay a Decision"
+    },
+    {
+      "description": "Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "json",
+            "description": "Export format",
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
+          },
+          "jobId": {
+            "description": "Replay job ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_replay_export",
+      "title": "Export Replay Result"
+    },
+    {
+      "description": "List window replay job history (reverse-chronological). Lightweight items — use lexq_replay_status for summary and changed samples.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_replay_list",
+      "title": "List Replay Jobs"
+    },
+    {
+      "description": "Submit an async job that replays a date window of past executions against a candidate version and measures the blast radius (how many decisions change). Billed per replayed record (REPLAY metric); VIEWER role cannot submit. Poll with lexq_replay_status.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "candidateVersionId": {
+            "description": "Version to re-evaluate against",
+            "format": "uuid",
+            "type": "string"
+          },
+          "from": {
+            "description": "Window start date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "maxRecords": {
+            "description": "Sample cap (server default applies; hard cap 50k)",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "to": {
+            "description": "Window end date (yyyy-MM-dd)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidateVersionId",
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_replay_start",
+      "title": "Start Window Replay (Blast Radius)"
+    },
+    {
+      "description": "Poll a window replay job. RUNNING shows progress 0–100; COMPLETED fills summary and changedSamples; FAILED carries errorMessage. capped=true means the window exceeded the sample cap and only part was replayed.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "jobId": {
+            "description": "Replay job ID from lexq_replay_start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_replay_status",
+      "title": "Get Replay Job Status"
+    },
+    {
+      "description": "Analyze which input facts a version requires. Returns required keys, types, and an example request body.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_requirements",
+      "title": "Analyze Requirements"
+    },
+    {
+      "description": "Create a rule in a DRAFT version. Requires name, condition tree, and actions array. priority is auto-assigned (appended last); use lexq_rules_reorder to change order.\n\nBefore creating rules with new fact keys, call lexq_facts_list to check existing facts.\nIf a required key is missing, ask the user to confirm the type, isRequired, and description\nbefore calling lexq_facts_create — registering facts enables type validation, Console UI\nautocomplete, and the dry-run requirements analyzer.\n\nAfter saving, lexq_facts_unregistered lists any keys this version references but has not\ndefined (non-blocking, version-wide) — use it to decide what to register.\n\nCondition: { type: \"SINGLE\", field, operator, value, valueType } or { type: \"GROUP\", operator: \"AND\"|\"OR\", children: [...] }\nValue types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER\n\nOperators are constrained by the LEFT fact's type (from lexq_facts_list). Using one outside\nits type is rejected by the server — check the fact type before choosing an operator.\n- STRING fact:       EQUALS, NOT_EQUALS, CONTAINS, IN, NOT_IN\n- NUMBER fact:       EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, IN, NOT_IN\n- BOOLEAN fact:      EQUALS, NOT_EQUALS\n- LIST_* fact:       HAS_ANY, HAS_ALL, HAS_NONE (only these)\n\nHAS_* query list-typed facts. Value is always an array whose element type matches the fact:\n- HAS_ANY: fact has at least one of the given values\n- HAS_ALL: fact has all of the given values\n- HAS_NONE: fact has none of the given values\nExample: { \"type\": \"SINGLE\", \"field\": \"userTags\", \"operator\": \"HAS_ANY\", \"value\": [\"VIP\",\"GOLD\"], \"valueType\": \"LIST_STRING\" }\n\nDo NOT use CONTAINS on a list fact — CONTAINS is substring match on STRING facts only.\nIN is the mirror of HAS_*: IN takes a scalar fact with a list value; HAS_* takes lists on both sides.\n\nActions: [{ type, parameters }]\n\nAction parameter schemas:\n- MUTATE_FACT: { targetVar: string, operator: \"ASSIGN\"|\"ADD\"|\"SUB\"|\"MUL\"|\"DIV\", method: \"PERCENTAGE\"|\"AMOUNT\", operand: number, refVar?: string, rounding?: RoundingOption }\n  targetVar is the fact this action reads and writes. It must exist in facts at execution\n  time as a number — supplied as an input fact or written by a prior action in this rule.\n  A missing required fact throws (no 0 default).\n  operand is the arithmetic operand; the unit is dictated by method (percent when\n  PERCENTAGE, absolute amount when AMOUNT). Ranges are not constrained — negative values\n  and >100 percentages are valid (refunds, surcharges).\n  refVar is the base for percentage calculation and is OPTIONAL — omit it to use targetVar\n  itself. It is only meaningful in PERCENTAGE × {ASSIGN, ADD, SUB}; specifying it in any\n  other cell is an error. Use it when the base differs from the target, e.g.\n  \"points += orderTotal × 5%\" → { targetVar: \"points\", refVar: \"orderTotal\",\n  operator: \"ADD\", method: \"PERCENTAGE\", operand: 5 }.\n  operator × method matrix:\n    ASSIGN  targetVar = operand              | targetVar = refVar × operand/100\n    ADD     targetVar += operand             | targetVar += refVar × operand/100\n    SUB     targetVar -= operand             | targetVar -= refVar × operand/100\n    MUL     targetVar *= operand             | targetVar *= (operand/100 + 1)\n    DIV     targetVar /= operand             | invalid\n  Constraints: DIV + PERCENTAGE is invalid (use MUL with the inverse). DIV + AMOUNT\n  requires operand !== 0.\n- SET_FACT: { targetVar: string, value: string|number|boolean } Creates the fact if absent\n  — this is the only action that does. MUTATE_FACT requires the target to already exist.\n- BLOCK: { reason: string } Records a rejection decision. It does NOT halt rule execution —\n  subsequent actions and subsequent winning rules still run. Enforcement is the caller's\n  responsibility; the decision surfaces as the isBlocked fact.\n\nRoundingOption (optional, MUTATE_FACT only): { scale: integer (0..34), mode?: \"HALF_UP\"|\"HALF_DOWN\"|\"HALF_EVEN\"|\"FLOOR\"|\"CEILING\"|\"DOWN\"|\"UP\" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rule": {
+            "description": "JSON string of CreateRuleRequest: { name, condition, actions, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "rule"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_create",
+      "title": "Create Rule"
+    },
+    {
+      "description": "Delete a rule from a DRAFT version.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "force": {
+            "default": false,
+            "description": "Skip confirmation (for the last rule in a version)",
+            "type": "boolean"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ruleId": {
+            "description": "Rule ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "ruleId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_delete",
+      "title": "Delete Rule"
+    },
+    {
+      "description": "Get full rule detail including condition tree and action definitions.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ruleId": {
+            "description": "Rule ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "ruleId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_get",
+      "title": "Get Rule Detail"
+    },
+    {
+      "description": "List all rules in a version (priority ASC). Returns summary with conditionSummary and actionSummary.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_list",
+      "title": "List Rules"
+    },
+    {
+      "description": "Reorder rules by specifying rule IDs in desired order. Priorities are assigned 1...N (1-based, continuous); array index 0 = priority 1 (highest precedence).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ruleIds": {
+            "description": "Rule IDs in desired priority order",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "ruleIds"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_reorder",
+      "title": "Reorder Rules"
+    },
+    {
+      "description": "Enable or disable a rule without deleting it.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isEnabled": {
+            "description": "true to enable, false to disable",
+            "type": "boolean"
+          },
+          "ruleId": {
+            "description": "Rule ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "ruleId",
+          "isEnabled"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_toggle",
+      "title": "Toggle Rule"
+    },
+    {
+      "description": "Update an existing rule in a DRAFT version. Only provided fields are changed.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rule": {
+            "description": "JSON string of UpdateRuleRequest: { name?, condition?, actions?, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }",
+            "type": "string"
+          },
+          "ruleId": {
+            "description": "Rule ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId",
+          "ruleId",
+          "rule"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_rules_update",
+      "title": "Update Rule"
+    },
+    {
+      "description": "Cancel a running or pending simulation.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "simulationId": {
+            "description": "Simulation ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "simulationId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_simulation_cancel",
+      "title": "Cancel Simulation"
+    },
+    {
+      "description": "Export simulation results as JSON or CSV. Returns the raw data.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "json",
+            "description": "Export format",
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
+          },
+          "simulationId": {
+            "description": "Simulation ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "simulationId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_simulation_export",
+      "title": "Export Simulation"
+    },
+    {
+      "description": "List simulation history with optional filters.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "description": "Start date (yyyy-MM-dd)",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "description": "Filter by status",
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED"
+            ],
+            "type": "string"
+          },
+          "to": {
+            "description": "End date (yyyy-MM-dd)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_simulation_list",
+      "title": "List Simulations"
+    },
+    {
+      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000, default 10000)\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "JSON string of SimulationRequest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_simulation_start",
+      "title": "Start Simulation"
+    },
+    {
+      "description": "Get simulation status and results. Poll until status is COMPLETED or FAILED.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "simulationId": {
+            "description": "Simulation ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "simulationId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_simulation_status",
+      "title": "Simulation Status"
+    },
+    {
+      "description": "Clone an existing version to create a new DRAFT. Useful when the source version is already published.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Source version ID to clone",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_versions_clone",
+      "title": "Clone Policy Version"
+    },
+    {
+      "description": "Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "commitMessage": {
+            "description": "Commit message describing this version",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "description": "Effective start date (ISO 8601)",
+            "type": "string"
+          },
+          "effectiveTo": {
+            "description": "Effective end date (ISO 8601)",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_versions_create",
+      "title": "Create Policy Version"
+    },
+    {
+      "description": "Delete a DRAFT version. Only DRAFT versions can be deleted.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_versions_delete",
+      "title": "Delete Policy Version"
+    },
+    {
+      "description": "Get a single version by ID, including its rules and fact requirements.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_versions_get",
+      "title": "Get Policy Version"
+    },
+    {
+      "description": "List all versions of a policy group.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_versions_list",
+      "title": "List Policy Versions"
+    },
+    {
+      "description": "Update a DRAFT version. Only DRAFT versions can be modified. Only provided fields are changed.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "commitMessage": {
+            "description": "New commit message",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "description": "New effective start date",
+            "type": "string"
+          },
+          "effectiveTo": {
+            "description": "New effective end date",
+            "type": "string"
+          },
+          "groupId": {
+            "description": "Policy group ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionId": {
+            "description": "Version ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_versions_update",
+      "title": "Update Policy Version"
+    },
+    {
+      "description": "Delete a webhook subscription by ID.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Webhook subscription ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_webhook_subscriptions_delete",
+      "title": "Delete Webhook Subscription"
+    },
+    {
+      "description": "Get webhook subscription detail by ID.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Webhook subscription ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_webhook_subscriptions_get",
+      "title": "Get Webhook Subscription"
+    },
+    {
+      "description": "List platform event webhook subscriptions. These receive deployment lifecycle notifications (publish, deploy, rollback, undeploy).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "default": 0,
+            "description": "Page number",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Page size",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "lexq_webhook_subscriptions_list",
+      "title": "List Webhook Subscriptions"
+    },
+    {
+      "description": "Create or update a webhook subscription. Omit id to create, provide id to update. Events: VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED. Formats: GENERIC (full JSON), SLACK ({\"text\": \"...\"}).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Subscription ID (omit to create, provide to update)",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isActive": {
+            "default": true,
+            "description": "Whether the subscription is active",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Subscription name (unique per tenant)",
+            "minLength": 1,
+            "type": "string"
+          },
+          "payloadFormat": {
+            "default": "GENERIC",
+            "description": "Payload format",
+            "enum": [
+              "GENERIC",
+              "SLACK"
+            ],
+            "type": "string"
+          },
+          "secret": {
+            "description": "HMAC-SHA256 signing secret",
+            "type": "string"
+          },
+          "subscribedEvents": {
+            "description": "Events to subscribe to",
+            "items": {
+              "enum": [
+                "VERSION_PUBLISHED",
+                "DEPLOYED",
+                "ROLLED_BACK",
+                "UNDEPLOYED",
+                "DEPLOY_SCHEDULED",
+                "DEPLOY_SCHEDULE_CANCELED"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "webhookUrl": {
+            "description": "Webhook endpoint URL",
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "webhookUrl",
+          "subscribedEvents"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_webhook_subscriptions_save",
+      "title": "Save Webhook Subscription"
+    },
+    {
+      "description": "Send a test event to verify webhook connectivity. Returns the HTTP status code and success/failure message.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Webhook subscription ID",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "lexq_webhook_subscriptions_test",
+      "title": "Test Webhook Subscription"
+    },
+    {
+      "description": "Show current authentication info (tenant ID, user ID, role).",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "lexq_whoami",
+      "title": "Who Am I"
+    }
+  ]
+}
