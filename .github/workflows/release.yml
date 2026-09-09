@@ -54,6 +54,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Also on the pull request. It runs here too because this is the step that cannot be
+      # taken back: npm has no real unpublish, so a contract that drifted between the review
+      # and the merge would ship, and the only remedy would be publishing again.
+      - name: Tool schema contract
+        run: pnpm schemas:check
+
       - name: Exact decimals
         run: pnpm test:decimals
 

@@ -63,6 +63,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # What `tools/list` returns is the contract an agent reads before it calls a tool.
+      # It is assembled from the schemas by the SDK, so a dependency bump can rewrite it
+      # while every other gate here stays green. Runs after Build: it reads dist/.
+      - name: Tool schema contract
+        run: pnpm schemas:check
+
       - name: Fact key grammar
         run: pnpm test:fact-key
 
