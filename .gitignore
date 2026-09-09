@@ -31,3 +31,9 @@ CLAUDE.local.md
 # The full contract manifest the engine delivers. It is wider than what this repo
 # exposes, so only the ORDER subset (contracts/lexq-manifest.cli.json) is committed.
 contracts/lexq-manifest.json
+
+# MCP Registry domain-verification signing key. The publishing guide has you run openssl in
+# the project directory, and this repository is public: one `git add -A` would put the private
+# key on the internet permanently, since a force-push does not unserve a commit by its hash.
+*.pem
+mcp-registry-auth
