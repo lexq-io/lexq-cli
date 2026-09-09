@@ -1,11 +1,20 @@
 name: Release
 
+# The tag is the release. AGENTS.md has always said so — "Publish (`v*` tag) before
+# redeploying it" — while this workflow published on every push to main and bumped the patch
+# number itself. The shipped documentation described a process that did not exist.
+#
+# Publishing on merge also made every merge a release. A CI-only change spent a version
+# number, and a change that raises the Node floor would have gone out as a patch, which is
+# the one thing semver promises will not happen. npm has no real unpublish, so that promise
+# has to be kept before the merge, not after it.
+#
+# workflow_dispatch stays as a recovery hatch: if the tag landed but publishing failed, it
+# reruns from package.json. npm rejects a version it already holds, so it cannot double-publish.
 on:
   push:
-    branches: [ main ]
-    paths-ignore:
-      - '*.md'
-      - '.gitignore'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -16,14 +25,13 @@ jobs:
   release:
     name: Publish to npm & GitHub Release
     runs-on: ubuntu-latest
-    # The bot's own version-bump commit must not retrigger this workflow.
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
+      # Full history so the release notes can be generated from it. No token: nothing
+      # pushes back to the repository any more.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v4
 
@@ -49,17 +57,21 @@ jobs:
       - name: Exact decimals
         run: pnpm test:decimals
 
-      - name: Bump version & tag
-        id: bump
+      # The version lives in package.json and is raised in the pull request, where a reviewer
+      # sees it beside the change that justifies it. This step only checks that the tag agrees.
+      # If it does not, npm would publish one version while the release notes name another,
+      # and a published version cannot be taken back.
+      - name: Tag matches package.json
+        if: github.ref_type == 'tag'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          NEW_VERSION=$(npm version patch --no-git-tag-version)
-          git add package.json
-          git commit -m "chore: release ${NEW_VERSION} [skip ci]"
-          git tag "${NEW_VERSION}"
-          git push origin main --tags
-          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "tag v${TAG} does not match package.json ${PKG}" >&2
+            echo "Raise the version in a pull request first, then tag the merge commit." >&2
+            exit 1
+          fi
+          echo "v${TAG} matches package.json"
 
       - name: Show npm version
         run: npm -v
@@ -67,8 +79,10 @@ jobs:
       - name: Publish to npm
         run: npm publish --provenance --access public
 
+      # Skipped on workflow_dispatch: there is no tag to attach a release to.
       - name: Create GitHub Release
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.bump.outputs.version }}
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
