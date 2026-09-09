@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
@@ -19,9 +19,9 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
       title: 'Get Decision Provenance',
       description:
         'Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint.',
-      inputSchema: {
+      inputSchema: z.object({
         traceId: z.string().describe('Trace ID of the execution'),
-      },
+      }),
     },
     async ({ traceId }) => callApi('GET', `provenance/${traceId}`),
   );
@@ -32,7 +32,7 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
       title: 'List PII Reveal Audits',
       description:
         'List the PII reveal audit ledger — who revealed which fact of which trace, and when. Metadata only; revealed values are never stored or returned. Use for monthly access-log inspection and SIEM collection.',
-      inputSchema: {
+      inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         traceId: z.string().optional().describe('Filter by trace ID (exact match)'),
@@ -43,7 +43,7 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
           .describe('Filter by fact key (partial match, case-insensitive)'),
         startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
         endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
-      },
+      }),
     },
     async ({ page, size, traceId, revealedBy, factKey, startDate, endDate }) => {
       const params: Record<string, string> = paginationParams(page, size);

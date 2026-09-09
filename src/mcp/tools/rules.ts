@@ -1,5 +1,5 @@
 import { MAX_ROUNDING_SCALE } from '@/types/constants';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
@@ -15,10 +15,10 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       title: 'List Rules',
       description:
         'List all rules in a version (priority ASC). Returns summary with conditionSummary and actionSummary.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
-      },
+      }),
     },
     async ({ groupId, versionId }) =>
       callApi('GET', `policy-groups/${groupId}/versions/${versionId}/rules`),
@@ -29,11 +29,11 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Get Rule Detail',
       description: 'Get full rule detail including condition tree and action definitions.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         ruleId: z.string().uuid().describe('Rule ID'),
-      },
+      }),
     },
     async ({ groupId, versionId, ruleId }) =>
       callApi('GET', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}`),
@@ -104,7 +104,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
 
         RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         rule: z
@@ -112,7 +112,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           .describe(
             'JSON string of CreateRuleRequest: { name, condition, actions, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }',
           ),
-      },
+      }),
     },
     async ({ groupId, versionId, rule }) => {
       // `rule` arrives as text, so long decimals are still intact at this point.
@@ -126,7 +126,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Rule',
       description: 'Update an existing rule in a DRAFT version. Only provided fields are changed.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         ruleId: z.string().uuid().describe('Rule ID'),
@@ -135,7 +135,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           .describe(
             'JSON string of UpdateRuleRequest: { name?, condition?, actions?, mutexGroup?, mutexMode?, mutexStrategy?, mutexLimit?, isEnabled? }',
           ),
-      },
+      }),
     },
     async ({ groupId, versionId, ruleId, rule }) => {
       const body: unknown = parseJson(rule);
@@ -150,7 +150,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Delete Rule',
       description: 'Delete a rule from a DRAFT version.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         ruleId: z.string().uuid().describe('Rule ID'),
@@ -158,7 +158,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           .boolean()
           .default(false)
           .describe('Skip confirmation (for the last rule in a version)'),
-      },
+      }),
     },
     async ({ groupId, versionId, ruleId, force }) => {
       const params: Record<string, string> = {};
@@ -175,11 +175,11 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       title: 'Reorder Rules',
       description:
         'Reorder rules by specifying rule IDs in desired order. Priorities are assigned 1...N (1-based, continuous); array index 0 = priority 1 (highest precedence).',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         ruleIds: z.array(z.string().uuid()).describe('Rule IDs in desired priority order'),
-      },
+      }),
     },
     async ({ groupId, versionId, ruleIds }) => {
       const rules = ruleIds.map((ruleId: string, index: number) => ({
@@ -197,12 +197,12 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Toggle Rule',
       description: 'Enable or disable a rule without deleting it.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         ruleId: z.string().uuid().describe('Rule ID'),
         isEnabled: z.boolean().describe('true to enable, false to disable'),
-      },
+      }),
     },
     async ({ groupId, versionId, ruleId, isEnabled }) =>
       callApi('PATCH', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}/enabled`, {

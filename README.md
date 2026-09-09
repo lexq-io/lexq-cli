@@ -41,7 +41,7 @@ Or run without installing:
 npx @lexq/cli
 ```
 
-Requires **Node.js 18+**.
+Requires **Node.js 22+**.
 
 ## Quick Start
 

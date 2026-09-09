@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
@@ -11,10 +11,10 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
       title: 'List Webhook Subscriptions',
       description:
         'List platform event webhook subscriptions. These receive deployment lifecycle notifications (publish, deploy, rollback, undeploy).',
-      inputSchema: {
+      inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
-      },
+      }),
     },
     async ({ page, size }) => {
       const params = paginationParams(page, size);
@@ -27,9 +27,9 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     {
       title: 'Get Webhook Subscription',
       description: 'Get webhook subscription detail by ID.',
-      inputSchema: {
+      inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
-      },
+      }),
     },
     async ({ id }) => callApi('GET', `webhook-subscriptions/${id}`),
   );
@@ -40,7 +40,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
       title: 'Save Webhook Subscription',
       description:
         'Create or update a webhook subscription. Omit id to create, provide id to update. Events: VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED. Formats: GENERIC (full JSON), SLACK ({"text": "..."}).',
-      inputSchema: {
+      inputSchema: z.object({
         id: z
           .string()
           .uuid()
@@ -63,7 +63,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
           .optional()
           .default(true)
           .describe('Whether the subscription is active'),
-      },
+      }),
     },
     async ({ ...body }) => callApi('POST', 'webhook-subscriptions', { body }),
   );
@@ -73,9 +73,9 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     {
       title: 'Delete Webhook Subscription',
       description: 'Delete a webhook subscription by ID.',
-      inputSchema: {
+      inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
-      },
+      }),
     },
     async ({ id }) => callApi('DELETE', `webhook-subscriptions/${id}`),
   );
@@ -86,9 +86,9 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
       title: 'Test Webhook Subscription',
       description:
         'Send a test event to verify webhook connectivity. Returns the HTTP status code and success/failure message.',
-      inputSchema: {
+      inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
-      },
+      }),
     },
     async ({ id }) => callApi('POST', `webhook-subscriptions/${id}/test`),
   );
