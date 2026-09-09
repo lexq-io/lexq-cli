@@ -3,7 +3,7 @@
   "name": "io.lexq/lexq",
   "title": "LexQ",
   "description": "Policy engine tools: author rules, simulate impact, replay decisions, and deploy.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "websiteUrl": "https://lexq.io",
   "repository": {
     "url": "https://github.com/lexq-io/lexq-cli",
@@ -19,7 +19,7 @@
     {
       "registryType": "npm",
       "identifier": "@lexq/cli",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "runtimeHint": "npx",
       "runtimeArguments": [{ "type": "named", "name": "-y" }],
       "packageArguments": [
