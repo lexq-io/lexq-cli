@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.lexq/lexq",
+  "title": "LexQ",
+  "description": "Policy engine tools: author rules, simulate impact, replay decisions, and deploy.",
+  "version": "0.3.1",
+  "websiteUrl": "https://lexq.io",
+  "repository": {
+    "url": "https://github.com/lexq-io/lexq-cli",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.lexq.io/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@lexq/cli",
+      "version": "0.3.1",
+      "runtimeHint": "npx",
+      "runtimeArguments": [{ "type": "named", "name": "-y" }],
+      "packageArguments": [
+        { "type": "positional", "value": "serve" },
+        { "type": "named", "name": "--mcp" }
+      ],
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "LEXQ_API_KEY",
+          "description": "LexQ API key. Or leave it unset and run `lexq auth login` once.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

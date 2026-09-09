@@ -47,6 +47,12 @@ jobs:
       - name: A/B identity key contract
         run: pnpm ab-key:check
 
+      # The registry listing restates the package name, version and start command. A
+      # disagreement is rejected at publish time, which is after npm has already published
+      # and cannot be undone.
+      - name: Registry manifest
+        run: pnpm registry:check
+
       - name: Public surface
         run: pnpm surface:check
 
