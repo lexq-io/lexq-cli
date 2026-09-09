@@ -1,0 +1,58 @@
+name: Publish to MCP Registry
+
+# Separate from Release because the two cannot be one sequence.
+#
+# npm accepts a publish and answers "Your package is being processed and may take a few
+# minutes to become available"; the version stays 404 on the read API for about a minute
+# after that. The registry resolves the package before it accepts a listing, so running it
+# in the same job right after `npm publish` fails on a package that was just published.
+#
+# It also has to be re-runnable on its own. Rerunning Release cannot reach these steps: npm
+# rejects a version it already holds, which is the guard that stops a double publish.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to MCP Registry
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Polls the read API rather than sleeping a fixed amount. The delay is not a documented
+      # constant, and a sleep long enough to be safe is one nobody would keep.
+      - name: Wait for npm to serve the version
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "waiting for ${NAME}@${VERSION}"
+          for i in $(seq 1 40); do
+            if curl -sfo /dev/null "https://registry.npmjs.org/${NAME}/${VERSION}"; then
+              echo "${NAME}@${VERSION} is queryable"
+              exit 0
+            fi
+            echo "  not yet (${i}/40)"
+            sleep 15
+          done
+          echo "${NAME}@${VERSION} did not appear on npm within 10 minutes" >&2
+          echo "Check that the Release workflow published it." >&2
+          exit 1
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      # A signature over lexq.io, proved by a TXT record on the domain. That is what allows
+      # the `io.lexq` name instead of a GitHub handle.
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login dns --domain lexq.io --private-key "${{ secrets.MCP_PRIVATE_KEY }}"
+
+      - name: Publish
+        run: ./mcp-publisher publish

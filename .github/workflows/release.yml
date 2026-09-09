@@ -97,16 +97,3 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
-
-      # The registry holds metadata only, so it goes last: it points at a package that has
-      # to exist first. Authentication is a signature over lexq.io, proved by a TXT record
-      # on the domain, which is what allows the `io.lexq` name instead of a GitHub handle.
-      - name: Install mcp-publisher
-        run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-
-      - name: Authenticate to MCP Registry
-        run: ./mcp-publisher login dns --domain lexq.io --private-key "${{ secrets.MCP_PRIVATE_KEY }}"
-
-      - name: Publish to MCP Registry
-        run: ./mcp-publisher publish
