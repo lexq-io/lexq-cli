@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
@@ -11,7 +11,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
       title: 'List Failure Logs',
       description:
         'List system failure logs from background tasks (platform event webhooks, scheduled deployments).',
-      inputSchema: {
+      inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         taskType: z.enum(TaskType).optional().describe('Task type'),
@@ -19,7 +19,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
         keyword: z.string().optional().describe('Search in refId, refSubId, errorMessage'),
         startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
         endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
-      },
+      }),
     },
     async ({ page, size, taskType, status, keyword, startDate, endDate }) => {
       const params: Record<string, string> = paginationParams(page, size);
@@ -37,9 +37,9 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Get Failure Log',
       description: 'Get failure log detail by ID.',
-      inputSchema: {
+      inputSchema: z.object({
         logId: z.string().uuid().describe('Failure log ID'),
-      },
+      }),
     },
     async ({ logId }) => callApi('GET', `failure-logs/${logId}`),
   );
@@ -50,10 +50,10 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
       title: 'Process Failure Log',
       description:
         'Process a single failure log: RESOLVE (mark as manually fixed) or IGNORE (skip intentionally).',
-      inputSchema: {
+      inputSchema: z.object({
         logId: z.string().uuid().describe('Failure log ID'),
         action: z.enum(FailureAction).describe('Action to take'),
-      },
+      }),
     },
     async ({ logId, action }) =>
       callApi('POST', `failure-logs/${logId}/actions`, {
@@ -67,10 +67,10 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
       title: 'Bulk Process Failure Logs',
       description:
         'Process multiple failure logs at once. Provide an array of log IDs and the action.',
-      inputSchema: {
+      inputSchema: z.object({
         logIds: z.array(z.string().uuid()).describe('Array of failure log IDs'),
         action: z.enum(FailureAction).describe('Action to apply to all logs'),
-      },
+      }),
     },
     async ({ logIds, action }) =>
       callApi('POST', 'failure-logs/bulk-actions', {

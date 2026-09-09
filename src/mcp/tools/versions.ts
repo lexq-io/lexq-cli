@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
@@ -9,11 +9,11 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'List Policy Versions',
       description: 'List all versions of a policy group.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
-      },
+      }),
     },
     async ({ groupId, page, size }) =>
       callApi('GET', `policy-groups/${groupId}/versions`, {
@@ -26,10 +26,10 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Get Policy Version',
       description: 'Get a single version by ID, including its rules and fact requirements.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
-      },
+      }),
     },
     async ({ groupId, versionId }) =>
       callApi('GET', `policy-groups/${groupId}/versions/${versionId}`),
@@ -41,12 +41,12 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       title: 'Create Policy Version',
       description:
         'Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         commitMessage: z.string().optional().describe('Commit message describing this version'),
         effectiveFrom: z.string().optional().describe('Effective start date (ISO 8601)'),
         effectiveTo: z.string().optional().describe('Effective end date (ISO 8601)'),
-      },
+      }),
     },
     async ({ groupId, ...body }) => callApi('POST', `policy-groups/${groupId}/versions`, { body }),
   );
@@ -57,13 +57,13 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       title: 'Update Policy Version',
       description:
         'Update a DRAFT version. Only DRAFT versions can be modified. Only provided fields are changed.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         commitMessage: z.string().optional().describe('New commit message'),
         effectiveFrom: z.string().optional().describe('New effective start date'),
         effectiveTo: z.string().optional().describe('New effective end date'),
-      },
+      }),
     },
     async ({ groupId, versionId, ...body }) =>
       callApi('PUT', `policy-groups/${groupId}/versions/${versionId}`, { body }),
@@ -74,10 +74,10 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Delete Policy Version',
       description: 'Delete a DRAFT version. Only DRAFT versions can be deleted.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
-      },
+      }),
     },
     async ({ groupId, versionId }) =>
       callApi('DELETE', `policy-groups/${groupId}/versions/${versionId}`),
@@ -89,10 +89,10 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       title: 'Clone Policy Version',
       description:
         'Clone an existing version to create a new DRAFT. Useful when the source version is already published.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Source version ID to clone'),
-      },
+      }),
     },
     async ({ groupId, versionId }) => {
       return callApi('POST', `policy-groups/${groupId}/versions/${versionId}/clone`, {

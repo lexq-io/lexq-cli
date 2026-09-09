@@ -65,9 +65,9 @@ function canonical(value) {
 
 let McpServer, Client, InMemoryTransport, registerAllTools;
 try {
-  ({ McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js'));
-  ({ Client } = await import('@modelcontextprotocol/sdk/client/index.js'));
-  ({ InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js'));
+  ({ McpServer } = await import('@modelcontextprotocol/server'));
+  ({ Client } = await import('@modelcontextprotocol/client'));
+  ({ InMemoryTransport } = await import('@modelcontextprotocol/server'));
   ({ registerAllTools } = await import(BUILT_ENTRY));
 } catch (error) {
   bail(`could not load the server or the built tools: ${error.message}`);

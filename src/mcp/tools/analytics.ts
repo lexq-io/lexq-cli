@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
@@ -25,14 +25,14 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         
         Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }
         Always dry-run before publishing to validate rule behavior.`,
-      inputSchema: {
+      inputSchema: z.object({
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"paymentAmount":100000}'),
         includeDebugInfo: z
           .boolean()
           .default(true)
           .describe('Include execution and decision traces'),
-      },
+      }),
     },
     async ({ versionId, facts, includeDebugInfo }) => {
       const parsedFacts: unknown = parseJson(facts);
@@ -55,11 +55,11 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           resultA / resultB — full DryRunResponse for each version
           diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})
           diff.generatedDiff — changes in generatedVariables between A and B`,
-      inputSchema: {
+      inputSchema: z.object({
         versionIdA: z.string().uuid().describe('Baseline version ID'),
         versionIdB: z.string().uuid().describe('Candidate version ID'),
         facts: z.string().describe('JSON string of facts object'),
-      },
+      }),
     },
     async ({ versionIdA, versionIdB, facts }) => {
       const parsedFacts: unknown = parseJson(facts);
@@ -77,10 +77,10 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Analyze Requirements',
       description:
         'Analyze which input facts a version requires. Returns required keys, types, and an example request body.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
-      },
+      }),
     },
     async ({ groupId, versionId }) =>
       callApi('GET', `analytics/groups/${groupId}/versions/${versionId}/requirements`),
@@ -120,9 +120,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true }
         }
       `,
-      inputSchema: {
+      inputSchema: z.object({
         body: z.string().describe('JSON string of SimulationRequest'),
-      },
+      }),
     },
     async ({ body }) => {
       const parsed: unknown = parseJson(body);
@@ -135,9 +135,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'Simulation Status',
       description: 'Get simulation status and results. Poll until status is COMPLETED or FAILED.',
-      inputSchema: {
+      inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
-      },
+      }),
     },
     async ({ simulationId }) => callApi('GET', `analytics/simulations/${simulationId}`),
   );
@@ -147,7 +147,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'List Simulations',
       description: 'List simulation history with optional filters.',
-      inputSchema: {
+      inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         status: z
@@ -156,7 +156,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           .describe('Filter by status'),
         from: z.string().optional().describe('Start date (yyyy-MM-dd)'),
         to: z.string().optional().describe('End date (yyyy-MM-dd)'),
-      },
+      }),
     },
     async ({ page, size, status, from, to }) => {
       const params: Record<string, string> = paginationParams(page, size);
@@ -172,9 +172,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'Cancel Simulation',
       description: 'Cancel a running or pending simulation.',
-      inputSchema: {
+      inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
-      },
+      }),
     },
     async ({ simulationId }) => callApi('DELETE', `analytics/simulations/${simulationId}`),
   );
@@ -184,10 +184,10 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'Export Simulation',
       description: 'Export simulation results as JSON or CSV. Returns the raw data.',
-      inputSchema: {
+      inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
         format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),
-      },
+      }),
     },
     async ({ simulationId, format }) =>
       callApi('GET', `analytics/simulations/${simulationId}/export`, {
@@ -215,13 +215,13 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
 
         JSON example: [{"userId":"user_001","paymentAmount":150000}, {"userId":"user_002","paymentAmount":50000}]
       `,
-      inputSchema: {
+      inputSchema: z.object({
         content: z.string().describe('CSV or JSON content as string'),
         filename: z
           .string()
           .default('dataset.csv')
           .describe('Filename with extension (.csv or .json)'),
-      },
+      }),
     },
     async ({ content, filename }) => {
       const result = await callApi('POST', 'analytics/datasets/upload', {
@@ -257,11 +257,11 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Download Dataset Template',
       description:
         'Generate a sample CSV or JSON template based on the required facts of a version. Use this to understand the expected data format before uploading a dataset.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         format: z.enum(EXPORT_FORMATS).default('csv').describe('Template format'),
-      },
+      }),
     },
     async ({ groupId, versionId, format }) =>
       callApi('GET', `analytics/groups/${groupId}/versions/${versionId}/dataset-template`, {

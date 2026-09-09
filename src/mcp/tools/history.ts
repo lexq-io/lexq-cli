@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
@@ -10,7 +10,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
       title: 'List Execution History',
       description:
         'List policy execution history. Shows trace ID, group, version, status, match result, and latency.',
-      inputSchema: {
+      inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         traceId: z.string().optional().describe('Filter by trace ID'),
@@ -22,7 +22,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
           .describe('Filter by execution status'),
         startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
         endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
-      },
+      }),
     },
     async ({ page, size, traceId, groupId, versionId, status, startDate, endDate }) => {
       const params: Record<string, string> = paginationParams(page, size);
@@ -42,9 +42,9 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
       title: 'Get Execution Detail',
       description:
         'Get full execution detail including inputFacts, mutatedFacts, generatedVariables, executionTraces, and decisionTraces.',
-      inputSchema: {
+      inputSchema: z.object({
         traceId: z.string().describe('Trace ID from execution history'),
-      },
+      }),
     },
     async ({ traceId }) => callApi('GET', `execution/history/${traceId}`),
   );
@@ -55,11 +55,11 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
       title: 'Execution Statistics',
       description:
         'Get execution KPIs: total executions, success/failure counts, success rate, and average latency.',
-      inputSchema: {
+      inputSchema: z.object({
         groupId: z.string().uuid().optional().describe('Filter by policy group'),
         startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
         endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
-      },
+      }),
     },
     async ({ groupId, startDate, endDate }) => {
       const params: Record<string, string> = {};
