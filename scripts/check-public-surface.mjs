@@ -39,39 +39,57 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const SKIP_EXACT = new Set(['pnpm-lock.yaml', 'LICENSE']);
 const SKIP_PREFIX = ['dist/', 'node_modules/'];
 
-/* Repository names that are not public. `lexq-shared` and `lexq-mcp` are deliberately absent:
-   both name directories inside this repository (skills/lexq-shared, lexq-mcp/), so forbidding
-   the string would flag paths that are already public and correct. */
-const PRIVATE_REPOS = [
-  'engine',
-  'console',
-  'docs',
-  'web',
-  'admin',
-  'constitution',
-  'compliance',
-  'verify',
-].map((name) => `lexq-${name}`);
+/* Every `lexq-` name that is already public: the two public repositories in the organization,
+   the directories this repository carries, and the identifiers it ships. Anything else matching
+   `lexq-<word>` is a name no reader outside the project has seen, and it stops the commit.
+
+   An allow list rather than a list of forbidden names, for two reasons. The forbidden form
+   has to spell the private names out, in a file anyone can read. And it only catches what
+   someone remembered to add, where this one catches anything new.
+
+   Before adding an entry, check that the name really is public. */
+const PUBLIC_LEXQ_NAMES = new Set([
+  'lexq-cli',
+  'lexq-examples',
+  'lexq-io',
+  'lexq-mcp',
+  'lexq-shared',
+  'lexq-manifest',
+  'lexq-recipes',
+  'lexq-groups',
+  'lexq-rules',
+  'lexq-simulation',
+  'lexq-execution',
+]);
 
 const OWNER = ['sanghyunp', 'dev'].join('-');
+
+const SECTION_REFERENCE =
+  // U+00A7 is the section sign. The word form is split so this file does not match itself.
+  new RegExp(`\\u00A7\\s*\\d|${['CONVEN', 'TIONS'].join('')}`);
+
+// Hangul syllables, as escapes so this file does not match itself.
+const KOREAN = /[\uAC00-\uD7A3]/;
+
+const LEXQ_NAME = /lexq-[a-z0-9]+/g;
 
 const RULES = [
   {
     id: 'section-reference',
     what: 'internal specification reference',
-    // U+00A7 is the section sign. The word form is split so this file does not match itself.
-    re: new RegExp(`\\u00A7\\s*\\d|${['CONVEN', 'TIONS'].join('')}`),
+    hit: (line) => SECTION_REFERENCE.test(line),
   },
   {
     id: 'private-repo',
-    what: 'name of a repository that is not public',
-    re: new RegExp([...PRIVATE_REPOS, OWNER].join('|')),
+    what: 'name of a repository or account that is not public',
+    hit: (line) =>
+      line.includes(OWNER) ||
+      [...line.matchAll(LEXQ_NAME)].some((m) => !PUBLIC_LEXQ_NAMES.has(m[0])),
   },
   {
     id: 'korean',
     what: 'Korean text',
-    // Hangul syllables, as escapes so this file does not match itself.
-    re: /[\uAC00-\uD7A3]/,
+    hit: (line) => KOREAN.test(line),
   },
 ];
 
@@ -84,8 +102,7 @@ const ALLOW = [
   },
 ];
 
-const allowed = (file, ruleId) =>
-  ALLOW.some((a) => a.file === file && a.rule === ruleId);
+const allowed = (file, ruleId) => ALLOW.some((a) => a.file === file && a.rule === ruleId);
 
 const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
   .split('\n')
@@ -108,7 +125,7 @@ for (const file of tracked) {
   for (const rule of RULES) {
     if (allowed(file, rule.id)) continue;
     lines.forEach((line, i) => {
-      if (rule.re.test(line)) {
+      if (rule.hit(line)) {
         violations.push({ file, line: i + 1, what: rule.what, text: line.trim() });
       }
     });
@@ -143,7 +160,7 @@ if (commitsFlag !== -1) {
     const sha = commit.trim().slice(0, 9);
     for (const rule of RULES) {
       for (const line of commit.split('\n')) {
-        if (rule.re.test(line)) {
+        if (rule.hit(line)) {
           violations.push({
             file: `commit ${sha}`,
             line: 0,
@@ -174,6 +191,6 @@ for (const v of violations) {
 console.error(
   '\n  Generated files are not fixed by hand. src/types/enums.ts and',
   '\n  src/types/constants.ts come from scripts/gen-enums.mjs — fix the generator',
-  '\n  and run `pnpm enums`.'
+  '\n  and run `pnpm enums`.',
 );
 process.exit(1);
