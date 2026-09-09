@@ -28,7 +28,7 @@ export function registerServeCommand(program: Command): void {
           }
       `,
     )
-    .action(async (opts) => {
+    .action((opts) => {
       if (!opts.mcp) {
         console.error(
           'Error: --mcp flag is required.\n' +
@@ -38,6 +38,6 @@ export function registerServeCommand(program: Command): void {
         process.exit(1);
       }
 
-      await startMcpServer();
+      startMcpServer();
     });
 }
