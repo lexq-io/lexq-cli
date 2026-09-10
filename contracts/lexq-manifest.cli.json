@@ -73,6 +73,14 @@
         "ENGINE_ERROR"
       ]
     },
+    "ConditionUnresolvedReason": {
+      "values": [
+        "FACT_NOT_PROVIDED",
+        "FACT_TYPE_MISMATCH",
+        "CONDITION_VALUE_TYPE_INVALID",
+        "MALFORMED_RULE"
+      ]
+    },
     "SimulationStatus": {
       "values": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELED"]
     },
