@@ -86,6 +86,7 @@ const ORDER = [
   'BaselineStatus',
   'DecisionStatus',
   'DecisionReasonCode',
+  'ConditionUnresolvedReason',
   'SimulationStatus',
   'SimulationDatasetType',
   'SimulationDatasetSource',

@@ -30,7 +30,7 @@
     "typecheck": "tsc --noEmit",
     "enums": "node scripts/gen-enums.mjs",
     "enums:check": "node scripts/gen-enums.mjs --check",
-    "constants:check": "node scripts/check-constants.mjs",
+    "prose:check": "node scripts/check-prose-mirrors.mjs",
     "surface:check": "node scripts/check-public-surface.mjs",
     "ab-key:check": "node scripts/check-ab-key.mjs",
     "registry:check": "node scripts/check-registry-manifest.mjs",

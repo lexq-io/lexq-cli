@@ -277,7 +277,7 @@ Checks that guard a stated fact against the thing that owns it. All of them run 
 
 ```bash
 pnpm enums:check                # Generated enums match the engine contract
-pnpm constants:check            # Numbers written in prose match the contract
+pnpm prose:check                # Numbers and code tables in prose match the contract
 pnpm ab-key:check               # Tool descriptions still name the A/B traffic key
 pnpm surface:check              # Nothing internal reached a public file
 pnpm registry:check             # server.json agrees with package.json

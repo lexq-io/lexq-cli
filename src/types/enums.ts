@@ -88,6 +88,14 @@ export const DecisionReasonCode = [
 ] as const;
 export type DecisionReasonCode = (typeof DecisionReasonCode)[number];
 
+export const ConditionUnresolvedReason = [
+  'FACT_NOT_PROVIDED',
+  'FACT_TYPE_MISMATCH',
+  'CONDITION_VALUE_TYPE_INVALID',
+  'MALFORMED_RULE',
+] as const;
+export type ConditionUnresolvedReason = (typeof ConditionUnresolvedReason)[number];
+
 // ── Simulation ──
 export const SimulationStatus = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'] as const;
 export type SimulationStatus = (typeof SimulationStatus)[number];

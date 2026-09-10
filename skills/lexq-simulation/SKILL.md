@@ -186,12 +186,18 @@ rule you expect never appears in `decisionTraces`, check the version's `effectiv
 - **empty** — the condition was evaluated and did not match
 - **`Evaluation error: <code>`** — the condition could not be evaluated at all
 
-| Code                    | Meaning                                                            |
-|-------------------------|--------------------------------------------------------------------|
-| `FACT_NOT_PROVIDED`     | The rule references a fact absent from the request                 |
-| `FACT_TYPE_MISMATCH`    | The fact's runtime type does not match the condition               |
-| `UNSUPPORTED_FACT_TYPE` | Operator not valid for the fact's type (e.g. `CONTAINS` on a list) |
-| `MALFORMED_RULE`        | The stored rule is structurally invalid                            |
+Each code says **who fixes it**.
+
+| Code                           | Who fixes it | Meaning                                                    |
+|--------------------------------|--------------|------------------------------------------------------------|
+| `FACT_NOT_PROVIDED`            | the caller   | The rule reads a fact the request did not include          |
+| `FACT_TYPE_MISMATCH`           | the caller   | The value sent has the wrong type for the condition        |
+| `CONDITION_VALUE_TYPE_INVALID` | the author   | The literal stored in the rule is wrong for its operator   |
+| `MALFORMED_RULE`               | nobody       | The stored rule is structurally invalid. Report it         |
+
+`CONDITION_VALUE_TYPE_INVALID` is worth escalating. The right-hand side of a condition belongs
+to the rule, not to your request, so changing the payload will not help — the rule fails the
+same way for every caller. It also got past the check that is supposed to reject it on save.
 
 A rule from another group referencing facts you did not send yields `FACT_NOT_PROVIDED` — this
 is normal, not an error.

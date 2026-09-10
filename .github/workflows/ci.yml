@@ -36,10 +36,11 @@ jobs:
       - name: Contract enums
         run: pnpm enums:check
 
-      # Numbers stated as prose. The compiler keeps imported constants honest; skill docs,
-      # CONTEXT.md and comments have no such guard, and this package ships all of them.
-      - name: Contract constants in prose
-        run: pnpm constants:check
+      # Engine facts restated as prose — numbers, and the code tables in skill docs. The
+      # compiler keeps imported constants honest; prose has no such guard, and this package
+      # ships all of it.
+      - name: Contract facts in prose
+        run: pnpm prose:check
 
       # Files always. On a pull request also the commit messages: a squash merge writes
       # the pull request body into this repository's history, so a cleanup that quotes
