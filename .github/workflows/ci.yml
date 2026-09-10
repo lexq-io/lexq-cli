@@ -53,6 +53,11 @@ jobs:
       - name: Registry manifest
         run: pnpm registry:check
 
+      # The README names the MCP revisions this package serves. The SDK owns them, so a
+      # dependency bump can change the answer without touching a line here.
+      - name: Protocol revisions
+        run: pnpm protocol:check
+
       - name: Public surface
         run: pnpm surface:check
 

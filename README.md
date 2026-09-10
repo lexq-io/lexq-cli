@@ -5,7 +5,7 @@
 > your deploy pipeline, prove every change with Impact Simulation, and ship without
 > a git push.
 
-**[Website](https://lexq.io)** · **[Docs](https://docs.lexq.io)** · **[Console](https://console.lexq.io)**
+**[Website](https://lexq.io)** · **[Docs](https://docs.lexq.io)** · **[Console](https://console.lexq.io)** · **[MCP Registry](https://registry.modelcontextprotocol.io)**
 
 [![npm](https://img.shields.io/npm/v/@lexq/cli)](https://www.npmjs.com/package/@lexq/cli)
 [![License](https://img.shields.io/github/license/lexq-io/lexq-cli)](LICENSE)
@@ -146,7 +146,27 @@ Add to `claude_desktop_config.json`:
 ```
 
 > **Prerequisite:** `lexq auth login` must have been run once to store an
-> API key in `~/.lexq/config.json`.
+> API key in `~/.lexq/config.json`, or `LEXQ_API_KEY` must be set in the client's
+> environment block.
+
+### Registry
+
+The server is listed on the official MCP Registry as **`io.lexq/lexq`**. Clients that
+browse the registry find both the npm package and the hosted endpoint in that one entry.
+
+## Protocol Support
+
+The local stdio server and the hosted Streamable HTTP endpoint both serve two MCP
+revisions from one set of tool definitions, so a client sees the same tools either way.
+
+| Revision | How a client reaches it |
+|----------|-------------------------|
+| `2026-07-28` | A per-request `_meta` envelope. No handshake. |
+| `2025-11-25` | The `initialize` handshake. |
+
+There is nothing to configure. The server answers in whichever revision the opening message
+used, so a client can move to 2026-07-28 on its own schedule and one that has not moved
+keeps working.
 
 ## AI Agent Skills
 
@@ -222,6 +242,21 @@ Config is stored at `~/.lexq/config.json`:
 }
 ```
 
+The file holds an API key in plain text, so it is written `0600` inside a `0700` directory —
+readable by its owner and nobody else on the machine. An install created by an older version
+is repaired on the next save.
+
+### Environment variables
+
+These are read by the MCP server (`lexq serve --mcp`) and take precedence over the stored
+config. They let an editor or CI target an environment through the client's own config block,
+without writing to `~/.lexq/config.json`. CLI commands use `--api-key` and `--base-url` instead.
+
+| Variable | Overrides |
+|----------|-----------|
+| `LEXQ_API_KEY` | `apiKey` |
+| `PARTNER_BASE_URL` | `baseUrl` |
+
 ## Development
 
 ```bash
@@ -235,9 +270,30 @@ pnpm start -- groups list
 ```bash
 pnpm typecheck                  # Type check
 pnpm lint                       # ESLint
+pnpm build                      # Bundle to dist/
+```
+
+Checks that guard a stated fact against the thing that owns it. All of them run in CI.
+
+```bash
+pnpm enums:check                # Generated enums match the engine contract
+pnpm constants:check            # Numbers written in prose match the contract
+pnpm ab-key:check               # Tool descriptions still name the A/B traffic key
+pnpm surface:check              # Nothing internal reached a public file
+pnpm registry:check             # server.json agrees with package.json
+pnpm schemas:check              # tools/list matches the recorded snapshot (needs a build)
 pnpm test:fact-key              # Fact key grammar
 pnpm test:decimals              # Metric precision display
+pnpm test:export-format         # Export byte fidelity
+pnpm protocol:check             # README matches the revisions the server serves
 ```
+
+## Security
+
+Report a vulnerability through
+[GitHub's private reporting form](https://github.com/lexq-io/lexq-cli/security/advisories/new).
+The policy, including what is in scope, is in
+[SECURITY.md](https://github.com/lexq-io/lexq-cli/blob/main/SECURITY.md).
 
 ## License
 
