@@ -109,6 +109,32 @@ if (duplicates.length > 0) {
   bail(`duplicate tool names: ${[...new Set(duplicates)].join(', ')}`);
 }
 
+/* Every tool has to say who it is and what it does to the caller's data. The Claude
+   Connectors Directory refuses a submission that is missing either, and the reason it
+   asks is the reason it matters here too: a client decides whether to confirm a call
+   from these, and `destructiveHint` defaults to true only when `readOnlyHint` is false,
+   so a write that adds nothing but is left unannotated reads as one that might delete.
+
+   Checked at the wire rather than in the source: the annotation has to survive
+   registration to mean anything, and a tool added to a new file would slip past a grep. */
+const unannotated = tools.filter(
+  (tool) =>
+    !tool.title ||
+    !tool.annotations ||
+    (tool.annotations.readOnlyHint !== true &&
+      typeof tool.annotations.destructiveHint !== 'boolean'),
+);
+if (unannotated.length > 0) {
+  console.error(
+    `✗ ${unannotated.length} tool(s) missing a title or a read-only/destructive hint\n`,
+  );
+  for (const tool of unannotated) {
+    console.error(`  ${tool.name}  ${JSON.stringify(tool.annotations ?? null)}`);
+  }
+  console.error('\n  Add `annotations` beside `title` in src/mcp/tools.');
+  process.exit(1);
+}
+
 tools.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 
 const rawDigest = createHash('sha256').update(JSON.stringify(tools)).digest('hex').slice(0, 16);

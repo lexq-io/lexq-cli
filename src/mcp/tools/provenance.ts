@@ -17,6 +17,7 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
     'lexq_provenance_get',
     {
       title: 'Get Decision Provenance',
+      annotations: { readOnlyHint: true },
       description:
         'Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint.',
       inputSchema: z.object({
@@ -30,6 +31,7 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
     'lexq_pii_reveals_list',
     {
       title: 'List PII Reveal Audits',
+      annotations: { readOnlyHint: true },
       description:
         'List the PII reveal audit ledger — who revealed which fact of which trace, and when. Metadata only; revealed values are never stored or returned. Use for monthly access-log inspection and SIEM collection.',
       inputSchema: z.object({

@@ -8,6 +8,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     'lexq_history_list',
     {
       title: 'List Execution History',
+      annotations: { readOnlyHint: true },
       description:
         'List policy execution history. Shows trace ID, group, version, status, match result, and latency.',
       inputSchema: z.object({
@@ -40,6 +41,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     'lexq_history_get',
     {
       title: 'Get Execution Detail',
+      annotations: { readOnlyHint: true },
       description:
         'Get full execution detail including inputFacts, mutatedFacts, generatedVariables, executionTraces, and decisionTraces.',
       inputSchema: z.object({
@@ -53,6 +55,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     'lexq_history_stats',
     {
       title: 'Execution Statistics',
+      annotations: { readOnlyHint: true },
       description:
         'Get execution KPIs: total executions, success/failure counts, success rate, and average latency.',
       inputSchema: z.object({

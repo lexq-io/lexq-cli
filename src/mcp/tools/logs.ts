@@ -9,6 +9,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_list',
     {
       title: 'List Failure Logs',
+      annotations: { readOnlyHint: true },
       description:
         'List system failure logs from background tasks (platform event webhooks, scheduled deployments).',
       inputSchema: z.object({
@@ -36,6 +37,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_get',
     {
       title: 'Get Failure Log',
+      annotations: { readOnlyHint: true },
       description: 'Get failure log detail by ID.',
       inputSchema: z.object({
         logId: z.string().uuid().describe('Failure log ID'),
@@ -48,6 +50,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_action',
     {
       title: 'Process Failure Log',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Process a single failure log: RESOLVE (mark as manually fixed) or IGNORE (skip intentionally).',
       inputSchema: z.object({
@@ -65,6 +68,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_bulk_action',
     {
       title: 'Bulk Process Failure Logs',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Process multiple failure logs at once. Provide an array of log IDs and the action.',
       inputSchema: z.object({

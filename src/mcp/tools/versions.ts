@@ -8,6 +8,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_list',
     {
       title: 'List Policy Versions',
+      annotations: { readOnlyHint: true },
       description: 'List all versions of a policy group.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -25,6 +26,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_get',
     {
       title: 'Get Policy Version',
+      annotations: { readOnlyHint: true },
       description: 'Get a single version by ID, including its rules and fact requirements.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -39,6 +41,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_create',
     {
       title: 'Create Policy Version',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range.',
       inputSchema: z.object({
@@ -55,6 +58,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_update',
     {
       title: 'Update Policy Version',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Update a DRAFT version. Only DRAFT versions can be modified. Only provided fields are changed.',
       inputSchema: z.object({
@@ -73,6 +77,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_delete',
     {
       title: 'Delete Policy Version',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Delete a DRAFT version. Only DRAFT versions can be deleted.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -87,6 +92,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_clone',
     {
       title: 'Clone Policy Version',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Clone an existing version to create a new DRAFT. Useful when the source version is already published.',
       inputSchema: z.object({

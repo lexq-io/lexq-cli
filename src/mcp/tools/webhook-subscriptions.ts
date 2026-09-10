@@ -9,6 +9,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_list',
     {
       title: 'List Webhook Subscriptions',
+      annotations: { readOnlyHint: true },
       description:
         'List platform event webhook subscriptions. These receive deployment lifecycle notifications (publish, deploy, rollback, undeploy).',
       inputSchema: z.object({
@@ -26,6 +27,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_get',
     {
       title: 'Get Webhook Subscription',
+      annotations: { readOnlyHint: true },
       description: 'Get webhook subscription detail by ID.',
       inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
@@ -38,6 +40,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_save',
     {
       title: 'Save Webhook Subscription',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Create or update a webhook subscription. Omit id to create, provide id to update. Events: VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED. Formats: GENERIC (full JSON), SLACK ({"text": "..."}).',
       inputSchema: z.object({
@@ -72,6 +75,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_delete',
     {
       title: 'Delete Webhook Subscription',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Delete a webhook subscription by ID.',
       inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
@@ -84,6 +88,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_test',
     {
       title: 'Test Webhook Subscription',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Send a test event to verify webhook connectivity. Returns the HTTP status code and success/failure message.',
       inputSchema: z.object({
