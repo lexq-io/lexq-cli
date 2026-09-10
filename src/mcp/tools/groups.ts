@@ -10,6 +10,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_list',
     {
       title: 'List Policy Groups',
+      annotations: { readOnlyHint: true },
       description: 'List all policy groups (tenant-wide, priority ASC).',
       inputSchema: z.object({}),
     },
@@ -20,6 +21,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_get',
     {
       title: 'Get Policy Group',
+      annotations: { readOnlyHint: true },
       description: 'Get a single policy group by ID.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -32,6 +34,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_create',
     {
       title: 'Create Policy Group',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Policy groups that share an activationGroup form a cluster and must share the same activationMode / activationStrategy / executionLimit; executionLimit is how many of those groups run, not how many rules.',
       inputSchema: z.object({
@@ -78,6 +81,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_update',
     {
       title: 'Update Policy Group',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Update a policy group. Only provided fields are updated; omitted fields remain unchanged.',
       inputSchema: z.object({
@@ -119,6 +123,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_delete',
     {
       title: 'Delete Policy Group',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Archive a policy group. Only non-live groups can be deleted. This is irreversible.',
       inputSchema: z.object({
@@ -132,6 +137,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_groups_reorder',
     {
       title: 'Reorder Policy Groups',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Reorder policy groups by priority. Priority is tenant-wide and flat (1...N continuous); array index 0 = priority 1 (highest precedence). activationGroup is not affected — this only changes priority.',
       inputSchema: z.object({
@@ -155,6 +161,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_ab_test_start',
     {
       title: 'Start A/B Test',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. ' +
         'The split is computed from context.trafficKey on each execution request; requests that ' +
@@ -177,6 +184,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_ab_test_stop',
     {
       title: 'Stop A/B Test',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Stop a running A/B test. All traffic is restored to the control (current) version.',
       inputSchema: z.object({
@@ -190,6 +198,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     'lexq_ab_test_adjust',
     {
       title: 'Adjust A/B Test',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Adjust traffic rate of a running A/B test.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),

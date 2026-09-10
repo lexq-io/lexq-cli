@@ -7,6 +7,7 @@ export function registerStatusTools(server: McpServer, callApi: CallApi): void {
     'lexq_whoami',
     {
       title: 'Who Am I',
+      annotations: { readOnlyHint: true },
       description: 'Show current authentication info (tenant ID, user ID, role).',
       inputSchema: z.object({}),
     },

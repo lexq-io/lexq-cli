@@ -7,6 +7,7 @@ export function registerDomainTemplateTools(server: McpServer, callApi: CallApi)
     'lexq_domain_templates_list',
     {
       title: 'List Domain Templates',
+      annotations: { readOnlyHint: true },
       description:
         'List all domain templates. A domain template is a curated, industry-specific starter pack of fact definitions and sample rules (e.g. ECOMMERCE). Each entry reports its key, status (ACTIVE or COMING_SOON), and a summary of what it provisions. Call this before preview or apply to discover which templates can currently be applied.',
       inputSchema: z.object({}),
@@ -18,6 +19,7 @@ export function registerDomainTemplateTools(server: McpServer, callApi: CallApi)
     'lexq_domain_templates_preview',
     {
       title: 'Preview Domain Template',
+      annotations: { readOnlyHint: true },
       description:
         'Preview exactly what a domain template will provision before applying it: the fact definitions it registers, the sample rules it creates, and an apply plan. This is a read-only dry run — nothing is created. Only ACTIVE templates can be previewed.',
       inputSchema: z.object({
@@ -35,6 +37,7 @@ export function registerDomainTemplateTools(server: McpServer, callApi: CallApi)
     'lexq_domain_templates_apply',
     {
       title: 'Apply Domain Template',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         "Apply a domain template to the current tenant. Creates the template's fact definitions and a new policy group pre-populated with its sample rules as a DRAFT version. Existing facts are skipped — apply is additive and never overwrites existing schema. Run lexq_domain_templates_preview first to review what will be created. Only ACTIVE templates can be applied.",
       inputSchema: z.object({

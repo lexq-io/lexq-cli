@@ -14,6 +14,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_list',
     {
       title: 'List Fact Definitions',
+      annotations: { readOnlyHint: true },
       description:
         'List all fact definitions (input variable schema). Shows key, type, required, and PII status. Always check this before creating rules.',
       inputSchema: z.object({
@@ -33,6 +34,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_create',
     {
       title: 'Create Fact Definition',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Register a new input variable. Key starts with a letter, then letters, numbers, and underscores (e.g. paymentAmount). Casing is not enforced. Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER.',
       inputSchema: z.object({
@@ -62,6 +64,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_update',
     {
       title: 'Update Fact Definition',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Only the fields you send are changed. System facts accept name, description, and PII only.',
       inputSchema: z.object({
@@ -88,6 +91,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_delete',
     {
       title: 'Delete Fact Definition',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Remove the references first.',
       inputSchema: z.object({
@@ -101,6 +105,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_action_metadata',
     {
       title: 'Get Action Runtime Fact Metadata',
+      annotations: { readOnlyHint: true },
       description:
         'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. Facts are supplied as input or written by a prior action in the same rule; only SET_FACT creates a fact from nothing. Static data, safe to cache in-session.',
       inputSchema: z.object({}),
@@ -112,6 +117,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_unregistered',
     {
       title: 'List Unregistered Facts',
+      annotations: { readOnlyHint: true },
       description:
         "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy, INV-4). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
       inputSchema: z.object({
@@ -127,6 +133,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_export',
     {
       title: 'Export Fact Catalog',
+      annotations: { readOnlyHint: true },
       description:
         'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet; JSON matches the shape that batch create accepts, so it can be fed straight back in, which is why it leaves out the fields that endpoint does not take. Returns the file contents as text.',
       inputSchema: z.object({

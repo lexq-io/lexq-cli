@@ -8,6 +8,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_publish',
     {
       title: 'Publish Version',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them.',
       inputSchema: z.object({
@@ -24,6 +25,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_live',
     {
       title: 'Deploy to Live',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.',
       inputSchema: z.object({
@@ -42,6 +44,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_rollback',
     {
       title: 'Rollback Deployment',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Rollback to the previous deployed version. Only available if there is a previous version.',
       inputSchema: z.object({
@@ -59,6 +62,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_undeploy',
     {
       title: 'Undeploy',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Remove the live version from traffic. The version stays ACTIVE but no longer serves requests.',
       inputSchema: z.object({
@@ -76,6 +80,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_schedule',
     {
       title: 'Schedule Deployment',
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).',
       inputSchema: z.object({
@@ -97,6 +102,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_unschedule',
     {
       title: 'Cancel Scheduled Deployment',
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Cancel the pending scheduled deployment for a group. The version itself is not affected. Fails with P-039 if no pending schedule exists.',
       inputSchema: z.object({
@@ -110,6 +116,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_schedules',
     {
       title: 'List Scheduled Deployments',
+      annotations: { readOnlyHint: true },
       description:
         'List scheduled deployments across all groups (all statuses: PENDING, EXECUTED, CANCELED, FAILED), newest first.',
       inputSchema: z.object({
@@ -125,6 +132,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_history',
     {
       title: 'Deployment History',
+      annotations: { readOnlyHint: true },
       description: 'List deployment history across all groups.',
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
@@ -152,6 +160,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_detail',
     {
       title: 'Deployment Detail',
+      annotations: { readOnlyHint: true },
       description:
         'Get detailed info about a specific deployment including snapshot hash and integrity check.',
       inputSchema: z.object({
@@ -165,6 +174,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_overview',
     {
       title: 'Deployment Overview',
+      annotations: { readOnlyHint: true },
       description:
         'Show current deployment status of all groups — which version is live, last deployment type, and deployer.',
       inputSchema: z.object({}),
@@ -176,6 +186,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_deployable',
     {
       title: 'List Deployable Versions',
+      annotations: { readOnlyHint: true },
       description:
         'List ACTIVE (published) versions that can be deployed for a group. Use this to find which versions are available before calling deploy live.',
       inputSchema: z.object({
@@ -189,6 +200,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_diff',
     {
       title: 'Deployment Diff',
+      annotations: { readOnlyHint: true },
       description:
         'Compare rule snapshots between two versions. Shows added, removed, and modified rules. Useful for reviewing changes before deploying a new version.',
       inputSchema: z.object({
