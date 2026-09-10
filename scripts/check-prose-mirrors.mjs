@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * check-constants.mjs — verifies the numbers this package states in prose against the
- * engine contract manifest.
+ * check-prose-mirrors.mjs — verifies the engine facts this package restates in prose
+ * against the contract manifest. Two kinds: numbers, and enum values.
  *
  * Why this exists separately from gen-enums:
  *   Code can import a constant and the compiler keeps it honest. Prose cannot. Skill docs,
@@ -9,17 +9,27 @@
  *   ships all of them (package.json `files` carries dist, skills, AGENTS.md, CONTEXT.md).
  *   Before this gate those numbers were typed by hand with nothing to catch a drift.
  *
+ *   The enum axis was added after a table of status codes kept a name the server had
+ *   removed and missed the one that replaced it. The values belong to the server; the
+ *   sentence next to each one is this package's own writing. So the set is checked and the
+ *   wording is left alone.
+ *
  * What is checked:
- *   Value mismatch — the prose states a number the engine no longer holds.
- *   Zero matches   — the wording changed and the pattern stopped seeing anything. That is
- *                    not a pass. A gate that silently stops looking is worse than no gate,
- *                    because the output still says OK.
+ *   Number mismatch — the prose states a number the engine no longer holds.
+ *   Table drift     — a table listed in ENUM_TABLES holds a value the manifest dropped, or
+ *                     is missing one it added.
+ *   Zero matches    — the wording changed and the pattern stopped seeing anything. That is
+ *                     not a pass. A gate that silently stops looking is worse than no gate,
+ *                     because the output still says OK.
  *
  * What is NOT checked:
  *   Constants the code consumes by import. Those are the compiler's job, and a pattern for
  *   them would find nothing and fail the zero-match rule for the wrong reason.
  *
- * Usage:  node scripts/check-constants.mjs
+ *   Enum values written outside a table in ENUM_TABLES. Some prose names a subset on
+ *   purpose, so completeness is opt-in per table rather than repo-wide.
+ *
+ * Usage:  node scripts/check-prose-mirrors.mjs
  * Exit:   0 = ok, 1 = violation. Wired into CI.
  */
 import fs from 'node:fs';
@@ -81,6 +91,26 @@ const PROSE_MIRRORS = [
   },
 ];
 
+/**
+ * Markdown tables that spell out an enum, one value per row.
+ *
+ * Each entry names the table's file and the enum it mirrors. The check reads the first cell
+ * of every row and compares that set against the manifest, both ways: a value the engine
+ * dropped is still in the table, or a value it added is missing from it.
+ *
+ * The check points at a table rather than scanning for anything shaped like an enum value.
+ * A shape-based scan cannot tell a status code from an environment variable, so it needs an
+ * exception list that grows with the repo.
+ */
+const ENUM_TABLES = [
+  {
+    enumName: 'ConditionUnresolvedReason',
+    file: 'skills/lexq-simulation/SKILL.md',
+    heading: '#### `reasonDetail` on unevaluable conditions',
+    label: 'unevaluable-condition codes',
+  },
+];
+
 /** Everything this package ships as prose, plus source comments. */
 const SCAN_DIRS = ['skills', 'src'];
 const SCAN_FILES = ['CONTEXT.md', 'AGENTS.md', 'README.md'];
@@ -108,7 +138,15 @@ if (!fs.existsSync(CLI_MANIFEST)) {
   ]);
   process.exit(1);
 }
-const constants = JSON.parse(fs.readFileSync(CLI_MANIFEST, 'utf8')).constants;
+const manifest = JSON.parse(fs.readFileSync(CLI_MANIFEST, 'utf8'));
+const constants = manifest.constants;
+const enums = manifest.enums;
+if (!enums) {
+  fail('CLI manifest has no "enums" section', [
+    'Regenerate it with node scripts/gen-enums.mjs against a current engine manifest.',
+  ]);
+  process.exit(1);
+}
 if (!constants) {
   fail('CLI manifest has no "constants" section', [
     'Regenerate it with node scripts/gen-enums.mjs against a current engine manifest.',
@@ -159,8 +197,83 @@ for (const mirror of PROSE_MIRRORS) {
   }
 }
 
+for (const table of ENUM_TABLES) {
+  const node = enums[table.enumName];
+  if (!node) {
+    fail(`${table.enumName} is not in the manifest`, [
+      'Drop it from ENUM_TABLES, or add it to ORDER in scripts/gen-enums.mjs.',
+    ]);
+    violations++;
+    continue;
+  }
+
+  const full = path.join(ROOT, table.file);
+  if (!fs.existsSync(full)) {
+    fail(`${table.label}: ${table.file} not found`, ['Fix the path in ENUM_TABLES.']);
+    violations++;
+    continue;
+  }
+
+  // The first table under the named heading. Anchoring on the heading matters: this file
+  // holds several enum tables and an unanchored read would merge them into one set.
+  const lines = fs.readFileSync(full, 'utf8').split('\n');
+  const start = lines.indexOf(table.heading);
+  if (start === -1) {
+    fail(`${table.label}: heading not found in ${table.file}`, [
+      table.heading,
+      'The section was renamed. Fix `heading` in ENUM_TABLES.',
+    ]);
+    violations++;
+    continue;
+  }
+
+  // First cell of each row, when it holds a single code-formatted SCREAMING_CASE token.
+  const written = new Set();
+  let seenRow = false;
+  for (const line of lines.slice(start + 1)) {
+    if (!line.startsWith('|')) {
+      if (seenRow) break; // past the table
+      continue;
+    }
+    seenRow = true;
+    const cell = line.slice(1).split('|')[0].trim();
+    const m = /^`([A-Z][A-Z0-9_]*)`$/.exec(cell);
+    if (m) written.add(m[1]);
+  }
+
+  if (written.size === 0) {
+    fail(`${table.label} (${table.enumName}) matched no rows`, [
+      `The table in ${table.file} changed shape and this check stopped looking.`,
+      'Fix the entry in ENUM_TABLES, or drop it if the table is gone.',
+    ]);
+    violations++;
+    continue;
+  }
+
+  const declared = new Set(node.values);
+  const retired = [...written].filter((v) => !declared.has(v));
+  const missing = node.values.filter((v) => !written.has(v));
+
+  if (retired.length) {
+    fail(`${table.file} lists ${table.label} the engine no longer has`, [
+      retired.join(', '),
+    ]);
+    violations += retired.length;
+  }
+  if (missing.length) {
+    fail(`${table.file} is missing ${table.label} the engine now has`, [missing.join(', ')]);
+    violations += missing.length;
+  }
+  if (!retired.length && !missing.length) {
+    console.log(`✓ ${table.label} — ${written.size} row(s), exactly the manifest set`);
+  }
+}
+
 if (violations) {
   console.error(`\n${violations} violation(s) across ${files.length} files`);
   process.exit(1);
 }
-console.log(`\n${files.length} files checked · ${PROSE_MIRRORS.length} mirrored constants`);
+console.log(
+  `\n${files.length} files checked · ${PROSE_MIRRORS.length} mirrored constants · ` +
+    `${ENUM_TABLES.length} mirrored table(s)`,
+);
