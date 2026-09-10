@@ -34,6 +34,7 @@
     "surface:check": "node scripts/check-public-surface.mjs",
     "ab-key:check": "node scripts/check-ab-key.mjs",
     "registry:check": "node scripts/check-registry-manifest.mjs",
+    "protocol:check": "node scripts/check-protocol-revisions.mjs",
     "schemas:check": "node scripts/check-tool-schemas.mjs",
     "schemas:update": "node scripts/check-tool-schemas.mjs --update",
     "start": "node dist/index.js",
