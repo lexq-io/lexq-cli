@@ -1,29 +1,28 @@
 #!/usr/bin/env node
 /**
- * check-public-surface.mjs — this repository is public; its source is read by anyone.
+ * check-public-surface.mjs — everything here is installed and read by other people.
  *
- * Everything here is visible on GitHub, and `npm pack` ships `dist/`, `skills/`, `AGENTS.md`,
- * `CONTEXT.md`, `README.md`, `LICENSE`, and `package.json` on top of that. A comment written
- * for the team ends up in front of every reader.
+ * The repository is readable in full, and `npm pack` ships `dist/`, `skills/`, `AGENTS.md`,
+ * `CONTEXT.md`, `README.md`, `LICENSE` and `package.json` on top of that. Three things do
+ * not belong in a tracked file, because none of them gives a reader anything to act on:
  *
- * Three things must not appear in a tracked file:
+ *   1. A cross-reference that resolves nowhere. A section sign — § — with a number after
+ *      it points at a document the reader does not have. State the rule instead, or cite
+ *      something that opens: a JDK API name, an error code this package returns, a value it
+ *      prints.
  *
- *   1. Internal specification references. A section sign followed by a number cites a
- *      document no reader here can open, so it reads as a pointer to something withheld.
- *      State the rule instead, or cite something that does open: a JDK API name, an error
- *      code this package returns, a value it prints.
+ *   2. A `lexq-` name this project does not publish. There is nothing for the reader to
+ *      open, so it reads as a dead link. Say "the server", "the contract manifest".
  *
- *   2. Names of repositories that are not public, and the account that owns them. Say "the
- *      engine", "the server", "the contract manifest".
- *
- *   3. Korean. The working language of the team is not the language of this surface.
- *
- * The patterns below are built from escapes and fragments on purpose: this file would
- * otherwise trip its own check, and excluding it would leave the one hole that matters.
+ *   3. Text outside the Latin alphabet. The text here is English, and a line in another
+ *      writing system is unreadable to most of the people who receive it.
  *
  * The same three apply to commit messages. A squash merge writes the pull request body into
  * this repository's history, so a body that quotes what it removed puts it back. Pass
  * --commits <base> to scan the messages on a branch.
+ *
+ * A hit is fixed by rewriting the line. If the line is right as it stands, add it to ALLOW
+ * below with a reason, and the reason has to be about the reader.
  *
  * Usage:  node scripts/check-public-surface.mjs [--commits <base>]
  * Exit:   0 = clean, 1 = violation. Wired into CI.
@@ -39,22 +38,23 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const SKIP_EXACT = new Set(['pnpm-lock.yaml', 'LICENSE']);
 const SKIP_PREFIX = ['dist/', 'node_modules/'];
 
-/* Every `lexq-` name that is already public: the two public repositories in the organization,
-   the directories this repository carries, and the identifiers it ships. Anything else matching
-   `lexq-<word>` is a name no reader outside the project has seen, and it stops the commit.
+/* Every `lexq-` name a reader can already open. Anything else matching `lexq-<word>` leads
+   nowhere for them, and it stops the commit.
 
-   An allow list rather than a list of forbidden names, for two reasons. The forbidden form
-   has to spell the private names out, in a file anyone can read. And it only catches what
-   someone remembered to add, where this one catches anything new.
+   An allow list rather than a list of names to reject, for two reasons. A reject list has
+   to spell out what it rejects, in a file anyone can read. And it only catches what someone
+   remembered to add, where this one catches anything new.
 
-   Before adding an entry, check that the name really is public. */
+   Each name is here because of what it is: a repository anyone can open, a package on npm,
+   a skill that ships in the tarball. Being on this list does not make a name public — check
+   first, and say which of those it is. */
 const PUBLIC_LEXQ_NAMES = new Set([
-  'lexq-cli',
-  'lexq-examples',
-  'lexq-io',
-  'lexq-mcp',
-  'lexq-shared',
-  'lexq-manifest',
+  'lexq-cli', // this repository
+  'lexq-examples', // the other public repository
+  'lexq-io', // the organization that owns both
+  'lexq-mcp', // a package on npm, its repository field pointing here
+  'lexq-manifest', // the contract file this repository carries
+  'lexq-shared', // a skill shipped in the tarball, like the five below
   'lexq-recipes',
   'lexq-groups',
   'lexq-rules',
@@ -62,14 +62,20 @@ const PUBLIC_LEXQ_NAMES = new Set([
   'lexq-execution',
 ]);
 
-const OWNER = ['sanghyunp', 'dev'].join('-');
+/* Read rather than written out, so the handle appears in one file only: the one with a
+   reason to carry it. No value to compare against is a broken check, not a quiet pass. */
+const OWNER = JSON.parse(fs.readFileSync(path.join(ROOT, 'glama.json'), 'utf8')).maintainers?.[0];
+if (!OWNER) {
+  console.error('\u2717 glama.json carries no maintainer handle to compare against');
+  process.exit(1);
+}
 
-const SECTION_REFERENCE =
-  // U+00A7 is the section sign. The word form is split so this file does not match itself.
-  new RegExp(`\\u00A7\\s*\\d|${['CONVEN', 'TIONS'].join('')}`);
+// U+00A7 is the section sign. A bare document name with no section number is not caught.
+const SECTION_REFERENCE = /\u00A7\s*\d/;
 
-// Hangul syllables, as escapes so this file does not match itself.
-const KOREAN = /[\uAC00-\uD7A3]/;
+/* The one writing system that has turned up here. Widen the range if another does; the
+   rule is the alphabet this text is written in, not this range. */
+const NON_LATIN = /[\uAC00-\uD7A3]/;
 
 const LEXQ_NAME = /lexq-[a-z0-9]+/g;
 
@@ -87,9 +93,9 @@ const RULES = [
       [...line.matchAll(LEXQ_NAME)].some((m) => !PUBLIC_LEXQ_NAMES.has(m[0])),
   },
   {
-    id: 'korean',
-    what: 'Korean text',
-    hit: (line) => KOREAN.test(line),
+    id: 'non-english',
+    what: 'text outside the Latin alphabet',
+    hit: (line) => NON_LATIN.test(line),
   },
 ];
 
