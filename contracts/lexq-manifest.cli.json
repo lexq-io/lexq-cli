@@ -128,7 +128,7 @@
       "values": ["CONDITION", "ACTION"]
     },
     "SkipReason": {
-      "values": ["ALREADY_EXISTS", "INVALID_KEY", "RESERVED"]
+      "values": ["ALREADY_EXISTS", "INVALID_KEY", "RESERVED", "LIMIT_EXCEEDED"]
     },
     "DeploymentScheduleStatus": {
       "values": ["PENDING", "EXECUTED", "CANCELED", "FAILED"]
