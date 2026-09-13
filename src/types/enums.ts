@@ -153,7 +153,13 @@ export type Confidence = (typeof Confidence)[number];
 export const SourceKind = ['CONDITION', 'ACTION'] as const;
 export type SourceKind = (typeof SourceKind)[number];
 
-export const SkipReason = ['ALREADY_EXISTS', 'INVALID_KEY', 'RESERVED', 'LIMIT_EXCEEDED'] as const;
+export const SkipReason = [
+  'ALREADY_EXISTS',
+  'INVALID_KEY',
+  'RESERVED',
+  'LIMIT_EXCEEDED',
+  'INVALID_VALUE_DOMAIN',
+] as const;
 export type SkipReason = (typeof SkipReason)[number];
 
 // ── Scheduled Deployment ──
