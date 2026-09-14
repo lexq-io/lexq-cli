@@ -41,6 +41,7 @@
     "test:decimals": "pnpm build && node tests/exact-decimals.mjs",
     "test:fact-key": "node tests/fact-key.mjs",
     "test:export-format": "node tests/export-format.mjs",
+    "test:value-domain": "pnpm build && node tests/value-domain.mjs",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.ts\"",

@@ -89,3 +89,6 @@ jobs:
 
       - name: Exact decimals
         run: pnpm test:decimals
+
+      - name: Value domain flags
+        run: node tests/value-domain.mjs
