@@ -47,6 +47,7 @@ This is the typical lifecycle. **Always follow this order:**
 1. lexq groups create          → Create a policy group
 2. lexq versions create        → Create a DRAFT version inside it
 3. lexq facts create           → Register input variables (if not already defined)
+                               → --allowed-values / --min / --max constrain what callers may send
 4. lexq rules create           → Add rules with conditions + actions
 5. lexq analytics dry-run      → Test with sample facts (validate before publish)
 6. lexq deploy publish         → DRAFT → ACTIVE (locks the version)
