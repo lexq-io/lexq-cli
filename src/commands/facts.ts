@@ -4,7 +4,13 @@ import { apiRequest } from '@/lib/api-client';
 import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { CreateFactRequest, UpdateFactRequest, FactSchemaResponse } from '@/types/facts';
+import { isLosslessNumber, parseJson } from '@/lib/lossless-json';
+import type {
+  CreateFactRequest,
+  UpdateFactRequest,
+  FactSchemaResponse,
+  ValueDomain,
+} from '@/types/facts';
 
 export function registerFactCommands(program: Command): void {
   const facts = program
@@ -141,6 +147,9 @@ export function registerFactCommands(program: Command): void {
     .option('--description <desc>', 'Description')
     .option('--required', 'Mark as required', false)
     .option('--pii', 'Mark as PII — value is masked on every read surface', false)
+    .option('--allowed-values <csv>', 'Comma-separated list of accepted values')
+    .option('--min <number>', 'Lower bound, inclusive (numeric types only)')
+    .option('--max <number>', 'Upper bound, inclusive (numeric types only)')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
@@ -158,9 +167,21 @@ export function registerFactCommands(program: Command): void {
               "isRequired": false
             }'
 
+          $ lexq facts create --key riskScore --name "Risk Score" --type NUMBER --min 0 --max 100
+          $ lexq facts create --key tier --name "Tier" --type STRING \
+              --allowed-values "GOLD, SILVER, BRONZE"
+
         Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
         Key Format:  starts with a letter, then letters, numbers, and underscores.
                      Casing is yours to choose (e.g., paymentAmount, payment_amount)
+
+        Value Domain: --allowed-values, --min, and --max say which values the fact accepts.
+                      A rule can then only compare against those values, and the console turns
+                      the rule editor into a dropdown instead of a free text box.
+                      STRING types take --allowed-values. NUMBER types take all three.
+                      BOOLEAN takes none — it has only two values to begin with.
+                      For list types the constraint applies to each element.
+                      Leave them out for no constraint, which is how facts behaved before.
       `,
     )
     .action(async (opts) => {
@@ -195,15 +216,31 @@ export function registerFactCommands(program: Command): void {
     .option('--no-required', 'Mark as not required')
     .option('--pii', 'Mark as PII (enables masking)')
     .option('--no-pii', 'Unmark as PII (disables masking — value becomes visible)')
+    .option('--type <type>', 'Value type: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER')
+    .option('--allowed-values <csv>', 'Comma-separated list of accepted values')
+    .option('--min <number>', 'Lower bound, inclusive (numeric types only)')
+    .option('--max <number>', 'Upper bound, inclusive (numeric types only)')
+    .option('--clear-value-domain', 'Remove the value constraint entirely')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
       dedent`
 
-        System facts cannot be modified. Only display name, description, and required flag can be changed.
+        System facts accept name, description, and the PII flag only.
 
-        Example:
+        Examples:
           $ lexq facts update --id <factId> --name "Updated Name" --required
+          $ lexq facts update --id <factId> --min 0 --max 100
+          $ lexq facts update --id <factId> --clear-value-domain
+
+        Only the flags you pass are changed. Leaving out --allowed-values, --min, and --max
+        leaves the constraint alone; --clear-value-domain removes it.
+
+        Narrowing a constraint does not rewrite rules that already reference this fact. They keep
+        working, and the next time one is saved it is judged against the new constraint.
+
+        Pass --type when the accepted values are numbers and you are not also naming the type,
+        so "10" is sent as a number rather than a string. --json settles it either way.
       `,
     )
     .action(async (opts) => {
@@ -348,6 +385,9 @@ function buildCreateBody(opts: Record<string, string | boolean | undefined>): Cr
     isPii: opts.pii === true,
   };
   if (opts.description) body.description = opts.description as string;
+
+  const domain = buildValueDomain(opts, opts.type as string);
+  if (domain) body.valueDomain = domain;
   return body;
 }
 
@@ -355,7 +395,86 @@ function buildUpdateBody(opts: Record<string, string | boolean | undefined>): Up
   const body: UpdateFactRequest = {};
   if (opts.name) body.name = opts.name as string;
   if (opts.description !== undefined) body.description = opts.description as string;
+  if (opts.type) body.type = opts.type as UpdateFactRequest['type'];
   if (typeof opts.required === 'boolean') body.isRequired = opts.required;
   if (typeof opts.isPii === 'boolean') body.isPii = opts.isPii;
+
+  if (opts.clearValueDomain === true) {
+    if (hasDomainFlag(opts)) {
+      throw new Error(
+        '--clear-value-domain cannot be combined with --allowed-values, --min, or --max.',
+      );
+    }
+    // An empty object is what removes the constraint. Omitting the field leaves it alone.
+    body.valueDomain = {};
+    return body;
+  }
+
+  const domain = buildValueDomain(opts, opts.type as string);
+  if (domain) body.valueDomain = domain;
   return body;
+}
+
+function hasDomainFlag(opts: Record<string, string | boolean | undefined>): boolean {
+  return opts.allowedValues !== undefined || opts.min !== undefined || opts.max !== undefined;
+}
+
+/**
+ * Read one numeric literal, keeping every digit a JSON number would keep.
+ *
+ * `Number()` folds a 34-digit literal and turns an empty string into zero. This goes through the
+ * same parser the API client uses, so `0.10` stays `0.10` and a literal beyond double precision
+ * survives as a carrier all the way to the request body.
+ */
+function parseNumericLiteral(text: string, flag: string): unknown {
+  let parsed: unknown;
+  try {
+    parsed = parseJson(text);
+  } catch {
+    throw new Error(`${flag} must be a number, got: ${text}`);
+  }
+  if (typeof parsed !== 'number' && !isLosslessNumber(parsed)) {
+    throw new Error(`${flag} must be a number, got: ${text}`);
+  }
+  return parsed;
+}
+
+/**
+ * Turn one comma-separated entry into the value to send.
+ *
+ * `numeric` is known on create, where `--type` is required. On update it may be absent, and then
+ * a literal that reads as a number becomes one. Pass `--json` when that guess is wrong — for
+ * example when a STRING fact accepts "100".
+ */
+function asDomainValue(text: string, numeric: boolean | undefined): unknown {
+  if (numeric === true) return parseNumericLiteral(text, '--allowed-values');
+  if (numeric === false) return text;
+  try {
+    const parsed = parseJson(text);
+    return typeof parsed === 'number' || isLosslessNumber(parsed) ? parsed : text;
+  } catch {
+    return text;
+  }
+}
+
+/** Build the constraint from the flags, or `undefined` when none was given. */
+function buildValueDomain(
+  opts: Record<string, string | boolean | undefined>,
+  type: string | undefined,
+): ValueDomain | undefined {
+  if (!hasDomainFlag(opts)) return undefined;
+
+  const numeric = type === undefined ? undefined : type === 'NUMBER' || type === 'LIST_NUMBER';
+  const domain: ValueDomain = {};
+
+  if (opts.allowedValues !== undefined) {
+    domain.allowedValues = (opts.allowedValues as string)
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+      .map((part) => asDomainValue(part, numeric));
+  }
+  if (opts.min !== undefined) domain.min = parseNumericLiteral(opts.min as string, '--min');
+  if (opts.max !== undefined) domain.max = parseNumericLiteral(opts.max as string, '--max');
+  return domain;
 }

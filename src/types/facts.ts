@@ -24,6 +24,27 @@ export const FACT_KEY_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 // Response
 // ══════════════════════════════════════════
 
+/**
+ * Which values a fact accepts. Every field is optional; omitting all three means no constraint.
+ *
+ * - `STRING` / `LIST_STRING` — `allowedValues` only
+ * - `NUMBER` / `LIST_NUMBER` — `allowedValues`, `min`, `max`
+ * - `BOOLEAN` — not applicable (only two values exist)
+ *
+ * For list types the constraint applies to each element, not to the list as a whole.
+ *
+ * Numbers may arrive as `LosslessNumber` when a literal does not survive a double round trip.
+ * Render them with `String(value)`; `'' + value` folds the digits.
+ */
+export interface ValueDomain {
+  /** Accepted values. When present and non-empty, a value must be one of these. */
+  allowedValues?: unknown[];
+  /** Lower bound, inclusive. Numeric types only. */
+  min?: unknown;
+  /** Upper bound, inclusive. Numeric types only. */
+  max?: unknown;
+}
+
 export interface FactSchemaResponse {
   id: string;
   key: string;
@@ -33,6 +54,8 @@ export interface FactSchemaResponse {
   isSystem: boolean;
   isRequired: boolean;
   isPii: boolean;
+  /** `null` when no constraint is declared. */
+  valueDomain: ValueDomain | null;
 }
 
 // ══════════════════════════════════════════
@@ -46,11 +69,20 @@ export interface CreateFactRequest {
   description?: string;
   isRequired: boolean;
   isPii: boolean;
+  /** Omit for no constraint. */
+  valueDomain?: ValueDomain;
 }
 
 export interface UpdateFactRequest {
   name?: string;
   description?: string;
+  /** Omit to leave unchanged. Changing it fails while any rule references the fact. */
+  type?: ValueType;
   isRequired?: boolean;
   isPii?: boolean;
+  /**
+   * Three states, not two. Omitting the field leaves the constraint alone; sending an empty
+   * object (`{}`) removes it; sending a populated object replaces it.
+   */
+  valueDomain?: ValueDomain;
 }
