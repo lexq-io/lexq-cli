@@ -20,7 +20,11 @@ lexq versions create --group-id <gid> --json '{"commitMessage": "Initial tiered 
 
 # 3. Register facts (skip if already exist)
 lexq facts create --key paymentAmount --name "Payment Amount" --type NUMBER --required
-lexq facts create --key customerTier --name "Customer Tier" --type STRING
+lexq facts create --key customerTier --name "Customer Tier" --type STRING \
+  --allowed-values "VIP, GOLD, SILVER"
+# A value domain says which values the fact accepts. It refuses a rule literal that could
+# never match (a typo like "PLATNUM"), and the Console offers a dropdown instead of a text box.
+# Leave it off when the set is open — a country code, an account id, a free-text label.
 
 # 4. Add rules — creation order becomes priority order (first created = priority 1 = highest)
 lexq rules create --group-id <gid> --version-id <vid> --json '{
