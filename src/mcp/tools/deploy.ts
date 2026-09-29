@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { MAX_SNAPSHOT_BYTES } from '@/types/constants';
 
 export function registerDeployTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -9,8 +10,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Publish Version',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them.',
+      description: `Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them. Publishing fails if the version's compiled rules exceed ${MAX_SNAPSHOT_BYTES / 1024} KB.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to publish'),

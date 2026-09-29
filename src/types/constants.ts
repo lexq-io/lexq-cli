@@ -28,3 +28,15 @@ export const MIN_SAMPLES = 100;
 export const MIN_COHORT_SIZE = 3;
 
 export const PROFILE_DEFAULT_WINDOW_HOURS = 24;
+
+export const MAX_GROUPS_PER_TENANT = 20;
+
+export const MAX_DRAFT_VERSIONS_PER_GROUP = 20;
+
+export const MAX_RULES_PER_VERSION = 100;
+
+export const MAX_CONDITIONS_PER_RULE = 25;
+
+export const MAX_CONDITION_DEPTH = 10;
+
+export const MAX_SNAPSHOT_BYTES = 131072;
