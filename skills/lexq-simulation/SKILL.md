@@ -251,6 +251,9 @@ lexq analytics simulation start --json '{
 | `MANUAL`     | `REQUEST_BODY`   | Provide `manualData` array in the request |
 | `UPLOADED`   | `S3_BUCKET`      | Reference an uploaded dataset by `path`   |
 
+`HISTORICAL` takes `from` / `to` as `yyyy-MM-dd`, whole days in the organization time zone, both
+inclusive.
+
 ### File Upload Dataset
 
 ```bash

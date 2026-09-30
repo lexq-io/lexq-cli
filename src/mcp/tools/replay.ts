@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { EXPORT_FORMATS } from '@/lib/export';
+import { WINDOW_END_DAY, WINDOW_START_DAY } from '@/lib/dates';
 
 export function registerReplayTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -31,8 +32,8 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
         'Submit an async job that replays a date window of past executions against a candidate version and measures the blast radius (how many decisions change). Billed per replayed record (REPLAY metric); VIEWER role cannot submit. Poll with lexq_replay_status.',
       inputSchema: z.object({
         candidateVersionId: z.string().uuid().describe('Version to re-evaluate against'),
-        from: z.string().describe('Window start date (yyyy-MM-dd)'),
-        to: z.string().describe('Window end date (yyyy-MM-dd)'),
+        from: z.string().describe(WINDOW_START_DAY),
+        to: z.string().describe(WINDOW_END_DAY),
         maxRecords: z
           .number()
           .int()

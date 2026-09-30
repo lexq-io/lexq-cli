@@ -245,7 +245,7 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
           "endDate": {
-            "description": "End date (yyyy-MM-dd)",
+            "description": "End date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           },
           "groupId": {
@@ -269,7 +269,7 @@
             "type": "integer"
           },
           "startDate": {
-            "description": "Start date (yyyy-MM-dd)",
+            "description": "Start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           },
           "types": {
@@ -404,7 +404,7 @@
         "destructiveHint": false,
         "readOnlyHint": false
       },
-      "description": "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
+      "description": "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1160,7 +1160,7 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
           "endDate": {
-            "description": "End date (yyyy-MM-dd)",
+            "description": "End date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           },
           "groupId": {
@@ -1184,7 +1184,7 @@
             "type": "integer"
           },
           "startDate": {
-            "description": "Start date (yyyy-MM-dd)",
+            "description": "Start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           },
           "status": {
@@ -1217,12 +1217,12 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "Get execution KPIs: total executions, success/failure counts, success rate, and average latency.",
+      "description": "Get execution KPIs: total executions, success/failure counts, success rate, and average latency. Without dates the window is the last 30 days through today, in the organization time zone. At most 31 days per call; a longer range is rejected with AN-039. startDate alone runs through today.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
           "endDate": {
-            "description": "End date (yyyy-MM-dd)",
+            "description": "End date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           },
           "groupId": {
@@ -1232,7 +1232,7 @@
             "type": "string"
           },
           "startDate": {
-            "description": "Start date (yyyy-MM-dd)",
+            "description": "Start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           }
         },
@@ -1337,12 +1337,12 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "List system failure logs from background tasks (platform event webhooks, scheduled deployments).",
+      "description": "List system failure logs from background tasks (platform event webhooks, scheduled deployments). Without dates the window is 7 days back through today, in the organization time zone; pass startDate to look further back.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
           "endDate": {
-            "description": "End date (yyyy-MM-dd)",
+            "description": "End date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           },
           "keyword": {
@@ -1364,7 +1364,7 @@
             "type": "integer"
           },
           "startDate": {
-            "description": "Start date (yyyy-MM-dd)",
+            "description": "Start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           },
           "status": {
@@ -1399,7 +1399,7 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
           "endDate": {
-            "description": "End date (yyyy-MM-dd)",
+            "description": "End date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           },
           "factKey": {
@@ -1425,7 +1425,7 @@
             "type": "integer"
           },
           "startDate": {
-            "description": "Start date (yyyy-MM-dd)",
+            "description": "Start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           },
           "traceId": {
@@ -1672,7 +1672,7 @@
             "type": "string"
           },
           "from": {
-            "description": "Window start date (yyyy-MM-dd)",
+            "description": "Window start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           },
           "maxRecords": {
@@ -1682,7 +1682,7 @@
             "type": "integer"
           },
           "to": {
-            "description": "Window end date (yyyy-MM-dd)",
+            "description": "Window end date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           }
         },
@@ -2085,7 +2085,7 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
           "from": {
-            "description": "Start date (yyyy-MM-dd)",
+            "description": "Start date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive.",
             "type": "string"
           },
           "page": {
@@ -2114,7 +2114,7 @@
             "type": "string"
           },
           "to": {
-            "description": "End date (yyyy-MM-dd)",
+            "description": "End date, yyyy-MM-dd, a whole calendar day in the organization time zone (tenantTimezone in whoami), not UTC. Inclusive: the whole day counts.",
             "type": "string"
           }
         },
@@ -2128,7 +2128,7 @@
         "destructiveHint": false,
         "readOnlyHint": false
       },
-      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000, default 10000)\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
+      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days\n               in the organization time zone, both inclusive)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000, default 10000)\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2213,11 +2213,11 @@
             "type": "string"
           },
           "effectiveFrom": {
-            "description": "Effective start date (ISO 8601)",
+            "description": "Effective start, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected.",
             "type": "string"
           },
           "effectiveTo": {
-            "description": "Effective end date (ISO 8601)",
+            "description": "Effective end, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected.",
             "type": "string"
           },
           "groupId": {
@@ -2338,7 +2338,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Update a DRAFT version. Only DRAFT versions can be modified. Only provided fields are changed.",
+      "description": "Update a DRAFT version. Only DRAFT versions can be modified. An omitted commitMessage keeps its value, but effectiveFrom and effectiveTo are replaced together: one you omit is cleared. To keep the effective window, send both current values (read them with lexq_versions_get).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2347,11 +2347,11 @@
             "type": "string"
           },
           "effectiveFrom": {
-            "description": "New effective start date",
+            "description": "Effective start, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected. Omit it and the start is cleared.",
             "type": "string"
           },
           "effectiveTo": {
-            "description": "New effective end date",
+            "description": "Effective end, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected. Omit it and the end is cleared.",
             "type": "string"
           },
           "groupId": {
@@ -2549,7 +2549,7 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "Show current authentication info (tenant ID, user ID, role).",
+      "description": "Show current authentication info (tenant ID, user ID, role) and tenantTimezone, the organization time zone that every yyyy-MM-dd date filter uses. Work out \"today\" or \"yesterday\" in that zone, not in UTC.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {},

@@ -5,6 +5,7 @@ import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
+import { END_DAY, START_DAY } from '@/lib/dates';
 
 export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
   // ── Dry Run ──
@@ -100,7 +101,8 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         Start an Impact Simulation against historical, uploaded, or inline data.
 
         dataset.type and dataset.source are BOTH required, and must be paired:
-          HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd)
+          HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days
+                       in the organization time zone, both inclusive)
           UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)
           MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)
 
@@ -160,8 +162,8 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           .enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'])
           .optional()
           .describe('Filter by status'),
-        from: z.string().optional().describe('Start date (yyyy-MM-dd)'),
-        to: z.string().optional().describe('End date (yyyy-MM-dd)'),
+        from: z.string().optional().describe(START_DAY),
+        to: z.string().optional().describe(END_DAY),
       }),
     },
     async ({ page, size, status, from, to }) => {

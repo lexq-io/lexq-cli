@@ -16,6 +16,7 @@ import type {
   SimulationStartResponse,
 } from '@/types/analytics';
 import { loadConfig } from '@/lib/config';
+import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
 
 export function registerAnalyticsCommands(program: Command): void {
   const analytics = program
@@ -248,6 +249,7 @@ export function registerAnalyticsCommands(program: Command): void {
             
         Dataset types: HISTORICAL, UPLOADED, MANUAL
         Dataset sources: EXECUTION_LOGS, S3_BUCKET, REQUEST_BODY
+        HISTORICAL from / to are yyyy-MM-dd, whole days in the organization time zone, both inclusive.
       `,
     )
     .action(async (opts) => {
@@ -395,8 +397,8 @@ export function registerAnalyticsCommands(program: Command): void {
     .command('list')
     .description('List simulation history')
     .option('--status <status>', 'Filter by status (PENDING, RUNNING, COMPLETED, FAILED, CANCELED)')
-    .option('--from <date>', 'Start date (yyyy-MM-dd)')
-    .option('--to <date>', 'End date (yyyy-MM-dd)')
+    .option('--from <date>', START_DAY)
+    .option('--to <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
     .action(async (opts) => {
@@ -431,7 +433,7 @@ export function registerAnalyticsCommands(program: Command): void {
               s.status,
               `${s.matchRate.toFixed(1)}%`,
               String(s.totalRecords),
-              s.createdAt.substring(0, 16),
+              utcMinute(s.createdAt),
             ]),
             { truncate: 20 },
           );

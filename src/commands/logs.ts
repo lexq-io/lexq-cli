@@ -5,6 +5,7 @@ import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { FailureLogResponse, BulkActionResponse } from '@/types/logs';
 import { TaskType } from '@/types/enums';
+import { END_DAY, FAILURE_LOG_LOOKBACK_DAYS, START_DAY, utcMinute } from '@/lib/dates';
 
 export function registerLogCommands(program: Command): void {
   const logs = program
@@ -33,13 +34,16 @@ export function registerLogCommands(program: Command): void {
     .option('--task-type <taskType>', `Filter by task type (${TaskType.join(', ')})`)
     .option('--status <status>', 'Filter by status (PENDING, RESOLVED, IGNORED)')
     .option('--keyword <keyword>', 'Search keyword')
-    .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
-    .option('--end-date <date>', 'End date (yyyy-MM-dd)')
+    .option('--start-date <date>', START_DAY)
+    .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
     .addHelpText(
       'after',
       dedent`
+
+        Without dates the window is ${FAILURE_LOG_LOOKBACK_DAYS} days back through today, in the organization
+        time zone. Pass --start-date to look further back.
 
         Examples:
           $ lexq logs list --status PENDING --format table
@@ -75,7 +79,7 @@ export function registerLogCommands(program: Command): void {
               l.taskType,
               l.status,
               l.errorMessage?.substring(0, 24) ?? '–',
-              l.createdAt.substring(0, 16),
+              utcMinute(l.createdAt),
             ]),
             { truncate: 24 },
           );

@@ -10,6 +10,7 @@ import type {
   ReplayJobListItem,
   ReplayJobSubmitResponse,
 } from '@/types/replay';
+import { WINDOW_END_DAY, WINDOW_START_DAY, utcMinute } from '@/lib/dates';
 
 export function registerReplayCommands(program: Command): void {
   const replay = program
@@ -71,8 +72,8 @@ export function registerReplayCommands(program: Command): void {
     .command('start')
     .description('Submit a window replay job (blast radius)')
     .requiredOption('--version-id <versionId>', 'Candidate version to re-evaluate against')
-    .requiredOption('--from <date>', 'Window start date (yyyy-MM-dd)')
-    .requiredOption('--to <date>', 'Window end date (yyyy-MM-dd)')
+    .requiredOption('--from <date>', WINDOW_START_DAY)
+    .requiredOption('--to <date>', WINDOW_END_DAY)
     .option('--max-records <number>', `Sample cap (hard cap ${REPLAY_WINDOW_MAX_RECORDS / 1000}k)`)
     .addHelpText(
       'after',
@@ -129,7 +130,7 @@ export function registerReplayCommands(program: Command): void {
 
         if (format === 'table') {
           printTable(
-            ['Job', 'Version', 'Window', 'Status', 'Progress', 'Changed', 'At'],
+            ['Job', 'Version', 'Window (org time zone)', 'Status', 'Progress', 'Changed', 'At'],
             data.content.map((j) => [
               j.jobId.substring(0, 12),
               j.candidateVersionName ?? '–',
@@ -137,7 +138,7 @@ export function registerReplayCommands(program: Command): void {
               j.status,
               `${j.progress}%`,
               `${j.changedCount}${j.capped ? ' (capped)' : ''}`,
-              j.createdAt.substring(0, 16),
+              utcMinute(j.createdAt),
             ]),
             { truncate: 24 },
           );

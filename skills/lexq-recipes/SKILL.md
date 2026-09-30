@@ -390,6 +390,10 @@ lexq logs bulk-action --ids "id4,id5" --action IGNORE
 lexq logs list --status PENDING --page 0 --size 10
 ```
 
+Without `--start-date`, `logs list` covers 7 days back through today, in the organization time
+zone. An empty list in step 5 means there is no PENDING failure in that window, not that there is
+none at all. Add an earlier `--start-date` to steps 1 and 5 to see older ones.
+
 `RESOLVE` and `IGNORE` differ only in intent — both remove the log from PENDING. Use `RESOLVE`
 when the underlying problem was fixed, `IGNORE` when it does not need fixing.
 

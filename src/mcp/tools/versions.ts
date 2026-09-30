@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { MAX_DRAFT_VERSIONS_PER_GROUP, MAX_RULES_PER_VERSION } from '@/types/constants';
+import { INSTANT } from '@/lib/dates';
 
 export function registerVersionTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -47,8 +48,8 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         commitMessage: z.string().optional().describe('Commit message describing this version'),
-        effectiveFrom: z.string().optional().describe('Effective start date (ISO 8601)'),
-        effectiveTo: z.string().optional().describe('Effective end date (ISO 8601)'),
+        effectiveFrom: z.string().optional().describe(`Effective start, ${INSTANT}`),
+        effectiveTo: z.string().optional().describe(`Effective end, ${INSTANT}`),
       }),
     },
     async ({ groupId, ...body }) => callApi('POST', `policy-groups/${groupId}/versions`, { body }),
@@ -60,13 +61,19 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       title: 'Update Policy Version',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Update a DRAFT version. Only DRAFT versions can be modified. Only provided fields are changed.',
+        'Update a DRAFT version. Only DRAFT versions can be modified. An omitted commitMessage keeps its value, but effectiveFrom and effectiveTo are replaced together: one you omit is cleared. To keep the effective window, send both current values (read them with lexq_versions_get).',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         commitMessage: z.string().optional().describe('New commit message'),
-        effectiveFrom: z.string().optional().describe('New effective start date'),
-        effectiveTo: z.string().optional().describe('New effective end date'),
+        effectiveFrom: z
+          .string()
+          .optional()
+          .describe(`Effective start, ${INSTANT} Omit it and the start is cleared.`),
+        effectiveTo: z
+          .string()
+          .optional()
+          .describe(`Effective end, ${INSTANT} Omit it and the end is cleared.`),
       }),
     },
     async ({ groupId, versionId, ...body }) =>

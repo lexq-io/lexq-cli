@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { RevealAuditItem } from '@/types/provenance';
+import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
 
 /**
  * PII reveal itself is console-only by contract, so there is no reveal subcommand here.
@@ -53,8 +54,8 @@ export function registerProvenanceCommands(program: Command): void {
     .option('--trace-id <traceId>', 'Filter by trace ID (exact)')
     .option('--fact-key <factKey>', 'Filter by fact key (partial, case-insensitive)')
     .option('--revealed-by <operatorId>', 'Filter by operator ID (exact)')
-    .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
-    .option('--end-date <date>', 'End date (yyyy-MM-dd)')
+    .option('--start-date <date>', START_DAY)
+    .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
     .addHelpText(
@@ -95,7 +96,7 @@ export function registerProvenanceCommands(program: Command): void {
           printTable(
             ['Revealed At', 'By', 'Fact Key', 'Trace'],
             data.content.map((a) => [
-              a.revealedAt.substring(0, 16),
+              utcMinute(a.revealedAt),
               a.revealedByName,
               a.factKey,
               a.traceId.substring(0, 12),

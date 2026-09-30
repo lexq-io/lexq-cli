@@ -20,6 +20,7 @@ import type {
   UndeployRequest,
   ScheduleRequest,
 } from '@/types/deploy';
+import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
 
 export function registerDeployCommands(program: Command): void {
   const deploy = program
@@ -223,8 +224,8 @@ export function registerDeployCommands(program: Command): void {
     .description('List deployment history')
     .option('--group-id <groupId>', 'Filter by policy group')
     .option('--types <types>', 'Filter by types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)')
-    .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
-    .option('--end-date <date>', 'End date (yyyy-MM-dd)')
+    .option('--start-date <date>', START_DAY)
+    .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
     .addHelpText(
@@ -263,7 +264,7 @@ export function registerDeployCommands(program: Command): void {
               d.policyGroupName,
               d.versionNo != null ? `v${d.versionNo}` : '–',
               d.deployedByName,
-              d.deployedAt.substring(0, 16),
+              utcMinute(d.deployedAt),
             ]),
             { truncate: 20 },
           );
@@ -339,7 +340,7 @@ export function registerDeployCommands(program: Command): void {
               d.groupName,
               d.groupStatus,
               d.currentVersionName ?? '–',
-              d.lastDeployedAt?.substring(0, 16) ?? '–',
+              utcMinute(d.lastDeployedAt),
             ]),
           );
         } else {
@@ -429,6 +430,8 @@ export function registerDeployCommands(program: Command): void {
 
         The version must be ACTIVE with a future effective start date; the system
         deploys it automatically at that time (within one scheduler tick, ≤60s).
+        That time is the version's effectiveFrom, set on the DRAFT before publishing;
+        this command takes no time of its own.
         One pending schedule per group. Manual deploy/rollback/undeploy, starting
         an A/B test, or archiving the group cancels the pending schedule.
 
@@ -541,10 +544,10 @@ export function registerDeployCommands(program: Command): void {
               s.status,
               s.policyGroupName ?? s.policyGroupId.substring(0, 8),
               s.versionNo != null ? `v${s.versionNo}` : '–',
-              s.scheduledFor.substring(0, 16),
+              utcMinute(s.scheduledFor),
               s.scheduledByName,
               s.status === 'EXECUTED'
-                ? (s.executedAt?.substring(0, 16) ?? '–')
+                ? utcMinute(s.executedAt)
                 : s.status === 'CANCELED'
                   ? (s.canceledReason ?? '–')
                   : s.status === 'FAILED'

@@ -81,7 +81,7 @@ export function registerAuthCommands(program: Command): void {
 
         Example:
           $ lexq auth whoami
-          { "tenantId": "abc-123", "userId": "...", "role": "ADMIN", "apiKey": "lexq_us_****abcd" }
+          { "tenantId": "abc-123", "userId": "...", "role": "ADMIN", "tenantTimezone": "Asia/Seoul", "apiKey": "lexq_us_****abcd" }
       `,
     )
     .action(async () => {

@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { PolicyVersionSummary } from '@/types/versions';
+import { INSTANT, utcMinute } from '@/lib/dates';
 
 export function registerVersionCommands(program: Command): void {
   const versions = program
@@ -62,7 +63,7 @@ export function registerVersionCommands(program: Command): void {
               v.status,
               v.commitMessage ?? '–',
               v.snapshotHash ? v.snapshotHash.substring(0, 8) : '–',
-              v.createdAt.substring(0, 10),
+              utcMinute(v.createdAt),
             ]),
             { truncate: 24 },
           );
@@ -108,8 +109,8 @@ export function registerVersionCommands(program: Command): void {
     .description('Create a new draft version')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .option('--commit-message <message>', 'Commit message')
-    .option('--effective-from <date>', 'Effective from (ISO datetime)')
-    .option('--effective-to <date>', 'Effective to (ISO datetime)')
+    .option('--effective-from <instant>', `Effective start, ${INSTANT}`)
+    .option('--effective-to <instant>', `Effective end, ${INSTANT}`)
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
@@ -126,8 +127,8 @@ export function registerVersionCommands(program: Command): void {
 
         Fields:
           commitMessage    string      Version description (optional, max 255 chars)
-          effectiveFrom    datetime    Start of effective period (optional, ISO-8601)
-          effectiveTo      datetime    End of effective period (optional, auto-expires)
+          effectiveFrom    instant     Start of effective period (optional, with Z or an offset)
+          effectiveTo      instant     End of effective period (optional, auto-expires)
       `,
     )
     .action(async (opts) => {
@@ -160,14 +161,18 @@ export function registerVersionCommands(program: Command): void {
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--id <versionId>', 'Policy version ID')
     .option('--commit-message <message>', 'Commit message')
-    .option('--effective-from <date>', 'Effective from (ISO datetime)')
-    .option('--effective-to <date>', 'Effective to (ISO datetime)')
+    .option('--effective-from <instant>', `Effective start, ${INSTANT}`)
+    .option('--effective-to <instant>', `Effective end, ${INSTANT}`)
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
       dedent`
 
         Only DRAFT versions can be updated. Published (ACTIVE) versions are immutable.
+
+        An omitted --commit-message keeps its value, but --effective-from and --effective-to
+        are replaced together: one you omit is cleared. To keep the effective window, pass
+        both current values (read them with lexq versions get).
 
         Example:
           $ lexq versions update --group-id <gid> --id <vid> --commit-message "Updated rules"

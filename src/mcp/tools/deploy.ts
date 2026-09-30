@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { MAX_SNAPSHOT_BYTES } from '@/types/constants';
+import { END_DAY, START_DAY } from '@/lib/dates';
 
 export function registerDeployTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -82,7 +83,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       title: 'Schedule Deployment',
       annotations: { readOnlyHint: false, destructiveHint: false },
       description:
-        'Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).',
+        "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z
@@ -142,8 +143,8 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
           .string()
           .optional()
           .describe('Filter by deployment types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)'),
-        startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
-        endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
+        startDate: z.string().optional().describe(START_DAY),
+        endDate: z.string().optional().describe(END_DAY),
       }),
     },
     async ({ page, size, groupId, types, startDate, endDate }) => {

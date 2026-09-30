@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { END_DAY, START_DAY, STATS_DEFAULT_WINDOW_DAYS, STATS_MAX_WINDOW_DAYS } from '@/lib/dates';
 
 export function registerHistoryTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -21,8 +22,8 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
           .enum(['SUCCESS', 'NO_MATCH', 'ERROR', 'TIMEOUT'])
           .optional()
           .describe('Filter by execution status'),
-        startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
-        endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
+        startDate: z.string().optional().describe(START_DAY),
+        endDate: z.string().optional().describe(END_DAY),
       }),
     },
     async ({ page, size, traceId, groupId, versionId, status, startDate, endDate }) => {
@@ -56,12 +57,11 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Execution Statistics',
       annotations: { readOnlyHint: true },
-      description:
-        'Get execution KPIs: total executions, success/failure counts, success rate, and average latency.',
+      description: `Get execution KPIs: total executions, success/failure counts, success rate, and average latency. Without dates the window is the last ${STATS_DEFAULT_WINDOW_DAYS} days through today, in the organization time zone. At most ${STATS_MAX_WINDOW_DAYS} days per call; a longer range is rejected with AN-039. startDate alone runs through today.`,
       inputSchema: z.object({
         groupId: z.string().uuid().optional().describe('Filter by policy group'),
-        startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
-        endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
+        startDate: z.string().optional().describe(START_DAY),
+        endDate: z.string().optional().describe(END_DAY),
       }),
     },
     async ({ groupId, startDate, endDate }) => {

@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { END_DAY, START_DAY } from '@/lib/dates';
 
 /**
  * Decision Provenance tools — read-only lineage + reveal audit ledger.
@@ -43,8 +44,8 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
           .string()
           .optional()
           .describe('Filter by fact key (partial match, case-insensitive)'),
-        startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
-        endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
+        startDate: z.string().optional().describe(START_DAY),
+        endDate: z.string().optional().describe(END_DAY),
       }),
     },
     async ({ page, size, traceId, revealedBy, factKey, startDate, endDate }) => {
