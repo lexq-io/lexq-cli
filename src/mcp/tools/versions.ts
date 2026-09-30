@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
+import { MAX_DRAFT_VERSIONS_PER_GROUP, MAX_RULES_PER_VERSION } from '@/types/constants';
 
 export function registerVersionTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -42,8 +43,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Create Policy Version',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range.',
+      description: `Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range. A group can hold at most ${MAX_DRAFT_VERSIONS_PER_GROUP} DRAFT versions at a time; published versions do not count. Publish or delete drafts to make room.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         commitMessage: z.string().optional().describe('Commit message describing this version'),
@@ -93,8 +93,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     {
       title: 'Clone Policy Version',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Clone an existing version to create a new DRAFT. Useful when the source version is already published.',
+      description: `Clone an existing version to create a new DRAFT. Useful when the source version is already published. The new DRAFT counts toward the limit of ${MAX_DRAFT_VERSIONS_PER_GROUP} DRAFT versions per group, and a source with more than ${MAX_RULES_PER_VERSION} rules cannot be cloned.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Source version ID to clone'),

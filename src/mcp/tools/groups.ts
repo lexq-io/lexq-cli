@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { ConflictResolutionMode, ConflictResolutionStrategy } from '@/types/enums';
+import { MAX_GROUPS_PER_TENANT } from '@/types/constants';
 
 export function registerGroupTools(server: McpServer, callApi: CallApi): void {
   // ── CRUD ──
@@ -35,8 +36,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Create Policy Group',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Policy groups that share an activationGroup form a cluster and must share the same activationMode / activationStrategy / executionLimit; executionLimit is how many of those groups run, not how many rules.',
+      description: `Create a new policy group. Requires name. Priority is auto-assigned (appended last, tenant-wide); use lexq_groups_reorder to change order. Optionally set conflict resolution, activation group, and description. Policy groups that share an activationGroup form a cluster and must share the same activationMode / activationStrategy / executionLimit; executionLimit is how many of those groups run, not how many rules. A tenant can have at most ${MAX_GROUPS_PER_TENANT} groups that are not ARCHIVED; archive groups you no longer use to free a slot.`,
       inputSchema: z.object({
         name: z.string().describe('Group name (unique among non-ARCHIVED)'),
         description: z.string().optional().describe('Group description'),

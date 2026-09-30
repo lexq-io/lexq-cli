@@ -1,4 +1,9 @@
-import { MAX_ROUNDING_SCALE } from '@/types/constants';
+import {
+  MAX_CONDITION_DEPTH,
+  MAX_CONDITIONS_PER_RULE,
+  MAX_ROUNDING_SCALE,
+  MAX_RULES_PER_VERSION,
+} from '@/types/constants';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
@@ -59,7 +64,9 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
 
         Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
         Value types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
-        
+        Limits: a condition tree may hold at most ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes; GROUP nodes do not count)
+        and nest at most ${MAX_CONDITION_DEPTH} levels below the root. A version holds at most ${MAX_RULES_PER_VERSION} rules.
+
         Operators are constrained by the LEFT fact's type (from lexq_facts_list). Using one outside
         its type is rejected by the server — check the fact type before choosing an operator.
         - STRING fact:       EQUALS, NOT_EQUALS, CONTAINS, IN, NOT_IN
@@ -129,7 +136,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Rule',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description: 'Update an existing rule in a DRAFT version. Only provided fields are changed.',
+      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

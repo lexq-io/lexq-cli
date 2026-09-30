@@ -66,6 +66,12 @@ const CONSTANTS = [
   'SlowRuleJudge.MIN_SAMPLES',
   'SlowRuleJudge.MIN_COHORT_SIZE',
   'PolicyProfileService.PROFILE_DEFAULT_WINDOW_HOURS',
+  'PolicyGroupService.MAX_GROUPS_PER_TENANT',
+  'PolicyVersionService.MAX_DRAFT_VERSIONS_PER_GROUP',
+  'PolicyRuleService.MAX_RULES_PER_VERSION',
+  'PolicyRuleService.MAX_CONDITIONS_PER_RULE',
+  'PolicyRuleService.MAX_CONDITION_DEPTH',
+  'RulesSnapshotWeigher.MAX_SNAPSHOT_BYTES',
 ];
 
 /** Enums this CLI exposes, in output order. The manifest is wider; anything not listed stays out. */
