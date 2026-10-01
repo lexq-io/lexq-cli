@@ -253,7 +253,7 @@ lexq profile <groupId>
 lexq profile <groupId> --rule <ruleId>
 
 # Defaults: live version, last 24h, cache HIT
-lexq profile <groupId> --version <vid> --cache MISS \
+lexq profile <groupId> --version-id <vid> --cache MISS \
   --from 2026-07-01T00:00:00Z --to 2026-08-01T00:00:00Z
 ```
 

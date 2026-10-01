@@ -22,7 +22,7 @@ export function registerProfileCommands(program: Command): void {
       '--rule <ruleId>',
       `Single-rule detail (distributions + ${LATENCY_WINDOW_MILLIS / 1000}s window series)`,
     )
-    .option('--version <versionId>', 'Version to inspect (default: live version)')
+    .option('--version-id <versionId>', 'Version to inspect (default: live version)')
     .option(
       '--from <instant>',
       `Window start, ISO-8601 instant (default: ${PROFILE_DEFAULT_WINDOW_HOURS}h ago)`,
@@ -42,7 +42,7 @@ export function registerProfileCommands(program: Command): void {
         Examples:
           $ lexq profile <groupId>
           $ lexq profile <groupId> --cache MISS --from 2026-07-01T00:00:00Z
-          $ lexq profile <groupId> --rule <ruleId> --version <versionId>
+          $ lexq profile <groupId> --rule <ruleId> --version-id <versionId>
       `,
     )
     .action(async (groupId, opts) => {
@@ -55,7 +55,7 @@ export function registerProfileCommands(program: Command): void {
         }
 
         const params: Record<string, string> = {};
-        if (opts.version) params.versionId = opts.version;
+        if (opts.versionId) params.versionId = opts.versionId;
         if (opts.from) params.from = opts.from;
         if (opts.to) params.to = opts.to;
         if (opts.cache) params.cacheState = opts.cache;
