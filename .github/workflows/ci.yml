@@ -87,6 +87,9 @@ jobs:
       - name: Export format vocabulary
         run: pnpm test:export-format
 
+      - name: Command options
+        run: pnpm test:command-options
+
       - name: Exact decimals
         run: pnpm test:decimals
 
