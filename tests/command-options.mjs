@@ -8,8 +8,13 @@
 // `lexq profile <groupId> --version <versionId>` printed the CLI version and exited 0,
 // because the root program owns `-V, --version`.
 //
+// A command that reads its request body from --file must not also require --json.
+// Commander rejects the call before the action runs, so the file is never read.
+// `lexq analytics simulation start --file request.json` failed with
+// "required option '--json <body>' not specified".
+//
 // This reads the source rather than importing it: it collects the root flags from
-// src/cli.ts and fails if any file under src/commands declares one of them again.
+// src/cli.ts and checks every command declared under src/commands.
 //
 // Usage:
 //   node tests/command-options.mjs
@@ -98,6 +103,33 @@ check(
 // Nothing found and nothing wrong read the same. If the option shape changes, the check
 // above goes quiet instead of going red, so the count is asserted separately.
 check(`the scan saw ${seen} command options (at least 200)`, seen >= 200);
+
+// A command's options follow its `.command('...')` in the chain, so the text up to the
+// next `.command(` is that command's declaration.
+const COMMAND = /\.command\(\s*'([^']+)'/g;
+const REQUIRED_JSON = /\.requiredOption\(\s*'--json\b/;
+const FILE_OPTION = /\.option\(\s*'--file\b/;
+const fileButJsonRequired = [];
+let commands = 0;
+for (const rel of sources('src/commands')) {
+  const text = read(rel);
+  const starts = [...text.matchAll(COMMAND)];
+  starts.forEach((match, i) => {
+    commands += 1;
+    const block = text.slice(match.index, starts[i + 1]?.index ?? text.length);
+    if (FILE_OPTION.test(block) && REQUIRED_JSON.test(block)) {
+      const line = text.slice(0, match.index).split('\n').length;
+      fileButJsonRequired.push(`${rel}:${line} ${match[1]}`);
+    }
+  });
+}
+
+check(
+  'no command that accepts --file also requires --json',
+  fileButJsonRequired.length === 0,
+  fileButJsonRequired.join(' | '),
+);
+check(`the scan saw ${commands} commands (at least 90)`, commands >= 90);
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail === 0 ? 0 : 1);
