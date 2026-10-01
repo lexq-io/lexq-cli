@@ -225,7 +225,7 @@ export function registerAnalyticsCommands(program: Command): void {
   sim
     .command('start')
     .description('Start a new batch simulation')
-    .requiredOption('--json <body>', 'Simulation request body as JSON')
+    .option('--json <body>', 'Simulation request body as JSON')
     .option('--file <path>', 'Read request body from a JSON file')
     .addHelpText(
       'after',
@@ -246,7 +246,9 @@ export function registerAnalyticsCommands(program: Command): void {
                 "maxRecords": 1000
               }
             }'
-            
+
+          $ lexq analytics simulation start --file simulation.json
+
         Dataset types: HISTORICAL, UPLOADED, MANUAL
         Dataset sources: EXECUTION_LOGS, S3_BUCKET, REQUEST_BODY
         HISTORICAL from / to are yyyy-MM-dd, whole days in the organization time zone, both inclusive.
@@ -255,6 +257,9 @@ export function registerAnalyticsCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
+        if (!opts.json && !opts.file) {
+          throw new Error('Request body is required. Use --json or --file.');
+        }
         const body = resolveBody(opts);
 
         const data = await apiRequest<SimulationStartResponse>('POST', 'analytics/simulations', {
