@@ -23,8 +23,11 @@ Filter options:
 | `--group-id <id>`     | Filter by policy group | `--group-id <gid>`        |
 | `--version-id <id>`   | Filter by version      | `--version-id <vid>`      |
 | `--status <status>`   | Filter by status       | `--status SUCCESS`        |
-| `--start-date <date>` | Start date (ISO)       | `--start-date 2025-01-01` |
-| `--end-date <date>`   | End date (ISO)         | `--end-date 2025-01-31`   |
+| `--start-date <date>` | First day, inclusive   | `--start-date 2025-01-01` |
+| `--end-date <date>`   | Last day, inclusive    | `--end-date 2025-01-31`   |
+
+Dates are `yyyy-MM-dd`, whole days in the organization time zone (`tenantTimezone` in
+`lexq auth whoami`), not UTC.
 
 ### Execution Statuses
 
@@ -52,6 +55,10 @@ Returns full detail including `inputFacts`, `executionTraces`, and `decisionTrac
 ```bash
 lexq history stats
 ```
+
+Without dates the window is the last 30 days through today, in the organization time zone. At most
+31 days per call; a longer range is rejected with `AN-039`. `--start-date` alone runs through
+today.
 
 Returns KPI summary:
 
@@ -98,8 +105,12 @@ Filter options:
 | `--task-type <type>`  | Task type                               | `PLATFORM_WEBHOOK`, `SCHEDULED_DEPLOYMENT` |
 | `--status <status>`   | Log status                              | `PENDING`, `RESOLVED`, `IGNORED`           |
 | `--keyword <kw>`      | Search in refId, refSubId, errorMessage | any string                                 |
-| `--start-date <date>` | Start date (ISO)                        | `2025-01-01`                               |
-| `--end-date <date>`   | End date (ISO)                          | `2025-01-31`                               |
+| `--start-date <date>` | First day, inclusive                    | `2025-01-01`                               |
+| `--end-date <date>`   | Last day, inclusive                     | `2025-01-31`                               |
+
+Without dates the list covers 7 days back through today, in the organization time zone. A failure
+older than that is left out even while it is still `PENDING`. Pass an earlier `--start-date` to
+see it.
 
 ### Get Failure Log Detail
 
@@ -247,7 +258,7 @@ lexq profile <groupId> --version <vid> --cache MISS \
 ```
 
 `--from` / `--to` are ISO-8601 **instants** here (`2026-07-01T00:00:00Z`), unlike `replay start`
-which takes `yyyy-MM-dd` dates.
+which takes `yyyy-MM-dd` days in the organization time zone.
 
 `p50` / `p95` / `p99` are `null` when the sample is under 100 — the engine reports insufficient
 data rather than inventing a number. `n` is always present.
@@ -264,7 +275,7 @@ lexq history list --status ERROR --page 0 --size 10
 # 3. For a specific bad decision, get the deterministic why
 lexq provenance get --trace-id <traceId>
 
-# 4. Check for system failures
+# 4. Check for system failures (covers 7 days back by default; add --start-date for older ones)
 lexq logs list --status PENDING --page 0 --size 10
 
 # 5. Inspect and mark

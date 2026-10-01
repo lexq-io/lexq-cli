@@ -153,7 +153,12 @@ Prefixes you will encounter through the CLI:
 1. **Fact keys start with a letter,** then letters, numbers, and underscores. Casing is yours to
    choose and keys are case-sensitive. These docs use `camelCase`: `paymentAmount`, `customerTier`.
 2. **IDs are UUIDs.** Always copy the full ID from list/create output — do not guess.
-3. **Dates use ISO 8601.** Example: `2025-01-01T00:00:00Z`. Time zone is UTC.
+3. **Dates come in two shapes.** A date filter (`--start-date`, `--end-date`, `--from` / `--to` on
+   `replay start` and `simulation list`) takes `yyyy-MM-dd` and means a whole calendar day in the
+   organization time zone, not UTC. `lexq auth whoami` shows that zone as `tenantTimezone`. An
+   instant (`--effective-from`, `--effective-to`, `--from` / `--to` on `profile`) takes ISO 8601
+   with `Z` or an offset: `2026-10-01T00:00:00Z` or `2026-10-01T09:00:00+09:00`. Tables print
+   times in UTC with a trailing `Z`.
 4. **JSON bodies via `--json`.** Most create/update commands accept `--json '<body>'` for the request body.
 5. **File input via `--file`.** `analytics dry-run`, `dry-run-compare`, `simulation start` accept
    `--file path/to/body.json` as an alternative to `--json`. `analytics dataset upload` requires

@@ -12,6 +12,7 @@ import type {
   StartAbTestRequest,
   AdjustTrafficRateRequest,
 } from '@/types/groups';
+import { utcMinute } from '@/lib/dates';
 
 export function registerGroupCommands(program: Command): void {
   const groups = program
@@ -62,7 +63,7 @@ export function registerGroupCommands(program: Command): void {
               g.status,
               String(g.priority),
               g.currentVersionName ?? '–',
-              g.updatedAt.substring(0, 10),
+              utcMinute(g.updatedAt),
             ]),
             { truncate: 24 },
           );

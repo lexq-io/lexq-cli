@@ -8,6 +8,13 @@ import type {
   ExecutionHistoryDetail,
   ExecutionStatsResponse,
 } from '@/types/history';
+import {
+  END_DAY,
+  START_DAY,
+  STATS_DEFAULT_WINDOW_DAYS,
+  STATS_MAX_WINDOW_DAYS,
+  utcMinute,
+} from '@/lib/dates';
 
 export function registerHistoryCommands(program: Command): void {
   const history = program
@@ -36,8 +43,8 @@ export function registerHistoryCommands(program: Command): void {
     .option('--group-id <groupId>', 'Filter by policy group')
     .option('--version-id <versionId>', 'Filter by version')
     .option('--status <status>', 'Filter by status (SUCCESS, NO_MATCH, ERROR, TIMEOUT)')
-    .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
-    .option('--end-date <date>', 'End date (yyyy-MM-dd)')
+    .option('--start-date <date>', START_DAY)
+    .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')
     .option('--size <number>', 'Page size', '20')
     .addHelpText(
@@ -84,7 +91,7 @@ export function registerHistoryCommands(program: Command): void {
               h.status,
               h.isMatched ? '✓' : '✗',
               `${h.latencyMs}ms`,
-              h.createdAt.substring(0, 16),
+              utcMinute(h.createdAt),
             ]),
             { truncate: 20 },
           );
@@ -136,17 +143,21 @@ export function registerHistoryCommands(program: Command): void {
     .command('stats')
     .description('Get execution statistics')
     .option('--group-id <groupId>', 'Filter by policy group')
-    .option('--start-date <date>', 'Start date (yyyy-MM-dd)')
-    .option('--end-date <date>', 'End date (yyyy-MM-dd)')
+    .option('--start-date <date>', START_DAY)
+    .option('--end-date <date>', END_DAY)
     .addHelpText(
       'after',
       dedent`
 
         Shows total executions, success/no-match/failure counts, success rate, and avg latency.
 
+        Without dates the window is the last ${STATS_DEFAULT_WINDOW_DAYS} days through today, in the organization
+        time zone. At most ${STATS_MAX_WINDOW_DAYS} days per call; a longer range is rejected with AN-039.
+        --start-date alone runs through today.
+
         Example:
           $ lexq history stats --format table
-          $ lexq history stats --group-id <gid> --start-date 2026-04-01
+          $ lexq history stats --group-id <gid> --start-date 2026-04-01 --end-date 2026-04-30
       `,
     )
     .action(async (opts) => {

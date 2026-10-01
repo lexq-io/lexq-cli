@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
+import { END_DAY, FAILURE_LOG_LOOKBACK_DAYS, START_DAY } from '@/lib/dates';
 
 export function registerLogTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -10,16 +11,15 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Failure Logs',
       annotations: { readOnlyHint: true },
-      description:
-        'List system failure logs from background tasks (platform event webhooks, scheduled deployments).',
+      description: `List system failure logs from background tasks (platform event webhooks, scheduled deployments). Without dates the window is ${FAILURE_LOG_LOOKBACK_DAYS} days back through today, in the organization time zone; pass startDate to look further back.`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
         taskType: z.enum(TaskType).optional().describe('Task type'),
         status: z.enum(FailureStatus).optional().describe('Log status'),
         keyword: z.string().optional().describe('Search in refId, refSubId, errorMessage'),
-        startDate: z.string().optional().describe('Start date (yyyy-MM-dd)'),
-        endDate: z.string().optional().describe('End date (yyyy-MM-dd)'),
+        startDate: z.string().optional().describe(START_DAY),
+        endDate: z.string().optional().describe(END_DAY),
       }),
     },
     async ({ page, size, taskType, status, keyword, startDate, endDate }) => {
