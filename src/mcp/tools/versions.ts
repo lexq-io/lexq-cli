@@ -61,7 +61,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       title: 'Update Policy Version',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Update a DRAFT version. Only DRAFT versions can be modified. An omitted commitMessage keeps its value, but effectiveFrom and effectiveTo are replaced together: one you omit is cleared. To keep the effective window, send both current values (read them with lexq_versions_get).',
+        'Update a DRAFT version. Only DRAFT versions can be modified. Omitted fields keep their current values. To remove an end of the effective window, set clearEffectiveFrom or clearEffectiveTo to true instead of sending a value.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
@@ -69,11 +69,19 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
         effectiveFrom: z
           .string()
           .optional()
-          .describe(`Effective start, ${INSTANT} Omit it and the start is cleared.`),
+          .describe(`Effective start, ${INSTANT} Omit it to keep the current start.`),
         effectiveTo: z
           .string()
           .optional()
-          .describe(`Effective end, ${INSTANT} Omit it and the end is cleared.`),
+          .describe(`Effective end, ${INSTANT} Omit it to keep the current end.`),
+        clearEffectiveFrom: z
+          .boolean()
+          .optional()
+          .describe('Set to true to remove the effective start. Do not send effectiveFrom with it.'),
+        clearEffectiveTo: z
+          .boolean()
+          .optional()
+          .describe('Set to true to remove the effective end. Do not send effectiveTo with it.'),
       }),
     },
     async ({ groupId, versionId, ...body }) =>

@@ -163,6 +163,8 @@ export function registerVersionCommands(program: Command): void {
     .option('--commit-message <message>', 'Commit message')
     .option('--effective-from <instant>', `Effective start, ${INSTANT}`)
     .option('--effective-to <instant>', `Effective end, ${INSTANT}`)
+    .option('--clear-effective-from', 'Remove the effective start')
+    .option('--clear-effective-to', 'Remove the effective end')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
@@ -170,12 +172,12 @@ export function registerVersionCommands(program: Command): void {
 
         Only DRAFT versions can be updated. Published (ACTIVE) versions are immutable.
 
-        An omitted --commit-message keeps its value, but --effective-from and --effective-to
-        are replaced together: one you omit is cleared. To keep the effective window, pass
-        both current values (read them with lexq versions get).
+        Omitted options keep their current values. To remove an end of the effective
+        window, pass --clear-effective-from or --clear-effective-to instead of a value.
 
-        Example:
+        Examples:
           $ lexq versions update --group-id <gid> --id <vid> --commit-message "Updated rules"
+          $ lexq versions update --group-id <gid> --id <vid> --clear-effective-to
       `,
     )
     .action(async (opts) => {
@@ -291,10 +293,14 @@ function buildCreateBody(opts: Record<string, string | undefined>): Record<strin
   return body;
 }
 
-function buildUpdateBody(opts: Record<string, string | undefined>): Record<string, unknown> {
+function buildUpdateBody(
+  opts: Record<string, string | boolean | undefined>,
+): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   if (opts.commitMessage) body.commitMessage = opts.commitMessage;
   if (opts.effectiveFrom) body.effectiveFrom = opts.effectiveFrom;
   if (opts.effectiveTo) body.effectiveTo = opts.effectiveTo;
+  if (opts.clearEffectiveFrom) body.clearEffectiveFrom = true;
+  if (opts.clearEffectiveTo) body.clearEffectiveTo = true;
   return body;
 }
