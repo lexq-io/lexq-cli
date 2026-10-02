@@ -11,7 +11,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Publish Version',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description: `Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them. Publishing fails if the version's compiled rules exceed ${MAX_SNAPSHOT_BYTES / 1024} KB.`,
+      description: `Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing; call lexq_facts_unregistered first to review them. Publishing fails if the version's compiled rules exceed ${MAX_SNAPSHOT_BYTES / 1024} KB, or if its effective end has already passed (P-058); move the end into the future with lexq_versions_update first.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to publish'),
@@ -28,7 +28,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       title: 'Deploy to Live',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.',
+        'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Versions whose effective end has passed are rejected (P-058). Undefined facts do not block deployment; use lexq_facts_unregistered to review what the version references but has not defined.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to deploy'),
@@ -47,7 +47,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       title: 'Rollback Deployment',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Rollback to the previous deployed version. Only available if there is a previous version.',
+        'Rollback to the previous deployed version. Only available if there is a previous version that is still ACTIVE and whose effective end has not passed (P-058).',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         memo: z.string().min(1).describe('Rollback reason (required)'),

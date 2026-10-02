@@ -56,4 +56,6 @@ export interface UpdateVersionRequest {
   commitMessage?: string;
   effectiveFrom?: string;
   effectiveTo?: string;
+  clearEffectiveFrom?: boolean;
+  clearEffectiveTo?: boolean;
 }

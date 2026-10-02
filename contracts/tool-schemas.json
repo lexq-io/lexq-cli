@@ -287,7 +287,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Undefined facts do not block deployment (INV-4); use lexq_facts_unregistered to review what the version references but has not defined.",
+      "description": "Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Versions whose effective end has passed are rejected (P-058). Undefined facts do not block deployment; use lexq_facts_unregistered to review what the version references but has not defined.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -337,7 +337,7 @@
         "destructiveHint": false,
         "readOnlyHint": false
       },
-      "description": "Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing (INV-4); call lexq_facts_unregistered first to review them. Publishing fails if the version's compiled rules exceed 128 KB.",
+      "description": "Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts referenced by rules do not block publishing; call lexq_facts_unregistered first to review them. Publishing fails if the version's compiled rules exceed 128 KB, or if its effective end has already passed (P-058); move the end into the future with lexq_versions_update first.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -374,7 +374,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Rollback to the previous deployed version. Only available if there is a previous version.",
+      "description": "Rollback to the previous deployed version. Only available if there is a previous version that is still ACTIVE and whose effective end has not passed (P-058).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -824,7 +824,7 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy, INV-4). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+      "description": "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2338,20 +2338,28 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Update a DRAFT version. Only DRAFT versions can be modified. An omitted commitMessage keeps its value, but effectiveFrom and effectiveTo are replaced together: one you omit is cleared. To keep the effective window, send both current values (read them with lexq_versions_get).",
+      "description": "Update a DRAFT version. Only DRAFT versions can be modified. Omitted fields keep their current values. To remove an end of the effective window, set clearEffectiveFrom or clearEffectiveTo to true instead of sending a value.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
+          "clearEffectiveFrom": {
+            "description": "Set to true to remove the effective start. Do not send effectiveFrom with it.",
+            "type": "boolean"
+          },
+          "clearEffectiveTo": {
+            "description": "Set to true to remove the effective end. Do not send effectiveTo with it.",
+            "type": "boolean"
+          },
           "commitMessage": {
             "description": "New commit message",
             "type": "string"
           },
           "effectiveFrom": {
-            "description": "Effective start, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected. Omit it and the start is cleared.",
+            "description": "Effective start, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected. Omit it to keep the current start.",
             "type": "string"
           },
           "effectiveTo": {
-            "description": "Effective end, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected. Omit it and the end is cleared.",
+            "description": "Effective end, ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected. Omit it to keep the current end.",
             "type": "string"
           },
           "groupId": {

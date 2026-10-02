@@ -149,7 +149,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'List Unregistered Facts',
       annotations: { readOnlyHint: true },
       description:
-        "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy, INV-4). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+        "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

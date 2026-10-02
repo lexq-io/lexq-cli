@@ -63,6 +63,7 @@ export function registerDeployCommands(program: Command): void {
 
         Locks the version permanently. Rules cannot be modified after publishing.
         A snapshot hash is generated for integrity verification.
+        A version whose effective end has already passed cannot be published (P-058).
 
         Example:
           $ lexq deploy publish --group-id <gid> --version-id <vid> --memo "Validated via dry-run"
@@ -102,6 +103,8 @@ export function registerDeployCommands(program: Command): void {
       dedent`
 
         Takes effect immediately. The version starts receiving production traffic.
+        A version whose effective start has not arrived (P-037) or whose effective end
+        has passed (P-058) is rejected.
 
         Example:
           $ lexq deploy live --group-id <gid> --version-id <vid> --memo "Go live — v3"
@@ -137,7 +140,8 @@ export function registerDeployCommands(program: Command): void {
       dedent`
 
         Reverts to the version that was live before the current one.
-        Only available if the previous version is still ACTIVE.
+        Only available if the previous version is still ACTIVE and its effective end
+        has not passed (P-058).
 
         Example:
           $ lexq deploy rollback --group-id <gid> --memo "High error rate" --force
