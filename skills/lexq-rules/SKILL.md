@@ -181,14 +181,14 @@ Each rule can have multiple actions. Actions fire sequentially.
 | Type          | Description                                | Key Parameters                                                       |
 |---------------|--------------------------------------------|----------------------------------------------------------------------|
 | `MUTATE_FACT` | Arithmetic change to a numeric fact        | `targetVar`, `operator`, `method`, `operand`, `refVar?`, `rounding?` |
-| `SET_FACT`    | Assign a literal value — creates if absent | `targetVar`, `value`                                                 |
+| `SET_FACT`    | Assign a literal value to a registered fact | `targetVar`, `value`                                                |
 | `BLOCK`       | Record a rejection decision                | `reason`                                                             |
 
 ### `MUTATE_FACT` parameters
 
 | Parameter   | Required | Meaning                                                                       |
 |-------------|----------|-------------------------------------------------------------------------------|
-| `targetVar` | always   | The fact this action **reads and writes**. Must already exist as a number.    |
+| `targetVar` | always   | The fact this action **reads and writes**. Must be registered and present as a number at execution. |
 | `operator`  | always   | `ASSIGN` \| `ADD` \| `SUB` \| `MUL` \| `DIV`                                  |
 | `method`    | always   | `PERCENTAGE` \| `AMOUNT` — dictates the unit of `operand`                     |
 | `operand`   | always   | The arithmetic operand. Percent when PERCENTAGE, absolute amount when AMOUNT. |
@@ -235,8 +235,15 @@ Use `refVar` when the base differs from the target:
 
 ### `SET_FACT` vs `MUTATE_FACT`
 
-`SET_FACT` creates the fact if it does not exist. `MUTATE_FACT` requires the target to already be
-present as a number and throws otherwise. "Make something that wasn't there" is `SET_FACT`'s job.
+Both actions write to `targetVar`, and it must be a **registered fact**. Saving or publishing a
+rule whose `targetVar` is not registered fails with `ACT-032`; register it with
+`lexq facts create` first. Keys a rule only reads (condition fields, `refVar`) may stay
+unregistered.
+
+At execution, they differ in what the request must send. `SET_FACT` writes the value even when
+the request did not send the key. `MUTATE_FACT` requires the request to send the target (`P-015`
+otherwise), and the target's value must be a number when the action runs. "Write something the
+request didn't send" is `SET_FACT`'s job.
 
 ### `BLOCK` does not halt execution
 

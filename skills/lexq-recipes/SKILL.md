@@ -480,8 +480,10 @@ lexq analytics dry-run --version-id <vid> --debug --json '{
 
 **Notes**
 
-- `SET_FACT` creates the fact if it does not exist. `MUTATE_FACT` requires the target to already
-  be present — that is the division of labor between them.
+- Register a `SET_FACT` target before saving the rule, as the step above does. A rule whose
+  `targetVar` is not a registered fact is rejected with `ACT-032`.
+- At execution, `SET_FACT` writes the key even when the request did not send it. `MUTATE_FACT`
+  requires the request to send its target. That is the division of labor between them.
 - Flags appear in `generatedVariables` in the response. `SET_FACT` produces no `__delta` because
   it is an assignment, not an arithmetic change.
 - Segment on a `LIST_STRING` fact with `HAS_ANY` / `HAS_ALL` / `HAS_NONE`, not `CONTAINS`.
