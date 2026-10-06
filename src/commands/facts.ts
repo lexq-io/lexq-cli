@@ -93,7 +93,9 @@ export function registerFactCommands(program: Command): void {
       dedent`
 
         Facts used in a version's rules that have no definition yet (read-only).
-        Does not block publish/deploy — register them to enable validation.
+        Keys a rule only reads do not block publish/deploy; register them to enable
+        validation. A SET_FACT or MUTATE_FACT targetVar must already be registered:
+        saving or publishing fails with ACT-032 otherwise.
 
         Example:
           $ lexq facts unregistered --group-id <gid> --version-id <vid> --format table

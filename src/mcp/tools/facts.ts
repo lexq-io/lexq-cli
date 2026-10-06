@@ -137,7 +137,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'Get Action Runtime Fact Metadata',
       annotations: { readOnlyHint: true },
       description:
-        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. Facts are supplied as input or written by a prior action in the same rule; only SET_FACT creates a fact from nothing. Static data, safe to cache in-session.',
+        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. These facts must be sent in the request (P-015 otherwise), even when an earlier action in the same rule writes them. SET_FACT requires no input fact: it is the only action that can write a key the request did not send, and its targetVar must be a registered fact (ACT-032). Static data, safe to cache in-session.',
       inputSchema: z.object({}),
     },
     async () => callApi('GET', 'schema/action-metadata'),
@@ -149,7 +149,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'List Unregistered Facts',
       annotations: { readOnlyHint: true },
       description:
-        "List facts referenced by a version's rules but not yet defined (read-only — does not block publish/deploy). Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+        "List facts referenced by a version's rules but not yet defined (read-only). Keys that rules only read do not block publish/deploy; a rule whose action targetVar is not a registered fact is rejected at save and publish with ACT-032. Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

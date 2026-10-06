@@ -58,7 +58,12 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         If a required key is missing, ask the user to confirm the type, isRequired, and description
         before calling lexq_facts_create — registering facts enables type validation, Console UI
         autocomplete, and the dry-run requirements analyzer.
-        
+
+        An action's targetVar (SET_FACT, MUTATE_FACT) must be a registered fact. Saving or
+        publishing a rule whose targetVar is not registered fails with ACT-032, so register it
+        with lexq_facts_create first. Keys a rule only reads (condition fields, refVar) may stay
+        unregistered.
+
         After saving, lexq_facts_unregistered lists any keys this version references but has not
         defined (non-blocking, version-wide) — use it to decide what to register.
 
@@ -87,8 +92,9 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
 
         Action parameter schemas:
         - MUTATE_FACT: { targetVar: string, operator: "ASSIGN"|"ADD"|"SUB"|"MUL"|"DIV", method: "PERCENTAGE"|"AMOUNT", operand: number, refVar?: string, rounding?: RoundingOption }
-          targetVar is the fact this action reads and writes. It must exist in facts at execution
-          time as a number — supplied as an input fact or written by a prior action in this rule.
+          targetVar is the fact this action reads and writes. It must be a registered fact
+          (ACT-032 otherwise), and the request must send it (P-015 otherwise). Its value must be
+          a number when the action runs.
           A missing required fact throws (no 0 default).
           operand is the arithmetic operand; the unit is dictated by method (percent when
           PERCENTAGE, absolute amount when AMOUNT). Ranges are not constrained — negative values
@@ -106,8 +112,10 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
             DIV     targetVar /= operand             | invalid
           Constraints: DIV + PERCENTAGE is invalid (use MUL with the inverse). DIV + AMOUNT
           requires operand !== 0.
-        - SET_FACT: { targetVar: string, value: string|number|boolean } Creates the fact if absent
-          — this is the only action that does. MUTATE_FACT requires the target to already exist.
+        - SET_FACT: { targetVar: string, value: string|number|boolean } targetVar must be a
+          registered fact (ACT-032 otherwise). The request does not have to send it: SET_FACT is
+          the only action that can write a key absent from the input facts. MUTATE_FACT requires
+          its target to be present in the input facts.
         - BLOCK: { reason: string } Records a rejection decision. It does NOT halt rule execution —
           subsequent actions and subsequent winning rules still run. Enforcement is the caller's
           responsibility; the decision surfaces as the isBlocked fact.
@@ -136,7 +144,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Rule',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root.`,
+      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root. Saving re-checks every action in the rule, including ones you did not change, and fails with ACT-032 if any action's targetVar is not a registered fact.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
