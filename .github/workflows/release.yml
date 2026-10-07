@@ -30,17 +30,17 @@ jobs:
       # Full history so the release notes can be generated from it. No token: nothing
       # pushes back to the repository any more, so the job's write token is not left on
       # disk for the steps that follow.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
       # Same source as CI (.nvmrc). The published artifact must be built by the
       # runtime the checks ran on. No dependency cache: this job can publish, and the
       # setup-node documentation advises against restoring a cache into a publishing job.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           registry-url: 'https://registry.npmjs.org'
@@ -95,7 +95,7 @@ jobs:
       # Skipped on workflow_dispatch: there is no tag to attach a release to.
       - name: Create GitHub Release
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
