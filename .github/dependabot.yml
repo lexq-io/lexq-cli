@@ -1,0 +1,22 @@
+# Actions in the workflows are pinned to commit SHAs, so they never change on their own.
+# Dependabot proposes new versions as pull requests.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    # Skip versions released less than 7 days ago, so a compromised release
+    # has a week to be found and pulled before it is proposed here.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci"
+    # Minor and patch updates share one pull request; each major update opens its own.
+    groups:
+      actions:
+        update-types: [minor, patch]
+    ignore:
+      # pnpm/action-setup v6 changes how pnpm is installed. Moving to it is a separate change.
+      - dependency-name: "pnpm/action-setup"
+        update-types: ["version-update:semver-major"]
