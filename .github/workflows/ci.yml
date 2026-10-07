@@ -12,19 +12,19 @@ permissions:
 jobs:
   check:
     name: Lint & Type Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Full history so the public-surface check can read the commits on this branch.
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       # The runtime lives in .nvmrc so CI and release cannot drift apart, and so
       # nvm/fnm give contributors the same version locally.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'pnpm'

@@ -24,23 +24,25 @@ permissions:
 jobs:
   release:
     name: Publish to npm & GitHub Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       # Full history so the release notes can be generated from it. No token: nothing
-      # pushes back to the repository any more.
-      - uses: actions/checkout@v4
+      # pushes back to the repository any more, so the job's write token is not left on
+      # disk for the steps that follow.
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       # Same source as CI (.nvmrc). The published artifact must be built by the
-      # runtime the checks ran on.
-      - uses: actions/setup-node@v4
+      # runtime the checks ran on. No dependency cache: this job can publish, and the
+      # setup-node documentation advises against restoring a cache into a publishing job.
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
       - run: pnpm install --frozen-lockfile
@@ -93,7 +95,7 @@ jobs:
       # Skipped on workflow_dispatch: there is no tag to attach a release to.
       - name: Create GitHub Release
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
