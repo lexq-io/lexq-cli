@@ -21,10 +21,10 @@ permissions:
 jobs:
   publish:
     name: Publish to MCP Registry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Polls the read API rather than sleeping a fixed amount. The delay is not a documented
       # constant, and a sleep long enough to be safe is one nobody would keep.
