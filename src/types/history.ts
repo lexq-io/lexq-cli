@@ -10,6 +10,8 @@ export interface ExecutionHistorySummary {
   traceId: string;
   policyGroupId: string;
   policyGroupName: string | null;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   policyVersionId: string;
   policyVersionNo: number | null;
   executionType: ApiExecutionType;

@@ -108,9 +108,10 @@ lexq groups delete --id <groupId>
 lexq groups delete --id <groupId> --force
 ```
 
-**`delete` archives — it does not erase.** The group becomes `ARCHIVED` and stops executing;
-versions, rules, and history are retained for audit. Deleting an already-archived group is a
-no-op.
+**`delete` archives — it does not erase right away.** The group becomes `ARCHIVED` and stops
+executing. If it was ever executed, deployed, or replayed, it is kept for audit, along with its
+versions and rules. Otherwise it is permanently deleted after 30 days, together with its
+versions, rules, simulations, and schedules. Deleting an already-archived group is a no-op.
 
 Two conditions block it:
 
@@ -121,6 +122,15 @@ Two conditions block it:
 
 Archiving cancels any pending scheduled deployment and closes the priority gap — remaining groups
 are renumbered 1…N.
+
+**The name can be reused right away.** Records keep the group's ID and the name it had, so after
+a new group takes the name, deployment history, scheduled deployments, execution history,
+simulations, and replays can list two groups under that name. These records carry
+`policyGroupArchivedAt`, the time the group was deleted (`null` if it has not been). In the
+tables of `lexq deploy history`, `deploy schedules`, `history list`, and
+`analytics simulation list` (`--format table`), a deleted group's name shows as
+`(deleted) <name>`. To see one group's deployments or executions only, pass its ID to
+`lexq deploy history --group-id` or `lexq history list --group-id`.
 
 ## Conflict Resolution
 

@@ -2,7 +2,7 @@ import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
-import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
+import { groupLabel, printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
   ExecutionHistorySummary,
   ExecutionHistoryDetail,
@@ -86,7 +86,7 @@ export function registerHistoryCommands(program: Command): void {
             ['Trace', 'Group', 'Version', 'Status', 'Matched', 'Latency', 'At'],
             data.content.map((h) => [
               h.traceId.substring(0, 12),
-              h.policyGroupName ?? '–',
+              groupLabel(h.policyGroupName, h.policyGroupArchivedAt),
               h.policyVersionNo != null ? `v${h.policyVersionNo}` : '–',
               h.status,
               h.isMatched ? '✓' : '✗',

@@ -95,6 +95,8 @@ export interface SimulationDetailResponse {
   simulationId: string;
   policyGroupId: string;
   policyGroupName: string;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   targetVersionName: string | null;
   baselineVersionName: string | null;
   status: SimulationStatus;
@@ -113,6 +115,8 @@ export interface SimulationHistoryResponse {
   simulationId: string;
   policyGroupId: string;
   policyGroupName: string;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   policyVersionId: string;
   baselinePolicyVersionId: string | null;
   targetVersionName: string | null;

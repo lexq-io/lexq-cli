@@ -18,6 +18,8 @@ export interface ReplayJobListItem {
   progress: number;
   policyGroupId: string;
   policyGroupName: string | null;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   candidateVersionId: string;
   candidateVersionName: string | null;
   fromDate: string;
