@@ -64,11 +64,11 @@ Tenant
 
 ### Policy Group Status
 
-| Value      | Description                        |
-|------------|------------------------------------|
-| `ACTIVE`   | Normal operation                   |
-| `DISABLED` | Execution blocked (emergency stop) |
-| `ARCHIVED` | Permanently removed                |
+| Value      | Description                                                                         |
+|------------|-------------------------------------------------------------------------------------|
+| `ACTIVE`   | Normal operation                                                                    |
+| `DISABLED` | Production execution rejected (`P-009`); dry run, simulation, and replay still work |
+| `ARCHIVED` | Permanently removed                                                                 |
 
 ### Policy Version Status
 

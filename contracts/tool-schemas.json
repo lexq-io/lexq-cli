@@ -1114,7 +1114,7 @@
             "type": "string"
           },
           "status": {
-            "description": "Status (DISABLED = emergency stop)",
+            "description": "DISABLED stops production execution of this group: execution calls return 403 (P-009), and a composite call that includes the group is rejected in full. The deployed version and any A/B test are kept, and dry run, Impact Simulation, and Decision Replay keep working, so a fix can be verified before setting ACTIVE again. To go back to the previous version, use lexq_deploy_rollback. To take the version out of production, use lexq_deploy_undeploy.",
             "enum": [
               "ACTIVE",
               "DISABLED"

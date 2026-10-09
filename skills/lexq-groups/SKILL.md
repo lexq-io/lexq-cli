@@ -17,8 +17,23 @@ controls conflict resolution when multiple groups interact.
 | `DISABLED` | `ARCHIVED` | **no**                            |
 
 - **ACTIVE** — executions are processed.
-- **DISABLED** — all executions are blocked. Use for emergency stop.
+- **DISABLED** — production execution stops. Execution calls return `P-009` (403), and a composite call that includes
+  the group is rejected in full. The live version and any A/B test are kept, and dry run, Impact Simulation, and
+  Decision Replay keep working, so you can verify a fix before setting `ACTIVE` again.
 - **ARCHIVED** — removed from execution. Reached only through `lexq groups delete`, not by setting `status` directly.
+
+### Disable, Roll Back, or Undeploy?
+
+| Situation                                                             | Use                    | Callers get                                                            |
+|-----------------------------------------------------------------------|------------------------|------------------------------------------------------------------------|
+| The previously deployed version is correct                            | `lexq deploy rollback` | Decisions from the previous version                                    |
+| This version has to leave production                                  | `lexq deploy undeploy` | `P-019` (400). Composite calls skip the group. A running A/B test ends |
+| Stop now without knowing the cause, then resume with the same version | `status: DISABLED`     | `P-009` (403). Composite calls that include the group are rejected     |
+
+Do not disable a group for a planned end, such as a promotion with a known end date. Set the version's `effectiveTo`
+instead. When that time passes, the group switches to its newest `ACTIVE` version that is still in effect, or is
+undeployed if there is none. Composite calls keep working either way. A disabled group rejects every composite call
+that includes it.
 
 ## CRUD Commands
 
@@ -246,4 +261,5 @@ lets you reuse the existing group instead of handling the error.
 lexq groups update --id <groupId> --json '{"status": "DISABLED"}'
 ```
 
-This immediately stops all executions for the group. No undeploy needed.
+This immediately stops production execution for the group. Dry run, Impact Simulation, and Decision Replay keep
+working. No undeploy needed.
