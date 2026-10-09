@@ -34,7 +34,9 @@ export function registerGroupCommands(program: Command): void {
           delete      Archive a group
           ab-test     Manage A/B tests (start, stop, adjust)
 
-        Statuses: ACTIVE, DISABLED (emergency stop), ARCHIVED (soft delete)
+        Statuses: ACTIVE, DISABLED, ARCHIVED (soft delete)
+          DISABLED stops production execution (403 P-009) and keeps the deployed version and any A/B test.
+          Dry run, simulation, and replay still work. Set ACTIVE to resume.
       `,
     );
 
