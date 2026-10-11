@@ -12,7 +12,8 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Policy Groups',
       annotations: { readOnlyHint: true },
-      description: 'List all policy groups (tenant-wide, priority ASC).',
+      description:
+        'List policy groups (tenant-wide, priority ASC). Deleted groups are not included.',
       inputSchema: z.object({}),
     },
     async () => callApi('GET', 'policy-groups'),
@@ -83,7 +84,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
       title: 'Update Policy Group',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Update a policy group. Only provided fields are updated; omitted fields remain unchanged.',
+        'Update a policy group. Only provided fields are updated; omitted fields remain unchanged. A deleted group cannot be updated (409 P-059).',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         name: z.string().optional().describe('New name'),
@@ -127,7 +128,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
       title: 'Delete Policy Group',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Archive a policy group. Only non-live groups can be deleted. This is irreversible.',
+        'Delete (archive) a policy group. A deployed group cannot be deleted (P-020); undeploy it first with lexq_deploy_undeploy, which also ends a running A/B test. This cannot be undone. The group no longer appears in lexq_groups_list and its name can be reused right away. Calls that change it (settings, versions, rules, starting an A/B test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted after 30 days.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
       }),

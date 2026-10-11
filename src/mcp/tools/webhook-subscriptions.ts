@@ -11,7 +11,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
       title: 'List Webhook Subscriptions',
       annotations: { readOnlyHint: true },
       description:
-        'List platform event webhook subscriptions. These receive deployment lifecycle notifications (publish, deploy, rollback, undeploy).',
+        'List platform event webhook subscriptions. These receive deployment lifecycle notifications: publish, deploy, rollback, and undeploy, plus a deployment being scheduled or a schedule being canceled.',
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
@@ -41,8 +41,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     {
       title: 'Save Webhook Subscription',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description:
-        'Create or update a webhook subscription. Omit id to create, provide id to update. Events: VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED. Formats: GENERIC (full JSON), SLACK ({"text": "..."}).',
+      description: `Create or update a webhook subscription. Omit id to create, provide id to update. Events: ${PlatformEventType.join(', ')}. Formats: GENERIC (full JSON), SLACK ({"text": "..."}).`,
       inputSchema: z.object({
         id: z
           .string()

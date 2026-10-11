@@ -14,7 +14,7 @@ export function registerStatusCommand(program: Command): void {
 
         Example:
           $ lexq status
-          { "status": "ok", "latencyMs": 142, "tenantId": "abc-123", "role": "ADMIN", "tenantTimezone": "Asia/Seoul" }
+          { "status": "ok", "latencyMs": 142, "tenantId": "abc-123", "role": "API_ADMIN", "tenantTimezone": "Asia/Seoul" }
 
         Use this to verify your API key is valid and the LexQ API is reachable.
         tenantTimezone is the zone every yyyy-MM-dd date option is read in.

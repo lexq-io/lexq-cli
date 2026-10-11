@@ -19,6 +19,9 @@ lexq auth login
 lexq auth whoami
 ```
 
+Create the key with the **Manage** scope in the Console (Management → API Keys). An **Execute only** key is
+for calling the execution API from your application and does not work with this CLI.
+
 The API key is passed as `X-API-KEY` header on every request. You can also override per-command:
 
 ```bash

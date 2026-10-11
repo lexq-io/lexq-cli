@@ -742,7 +742,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Remove the references first.",
+      "description": "Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Rules in deleted groups do not count. Remove the references first.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -855,7 +855,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Only the fields you send are changed. System facts accept name, description, and PII only.",
+      "description": "Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Rules in deleted groups do not count. Only the fields you send are changed. System facts accept name, description, and PII only.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -882,7 +882,7 @@
             "type": "string"
           },
           "type": {
-            "description": "Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule references the fact.",
+            "description": "Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule outside a deleted group references the fact.",
             "enum": [
               "STRING",
               "NUMBER",
@@ -982,7 +982,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Archive a policy group. Only non-live groups can be deleted. This is irreversible.",
+      "description": "Delete (archive) a policy group. A deployed group cannot be deleted (P-020); undeploy it first with lexq_deploy_undeploy, which also ends a running A/B test. This cannot be undone. The group no longer appears in lexq_groups_list and its name can be reused right away. Calls that change it (settings, versions, rules, starting an A/B test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted after 30 days.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1028,7 +1028,7 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "List all policy groups (tenant-wide, priority ASC).",
+      "description": "List policy groups (tenant-wide, priority ASC). Deleted groups are not included.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {},
@@ -1069,7 +1069,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Update a policy group. Only provided fields are updated; omitted fields remain unchanged.",
+      "description": "Update a policy group. Only provided fields are updated; omitted fields remain unchanged. A deleted group cannot be updated (409 P-059).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2128,7 +2128,7 @@
         "destructiveHint": false,
         "readOnlyHint": false
       },
-      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days\n               in the organization time zone, both inclusive)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000, default 10000)\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
+      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days\n               in the organization time zone, both inclusive)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000). When omitted, HISTORICAL and UPLOADED run at\n  most 1000 records and MANUAL runs every record sent.\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2435,7 +2435,7 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "List platform event webhook subscriptions. These receive deployment lifecycle notifications (publish, deploy, rollback, undeploy).",
+      "description": "List platform event webhook subscriptions. These receive deployment lifecycle notifications: publish, deploy, rollback, and undeploy, plus a deployment being scheduled or a schedule being canceled.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2464,7 +2464,7 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Create or update a webhook subscription. Omit id to create, provide id to update. Events: VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED. Formats: GENERIC (full JSON), SLACK ({\"text\": \"...\"}).",
+      "description": "Create or update a webhook subscription. Omit id to create, provide id to update. Events: VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED, DEPLOY_SCHEDULED, DEPLOY_SCHEDULE_CANCELED. Formats: GENERIC (full JSON), SLACK ({\"text\": \"...\"}).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

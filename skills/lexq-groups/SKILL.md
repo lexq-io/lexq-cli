@@ -113,15 +113,16 @@ executing. If it was ever executed, deployed, or replayed, it is kept for audit,
 versions and rules. Otherwise it is permanently deleted after 30 days, together with its
 versions, rules, simulations, and schedules. Deleting an already-archived group is a no-op.
 
-Two conditions block it:
-
-| Condition              | What to do first                                    |
-|------------------------|-----------------------------------------------------|
-| The group is deployed  | `lexq deploy undeploy --group-id <gid>`             |
-| An A/B test is running | `lexq groups ab-test stop --group-id <gid> --force` |
+A deployed group cannot be deleted (`P-020`). Undeploy it first with
+`lexq deploy undeploy --group-id <gid> --memo "<reason>"`, which also ends a running A/B test.
 
 Archiving cancels any pending scheduled deployment and closes the priority gap — remaining groups
 are renumbered 1…N.
+
+A deleted group no longer appears in `lexq groups list` and cannot be restored or changed.
+Changing its settings, versions, or rules, starting an A/B test, and publishing, deploying,
+rolling back, or scheduling a deployment all return `409` `P-059`. To start over, create a new
+group.
 
 **The name can be reused right away.** Records keep the group's ID and the name it had, so after
 a new group takes the name, deployment history, scheduled deployments, execution history,

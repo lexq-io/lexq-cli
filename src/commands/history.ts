@@ -91,7 +91,7 @@ export function registerHistoryCommands(program: Command): void {
               h.status,
               h.isMatched ? '✓' : '✗',
               `${h.latencyMs}ms`,
-              utcMinute(h.createdAt),
+              utcMinute(h.executedAt),
             ]),
             { truncate: 20 },
           );
