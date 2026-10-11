@@ -21,7 +21,8 @@ export function registerAuthCommands(program: Command): void {
           whoami    Verify authentication and show account info
 
         Getting Started:
-          1. Get your API key from the LexQ Console (Settings → API Keys)
+          1. Create an API key with the Manage scope in the LexQ Console (Management → API Keys).
+             An "Execute only" key is for the execution API and does not work with this CLI.
           2. Run: lexq auth login
           3. Verify: lexq auth whoami
       `,
@@ -81,7 +82,7 @@ export function registerAuthCommands(program: Command): void {
 
         Example:
           $ lexq auth whoami
-          { "tenantId": "abc-123", "userId": "...", "role": "ADMIN", "tenantTimezone": "Asia/Seoul", "apiKey": "lexq_us_****abcd" }
+          { "tenantId": "abc-123", "userId": "...", "role": "API_ADMIN", "tenantTimezone": "Asia/Seoul", "apiKey": "lexq****abcd", "baseUrl": "https://api.lexq.io/api/v1/partners" }
       `,
     )
     .action(async () => {

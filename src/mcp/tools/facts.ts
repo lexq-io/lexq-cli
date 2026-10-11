@@ -81,7 +81,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'Update Fact Definition',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Only the fields you send are changed. System facts accept name, description, and PII only.',
+        'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Rules in deleted groups do not count. Only the fields you send are changed. System facts accept name, description, and PII only.',
       inputSchema: z.object({
         factId: z.string().uuid().describe('Fact definition ID'),
         name: z.string().optional().describe('Display name'),
@@ -90,7 +90,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
           .enum(VALUE_TYPES)
           .optional()
           .describe(
-            'Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule references the fact.',
+            'Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule outside a deleted group references the fact.',
           ),
         isRequired: z.boolean().optional().describe('Required flag'),
         isPii: z
@@ -123,7 +123,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'Delete Fact Definition',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Remove the references first.',
+        'Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Rules in deleted groups do not count. Remove the references first.',
       inputSchema: z.object({
         factId: z.string().uuid().describe('Fact definition ID'),
       }),

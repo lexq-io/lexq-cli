@@ -76,7 +76,7 @@ export interface CreateFactRequest {
 export interface UpdateFactRequest {
   name?: string;
   description?: string;
-  /** Omit to leave unchanged. Changing it fails while any rule references the fact. */
+  /** Omit to leave unchanged. Changing it fails while any rule outside a deleted group references the fact. */
   type?: ValueType;
   isRequired?: boolean;
   isPii?: boolean;

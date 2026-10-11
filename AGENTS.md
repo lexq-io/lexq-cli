@@ -5,7 +5,7 @@
 ## What is this?
 
 LexQ CLI (`@lexq/cli`, binary: `lexq`) manages a policy execution engine. Policies are business rules (if-then) that
-evaluate input facts and produce actions (discounts, blocks, notifications, etc.).
+evaluate input facts and produce actions: change a number such as a discount, set a fact, or record a rejection.
 
 The CLI also doubles as an **MCP server** — run `lexq serve --mcp` to expose the full command inventory as MCP tools to
 any MCP-compatible AI client.
@@ -106,7 +106,7 @@ lexq deploy live --group-id $GID --version-id $VID --memo "Initial deploy"
 
 ## Example: Subscribe to Deployment Notifications
 
-Webhook subscriptions fire on platform events — separate from rule-level webhooks.
+Webhook subscriptions fire on deployment lifecycle events.
 
 ```bash
 # Subscribe to Slack for deployment events

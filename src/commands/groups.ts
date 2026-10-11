@@ -26,24 +26,25 @@ export function registerGroupCommands(program: Command): void {
         It controls deployment lifecycle, conflict resolution, and A/B testing.
 
         Commands:
-          list        List all policy groups
+          list        List policy groups (deleted groups are not included)
           get         Get group detail by ID
           create      Create a new group
           update      Update group settings
-          reorder     Change group priorities (drag & drag equivalent)
+          reorder     Change group priorities (drag & drop equivalent)
           delete      Archive a group
           ab-test     Manage A/B tests (start, stop, adjust)
 
-        Statuses: ACTIVE, DISABLED, ARCHIVED (soft delete)
+        Statuses: ACTIVE, DISABLED, ARCHIVED
           DISABLED stops production execution (403 P-009) and keeps the deployed version and any A/B test.
           Dry run, simulation, and replay still work. Set ACTIVE to resume.
+          ARCHIVED means deleted. Only 'lexq groups delete' sets it, and it cannot be undone.
       `,
     );
 
   // ── list ──
   groups
     .command('list')
-    .description('List all policy groups')
+    .description('List policy groups (deleted groups are not included)')
     .action(async () => {
       try {
         const globalOpts = program.opts();
@@ -160,6 +161,7 @@ export function registerGroupCommands(program: Command): void {
           $ lexq groups update --id <groupId> --json '{"description": "Updated", "status": "DISABLED"}'
 
         All fields are optional — only provided fields are updated. priority is not settable here — use 'lexq groups reorder'.
+        A deleted group cannot be updated (409 P-059).
       `,
     )
     .action(async (opts) => {
@@ -190,7 +192,15 @@ export function registerGroupCommands(program: Command): void {
       'after',
       dedent`
 
-        This archives the group (soft delete). Use --force to skip the confirmation prompt.
+        A deployed group cannot be deleted (P-020). Undeploy it first, which also ends a running A/B test.
+
+        A deleted group no longer appears in 'lexq groups list', and its name can be reused right away.
+        It cannot be restored, and calls that change it (settings, versions, rules, starting an A/B
+        test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever
+        executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted
+        after 30 days.
+
+        Use --force to skip the confirmation prompt.
       `,
     )
     .action(async (opts) => {

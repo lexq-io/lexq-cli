@@ -6,6 +6,7 @@ import { paginationParams } from './_shared';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
+import { DEFAULT_SIMULATION_RECORDS, MAX_SIMULATION_RECORDS } from '@/types/constants';
 
 export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
   // ── Dry Run ──
@@ -106,7 +107,8 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)
           MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)
 
-        options.maxRecords: number (max 100000, default 10000)
+        options.maxRecords: number (max ${MAX_SIMULATION_RECORDS}). When omitted, HISTORICAL and UPLOADED run at
+          most ${DEFAULT_SIMULATION_RECORDS} records and MANUAL runs every record sent.
         options.baselinePolicyVersionId: uuid (optional, for baseline comparison)
         options.includeRuleStats: boolean
         options.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass

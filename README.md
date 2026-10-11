@@ -48,7 +48,7 @@ Requires **Node.js 22+**.
 ```bash
 # 1. Authenticate
 lexq auth login
-# Enter your API key (create one at console.lexq.io → Management → API Keys)
+# Enter your API key (create one with the Manage scope at console.lexq.io → Management → API Keys)
 
 # 2. Verify
 lexq auth whoami

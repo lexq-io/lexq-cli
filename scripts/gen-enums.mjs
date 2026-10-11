@@ -59,6 +59,8 @@ const CONSTANTS = [
   'PolicyGroup.MIN_TRAFFIC_RATE',
   'PolicyGroup.MAX_TRAFFIC_RATE',
   'ReplayJobService.REPLAY_WINDOW_MAX_RECORDS',
+  'AnalyticsService.DEFAULT_SIMULATION_RECORDS',
+  'AnalyticsService.MAX_SIMULATION_RECORDS',
   'DeterministicSampler.PROFILE_SAMPLE_PERMILLE',
   'LatencyWindowFlusher.LATENCY_WINDOW_MILLIS',
   'QuantileDisplayGate.TAIL_MIN_OBS',

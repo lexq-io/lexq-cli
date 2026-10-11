@@ -3,6 +3,7 @@ import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
+import { PlatformEventType } from '@/types/enums';
 import type {
   WebhookSubscriptionResponse,
   WebhookSubscriptionTestResponse,
@@ -16,8 +17,8 @@ export function registerWebhookSubscriptionCommands(program: Command): void {
       'after',
       dedent`
 
-        Receive notifications when deployment lifecycle events occur
-        (publish, deploy, rollback, undeploy).
+        Receive notifications for deployment lifecycle events: publish, deploy, rollback, and
+        undeploy, plus a deployment being scheduled or a schedule being canceled.
 
         Commands:
           list      List all webhook subscriptions
@@ -26,8 +27,8 @@ export function registerWebhookSubscriptionCommands(program: Command): void {
           delete    Delete a subscription
           test      Send a test event to verify connectivity
 
-        This is separate from Integrations (rule action webhooks).
-        Webhook subscriptions are for platform-level event notifications.
+        Rule actions never call external systems. These subscriptions are how LexQ pushes deployment
+        events to you.
       `,
     );
 
@@ -132,7 +133,7 @@ export function registerWebhookSubscriptionCommands(program: Command): void {
         Fields:
           name                string      Subscription name (required, unique per tenant)
           webhookUrl          string      Webhook endpoint URL (required)
-          subscribedEvents    string[]    VERSION_PUBLISHED, DEPLOYED, ROLLED_BACK, UNDEPLOYED
+          subscribedEvents    string[]    ${PlatformEventType.join(', ')}
           payloadFormat       string      GENERIC (full JSON) or SLACK ({"text":"..."})  [default: GENERIC]
           secret              string      HMAC-SHA256 signing secret (optional)
           isActive            boolean     Enable/disable (optional)  [default: true]

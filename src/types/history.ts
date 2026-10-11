@@ -20,7 +20,7 @@ export interface ExecutionHistorySummary {
   latencyMs: number;
   clientIp: string | null;
   errorCode: string | null;
-  createdAt: string;
+  executedAt: string;
 }
 
 // ══════════════════════════════════════════
@@ -33,6 +33,7 @@ export interface ExecutionHistoryDetail extends ExecutionHistorySummary {
   requestFactsHash: string | null;
   resultTraces: ExecutionTrace[];
   decisionTraces: DecisionTrace[];
+  createdAt: string;
 }
 
 // ══════════════════════════════════════════
