@@ -3,6 +3,7 @@ import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import {
+  groupLabel,
   printJson,
   printTable,
   printError,
@@ -265,7 +266,7 @@ export function registerDeployCommands(program: Command): void {
             data.content.map((d) => [
               d.id.substring(0, 8),
               d.deploymentType,
-              d.policyGroupName,
+              groupLabel(d.policyGroupName, d.policyGroupArchivedAt),
               d.versionNo != null ? `v${d.versionNo}` : '–',
               d.deployedByName,
               utcMinute(d.deployedAt),
@@ -546,7 +547,11 @@ export function registerDeployCommands(program: Command): void {
             ['Status', 'Group', 'Version', 'Scheduled For', 'By', 'Result'],
             data.content.map((s) => [
               s.status,
-              s.policyGroupName ?? s.policyGroupId.substring(0, 8),
+              groupLabel(
+                s.policyGroupName,
+                s.policyGroupArchivedAt,
+                s.policyGroupId.substring(0, 8),
+              ),
               s.versionNo != null ? `v${s.versionNo}` : '–',
               utcMinute(s.scheduledFor),
               s.scheduledByName,

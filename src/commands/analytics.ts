@@ -5,7 +5,7 @@ import { apiRequest } from '@/lib/api-client';
 import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
-import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
+import { groupLabel, printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
   DatasetUploadResponse,
   DryRunCompareResponse,
@@ -433,7 +433,7 @@ export function registerAnalyticsCommands(program: Command): void {
             ['ID', 'Group', 'Target', 'Status', 'Match', 'Records', 'Created'],
             data.content.map((s) => [
               s.simulationId.substring(0, 8),
-              s.policyGroupName,
+              groupLabel(s.policyGroupName, s.policyGroupArchivedAt),
               s.targetVersionName ?? '–',
               s.status,
               `${s.matchRate.toFixed(1)}%`,

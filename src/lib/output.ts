@@ -9,6 +9,20 @@ export function printJson(data: unknown): void {
   console.log(stringifyJson(data, 2));
 }
 
+/**
+ * Builds the group cell of a history table. Group names only have to be unique among groups
+ * that are not deleted, so a deleted group and a newer one can share a name. A deleted group's
+ * name gets a `(deleted)` prefix. Cells are truncated at the end, so the prefix stays.
+ */
+export function groupLabel(
+  name: string | null,
+  archivedAt: string | null | undefined,
+  fallback = '–',
+): string {
+  const label = name ?? fallback;
+  return archivedAt ? `(deleted) ${label}` : label;
+}
+
 export function printTable(
   headers: string[],
   rows: string[][],

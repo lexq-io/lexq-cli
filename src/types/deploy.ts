@@ -15,6 +15,8 @@ export interface DeploymentSummary {
   id: string;
   policyGroupId: string;
   policyGroupName: string;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   versionId: string;
   versionNo: number | null;
   previousVersionId: string | null;
@@ -34,6 +36,8 @@ export interface DeploymentDetail {
   id: string;
   policyGroupId: string;
   policyGroupName: string;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   versionId: string;
   versionNo: number;
   previousVersionId: string | null;
@@ -106,6 +110,8 @@ export interface DeploymentSchedule {
   id: string;
   policyGroupId: string;
   policyGroupName: string | null;
+  /** When the group was deleted, or `null` if it has not been. */
+  policyGroupArchivedAt: string | null;
   versionId: string;
   versionNo: number | null;
   scheduledFor: string;
