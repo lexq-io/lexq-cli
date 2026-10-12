@@ -31,7 +31,7 @@ export function registerFactCommands(program: Command): void {
           delete           Remove a fact definition
           action-metadata  Show action runtime fact metadata
 
-        Every tenant starts with four facts: userId and userTags, and the system facts
+        Every tenant starts with userId and userTags, and with the system facts
         isBlocked and blockReason, which only the BLOCK action writes.
       `,
     );
