@@ -280,7 +280,7 @@ pnpm enums:check                # Generated enums match the engine contract
 pnpm prose:check                # Numbers and code tables in prose match the contract
 pnpm ab-key:check               # Tool descriptions still name the A/B traffic key
 pnpm surface:check              # Nothing internal reached a public file
-pnpm registry:check             # server.json agrees with package.json
+pnpm registry:check             # server.json agrees with package.json and src/mcp/server-info.json
 pnpm schemas:check              # tools/list matches the recorded snapshot (needs a build)
 pnpm test:fact-key              # Fact key grammar
 pnpm test:decimals              # Metric precision display

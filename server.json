@@ -3,11 +3,19 @@
   "name": "io.lexq/lexq",
   "title": "LexQ",
   "description": "The Decision Operations Platform for engineering teams",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "websiteUrl": "https://lexq.io",
+  "icons": [
+    {
+      "src": "https://lexq.io/logo.png",
+      "mimeType": "image/png",
+      "sizes": ["1024x1024"]
+    }
+  ],
   "repository": {
     "url": "https://github.com/lexq-io/lexq-cli",
-    "source": "github"
+    "source": "github",
+    "id": "1184909199"
   },
   "remotes": [
     {
@@ -19,7 +27,7 @@
     {
       "registryType": "npm",
       "identifier": "@lexq/cli",
-      "version": "1.1.2",
+      "version": "1.1.3",
       "runtimeHint": "npx",
       "runtimeArguments": [{ "type": "named", "name": "-y" }],
       "packageArguments": [
