@@ -1,0 +1,12 @@
+{
+  "title": "LexQ",
+  "description": "The Decision Operations Platform for engineering teams",
+  "websiteUrl": "https://lexq.io",
+  "icons": [
+    {
+      "src": "https://lexq.io/logo.png",
+      "mimeType": "image/png",
+      "sizes": ["1024x1024"]
+    }
+  ]
+}

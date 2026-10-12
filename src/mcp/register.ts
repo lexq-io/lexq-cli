@@ -1,5 +1,6 @@
-import type { McpServer } from '@modelcontextprotocol/server';
+import type { Implementation, McpServer } from '@modelcontextprotocol/server';
 import type { CallApi } from './tools/_shared';
+import serverInfo from './server-info.json';
 
 import { registerStatusTools } from './tools/status';
 import { registerGroupTools } from './tools/groups';
@@ -38,6 +39,16 @@ export function registerAllTools(server: McpServer, callApi: CallApi): void {
   registerDomainTemplateTools(server, callApi);
   registerWebhookSubscriptionTools(server, callApi);
 }
+
+/**
+ * How the server introduces itself when a client connects: a title, a description and an
+ * icon the client can show, and a link to its website. A host serving these tools adds its
+ * own version.
+ *
+ * The values are kept in server-info.json rather than here because server.json lists them
+ * again for the MCP Registry, and `pnpm registry:check` has to read both without a build.
+ */
+export const SERVER_INFO: Omit<Implementation, 'version'> = { name: 'lexq', ...serverInfo };
 
 // Re-exports for external consumers (lexq-mcp)
 export type { CallApi, McpToolResult } from './tools/_shared';
