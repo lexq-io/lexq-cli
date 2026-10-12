@@ -114,11 +114,20 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           requires operand !== 0.
         - SET_FACT: { targetVar: string, value: string|number|boolean } targetVar must be a
           registered fact (ACT-032 otherwise). The request does not have to send it: SET_FACT is
-          the only action that can write a key absent from the input facts. MUTATE_FACT requires
+          the only action whose targetVar may be absent from the input facts. MUTATE_FACT requires
           its target to be present in the input facts.
         - BLOCK: { reason: string } Records a rejection decision. It does NOT halt rule execution —
           subsequent actions and subsequent winning rules still run. Enforcement is the caller's
-          responsibility; the decision surfaces as the isBlocked fact.
+          responsibility; the decision surfaces as isBlocked (true) and blockReason (from reason).
+          Only BLOCK writes those two keys: saving or publishing a rule whose SET_FACT or
+          MUTATE_FACT targets either one fails with ACT-033.
+
+        Evaluation order: every rule's condition is checked against the input facts before any
+        action runs, so a condition never sees a value an action writes in the same request. Then
+        the actions of the winning rules run in priority order. Each action works on the values
+        the actions before it left, in its own rule or an earlier one. To test a value an action
+        writes, send that value as an input fact in a second request. If a rule should run
+        whenever another one does, put its actions in that rule instead.
 
         RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,

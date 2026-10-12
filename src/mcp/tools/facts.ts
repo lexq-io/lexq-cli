@@ -81,7 +81,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'Update Fact Definition',
       annotations: { readOnlyHint: false, destructiveHint: true },
       description:
-        'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Rules in deleted groups do not count. Only the fields you send are changed. System facts accept name, description, and PII only.',
+        'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Rules in deleted groups do not count. Only the fields you send are changed. System facts (isBlocked, blockReason) accept changes to name, description, PII, and the value domain; isRequired is ignored, and their type cannot change (FD-003).',
       inputSchema: z.object({
         factId: z.string().uuid().describe('Fact definition ID'),
         name: z.string().optional().describe('Display name'),
@@ -137,7 +137,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'Get Action Runtime Fact Metadata',
       annotations: { readOnlyHint: true },
       description:
-        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. These facts must be sent in the request (P-015 otherwise), even when an earlier action in the same rule writes them. SET_FACT requires no input fact: it is the only action that can write a key the request did not send, and its targetVar must be a registered fact (ACT-032). Static data, safe to cache in-session.',
+        'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. These facts must be sent in the request (P-015 otherwise), even when an earlier action in the same rule writes them. SET_FACT requires no input fact: it is the only action whose targetVar the request does not have to send, and that targetVar must be a registered fact (ACT-032). Static data, safe to cache in-session.',
       inputSchema: z.object({}),
     },
     async () => callApi('GET', 'schema/action-metadata'),
