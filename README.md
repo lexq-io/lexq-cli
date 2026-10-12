@@ -1,7 +1,7 @@
 # LexQ CLI
 
 > **The Decision Operations Platform for engineering teams.**
-> CLI and MCP server for [LexQ](https://lexq.io) — move business rules out of
+> CLI and MCP server for [LexQ](https://lexq.io). Move business rules out of
 > your deploy pipeline, prove every change with Impact Simulation, and ship without
 > a git push.
 
@@ -14,20 +14,17 @@
 
 ## Why LexQ?
 
-Your business rules — pricing, promotions, fee logic, eligibility checks —
-change often. But every change ships through the same PR → review → staging
-→ deploy cycle as your core application code. A one-line discount rule
-takes two weeks.
+Your business rules, such as pricing, promotions, fee logic, and eligibility
+checks, change often. But every change ships through the same PR → review →
+staging → deploy cycle as your core application code, so even a small change
+waits for the next release.
 
-This is an architectural problem, not a process problem. Business logic
-that changes weekly shouldn't live in code that ships quarterly.
+**LexQ keeps those rules out of your code.** Your service calls the LexQ API to
+evaluate them. You change rules in a visual console or through this CLI, test
+each change with Impact Simulation against past executions or a dataset you
+upload, and deploy them without an application release.
 
-**LexQ separates the two.** Rules live outside your application. You change
-them in a visual console or through this CLI. You prove every change with
-Impact Simulation against real execution data. You deploy without touching
-your codebase.
-
-Every decision leaves a full audit trace.
+Every decision leaves a full audit trail.
 
 ## Install
 
@@ -67,19 +64,22 @@ lexq deploy publish --group-id <GROUP_ID> --version-id <VERSION_ID> --memo "v1"
 lexq deploy live --group-id <GROUP_ID> --version-id <VERSION_ID> --memo "Initial deploy"
 ```
 
-## For AI Agents — the Complete Partner API
+## For AI Agents
 
-LexQ is designed to be AI-native. The entire policy engine Partner API is
-exposed via Model Context Protocol. Claude, Cursor, and other MCP-compatible
-agents can create, simulate, and deploy rules autonomously, with human approval
-before production.
+Claude, Cursor, and other MCP-compatible agents can use the Model Context
+Protocol to manage policy groups, versions, rules, and facts, run simulations
+and replays, deploy versions, and read execution history.
 
-### Claude.ai (Cloud — no install)
+Approval happens in your MCP client, which decides which tool calls you confirm.
+The deploy, rollback, and undeploy tools are marked as destructive, so a client
+can ask you before running them.
 
-1. **Settings → Connectors → Add Custom Integration**
-2. Enter: `https://mcp.lexq.io`
-3. Sign in with your LexQ account and select an API key
-4. Done — the full toolset available in every conversation
+### Claude.ai (cloud, no install)
+
+1. **Customize → Connectors → + Add → Add custom connector**
+2. Name it, enter `https://mcp.lexq.io`, and choose **Sign in now**
+3. On the LexQ page that opens, sign in and generate a new API key for MCP, or choose **I already have an API key** and paste an existing one
+4. The tools are now available in every conversation
 
 ### Remote (Streamable HTTP)
 
@@ -170,8 +170,8 @@ keeps working.
 
 ## AI Agent Skills
 
-LexQ CLI ships with **AI Agent Skills** — structured documentation agents
-read to understand *how* to use the tools, not just *what* they are.
+LexQ CLI ships with **AI Agent Skills**: structured documentation that tells
+agents *how* to use each tool.
 
 ```
 skills/
@@ -242,9 +242,9 @@ Config is stored at `~/.lexq/config.json`:
 }
 ```
 
-The file holds an API key in plain text, so it is written `0600` inside a `0700` directory —
-readable by its owner and nobody else on the machine. An install created by an older version
-is repaired on the next save.
+The file holds an API key in plain text. It is saved with mode `0600` inside a `0700`
+directory, so only its owner can read it. If an older version created it with looser
+permissions, the CLI tightens them the next time it saves the file.
 
 ### Environment variables
 
