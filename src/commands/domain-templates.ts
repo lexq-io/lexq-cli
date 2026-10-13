@@ -27,7 +27,7 @@ export function registerDomainTemplateCommands(program: Command): void {
           apply     Apply a template to the current tenant
 
         Workflow: list → preview → apply
-        Currently available: ECOMMERCE  (FINTECH, SAAS — coming soon)
+        Run "list" to see every template and whether it can be applied.
       `,
     );
 
