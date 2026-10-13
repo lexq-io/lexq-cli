@@ -247,9 +247,13 @@ request didn't send" is `SET_FACT`'s job.
 
 ### `BLOCK` does not halt execution
 
-`BLOCK` records a rejection decision by writing the `isBlocked` fact. Subsequent actions in the
-same rule and subsequent winning rules still run. Enforcement is the caller's responsibility —
-read `isBlocked` from the response.
+`BLOCK` records a rejection decision by writing `isBlocked` (`true`) and `blockReason` (from
+`reason`). Subsequent actions in the same rule and subsequent winning rules still run.
+Enforcement is the caller's responsibility — read `isBlocked` from the response.
+
+Only `BLOCK` writes those two keys. Saving or publishing a rule whose `SET_FACT` or
+`MUTATE_FACT` targets either one fails with `ACT-033`. No condition sees what `BLOCK` writes
+in the same request: every condition is checked against the input facts before any action runs.
 
 ### Action Example: 10% Discount via MUTATE_FACT
 

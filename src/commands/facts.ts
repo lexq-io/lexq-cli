@@ -31,7 +31,8 @@ export function registerFactCommands(program: Command): void {
           delete           Remove a fact definition
           action-metadata  Show action runtime fact metadata
 
-        System facts (userId, userTags) are auto-created.
+        Every tenant starts with userId and userTags, and with the system facts
+        isBlocked and blockReason, which only the BLOCK action writes.
       `,
     );
 
@@ -228,7 +229,8 @@ export function registerFactCommands(program: Command): void {
       'after',
       dedent`
 
-        System facts accept name, description, and the PII flag only.
+        System facts (isBlocked, blockReason) accept changes to name, description, the PII flag,
+        and the value domain. --required is ignored, and the type cannot change (FD-003).
 
         Examples:
           $ lexq facts update --id <factId> --name "Updated Name" --required
