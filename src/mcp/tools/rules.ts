@@ -116,9 +116,10 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
           registered fact (ACT-032 otherwise). The request does not have to send it: SET_FACT is
           the only action whose targetVar may be absent from the input facts. MUTATE_FACT requires
           its target to be present in the input facts.
-        - BLOCK: { reason: string } Records a rejection decision. It does NOT halt rule execution —
+        - BLOCK: { reason?: string } Records a rejection decision. It does NOT halt rule execution —
           subsequent actions and subsequent winning rules still run. Enforcement is the caller's
-          responsibility; the decision surfaces as isBlocked (true) and blockReason (from reason).
+          responsibility; the decision surfaces as isBlocked (true) and blockReason (reason, or
+          "Policy Violation" when omitted).
           Only BLOCK writes those two keys: saving or publishing a rule whose SET_FACT or
           MUTATE_FACT targets either one fails with ACT-033.
 

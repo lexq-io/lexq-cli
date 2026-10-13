@@ -164,7 +164,7 @@ export function registerRuleCommands(program: Command): void {
         Action Types:
           MUTATE_FACT   { targetVar, operator, method, operand, refVar?, rounding? }
           SET_FACT      { targetVar, value }
-          BLOCK         { reason }
+          BLOCK         { reason? }
 
           refVar is the percentage base and is optional — omit to use targetVar itself.
           It is only valid in PERCENTAGE × {ASSIGN, ADD, SUB}.
