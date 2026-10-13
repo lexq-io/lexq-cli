@@ -182,7 +182,7 @@ Each rule can have multiple actions. Actions fire sequentially.
 |---------------|--------------------------------------------|----------------------------------------------------------------------|
 | `MUTATE_FACT` | Arithmetic change to a numeric fact        | `targetVar`, `operator`, `method`, `operand`, `refVar?`, `rounding?` |
 | `SET_FACT`    | Assign a literal value to a registered fact | `targetVar`, `value`                                                |
-| `BLOCK`       | Record a rejection decision                | `reason`                                                             |
+| `BLOCK`       | Record a rejection decision                | `reason?`                                                            |
 
 ### `MUTATE_FACT` parameters
 
@@ -247,9 +247,9 @@ request didn't send" is `SET_FACT`'s job.
 
 ### `BLOCK` does not halt execution
 
-`BLOCK` records a rejection decision by writing `isBlocked` (`true`) and `blockReason` (from
-`reason`). Subsequent actions in the same rule and subsequent winning rules still run.
-Enforcement is the caller's responsibility — read `isBlocked` from the response.
+`BLOCK` records a rejection decision by writing `isBlocked` (`true`) and `blockReason` (`reason`,
+or `Policy Violation` when omitted). Subsequent actions in the same rule and subsequent winning
+rules still run. Enforcement is the caller's responsibility — read `isBlocked` from the response.
 
 Only `BLOCK` writes those two keys. Saving or publishing a rule whose `SET_FACT` or
 `MUTATE_FACT` targets either one fails with `ACT-033`. No condition sees what `BLOCK` writes
