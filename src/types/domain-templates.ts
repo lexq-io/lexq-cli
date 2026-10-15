@@ -61,7 +61,7 @@ export interface ApplyPlan {
 
 /**
  * A key this tenant already has with a different type, or with different allowed values or a
- * different range on an input fact. Apply keeps the existing definition.
+ * different range on an input fact. Apply fails with P-061 while any exists.
  */
 export interface FactConflict {
   key: string;

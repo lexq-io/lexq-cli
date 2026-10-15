@@ -21,7 +21,7 @@ export function registerDomainTemplateTools(server: McpServer, callApi: CallApi)
       title: 'Preview Domain Template',
       annotations: { readOnlyHint: true },
       description:
-        'Preview exactly what a domain template will provision before applying it: the fact definitions it registers (inputs carry their allowed values or ranges), the sample rules it creates with a description of each, and an apply plan. This is a read-only dry run; nothing is created. factConflicts lists keys this tenant already has with a different type, or with different allowed values or a different range on an input fact. Apply skips those keys and keeps the existing definition. Where the type differs, simulations check records against the existing type. A template rule whose condition operator does not fit that type, such as a greater-than on a STRING, is still created. Updating that rule with a condition that still does not fit fails with P-048. An update that leaves out the condition is saved as usual. Where the allowed values or range differ, requests are checked against the existing ones, and updating a rule with a condition value outside them fails with P-051. plan is null for a template that cannot be applied yet.',
+        'Preview exactly what a domain template will provision before applying it: the fact definitions it registers (inputs carry their allowed values or ranges), the sample rules it creates with a description of each, and an apply plan. This is a read-only dry run; nothing is created. factConflicts lists keys this tenant already has with a different type, or with different allowed values or a different range on an input fact. While it is not empty, apply fails with P-061 and creates nothing: delete those facts or change them to match the template, then apply. plan is null for a template that cannot be applied yet.',
       inputSchema: z.object({
         template: z
           .string()
@@ -39,7 +39,7 @@ export function registerDomainTemplateTools(server: McpServer, callApi: CallApi)
       title: 'Apply Domain Template',
       annotations: { readOnlyHint: false, destructiveHint: false },
       description:
-        "Apply a domain template to the current tenant. Creates the template's fact definitions and a new policy group pre-populated with its sample rules as a DRAFT version. Facts whose keys already exist are skipped, so apply never overwrites existing schema. Run lexq_domain_templates_preview first to review what will be created and whether any key conflicts. A template whose isAvailable is false cannot be applied.",
+        "Apply a domain template to the current tenant. Creates the template's fact definitions and a new policy group pre-populated with its sample rules as a DRAFT version. Apply never overwrites existing schema: a key that already exists with the same definition is kept as it is. Run lexq_domain_templates_preview first. If its factConflicts is not empty, apply fails with P-061 and creates nothing until those facts are deleted or changed to match the template. A template whose isAvailable is false cannot be applied.",
       inputSchema: z.object({
         template: z.string().describe('Domain template key to apply (e.g. ECOMMERCE).'),
         customName: z
