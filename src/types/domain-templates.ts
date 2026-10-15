@@ -1,3 +1,5 @@
+import type { ValueDomain } from './facts';
+
 // ══════════════════════════════════════════
 // Response
 // ══════════════════════════════════════════
@@ -19,6 +21,11 @@ export interface TemplateFactSpec {
   type: string;
   description: string;
   isRequired: boolean;
+  /**
+   * Allowed values or range for an input fact. `null` when there is no constraint: facts the
+   * rules write, BOOLEAN inputs, and inputs that take any value.
+   */
+  valueDomain: ValueDomain | null;
 }
 
 /**
@@ -29,7 +36,11 @@ export interface TemplateFactSpec {
  * condition-tree type — narrowing it here would be unused precision.
  */
 export interface TemplateRuleSpec {
+  /** Names the rule within the template. The created rule does not store it. */
+  key: string;
   name: string;
+  /** Why the rule exists. Shown in the preview only; created rules have no description. */
+  description: string;
   priority: number;
   condition: unknown;
   actions: Array<{ type: string; parameters: Record<string, unknown> }>;
@@ -43,14 +54,28 @@ export interface TemplateRuleSpec {
 export interface ApplyPlan {
   template: string;
   facts: TemplateFactSpec[];
-  policyGroup: { name: string; description: string; priority: number };
+  policyGroup: { name: string; description: string };
   policyVersion: { versionNo: number; commitMessage: string };
   rules: TemplateRuleSpec[];
 }
 
+/**
+ * A key this tenant already has with a different type, or with different allowed values or a
+ * different range on an input fact. Apply fails with P-061 while any exists.
+ */
+export interface FactConflict {
+  key: string;
+  existingType: string;
+  templateType: string;
+  existingValueDomain: ValueDomain | null;
+  templateValueDomain: ValueDomain | null;
+}
+
 export interface DomainTemplatePreviewResponse {
   preview: DomainTemplateSummary;
-  plan: ApplyPlan;
+  /** `null` for a template that cannot be applied yet. */
+  plan: ApplyPlan | null;
+  factConflicts: FactConflict[];
 }
 
 /** Result of applying a template — IDs of the resources that were created. */

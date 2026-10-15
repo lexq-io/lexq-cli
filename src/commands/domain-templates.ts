@@ -27,7 +27,7 @@ export function registerDomainTemplateCommands(program: Command): void {
           apply     Apply a template to the current tenant
 
         Workflow: list → preview → apply
-        Currently available: ECOMMERCE  (FINTECH, SAAS — coming soon)
+        Run "list" to see every template and whether it can be applied.
       `,
     );
 
@@ -116,10 +116,12 @@ export function registerDomainTemplateCommands(program: Command): void {
       dedent`
 
         Creates the template's fact definitions and a new DRAFT policy group
-        populated with its sample rules. Existing facts are skipped — apply is
-        additive and never overwrites your schema.
+        populated with its sample rules. A fact that already exists with the
+        same definition is kept as it is, so apply never overwrites your schema.
 
-        Run "preview" first to review what will be created.
+        Run "preview" first to review what will be created. If it lists
+        factConflicts, apply fails with P-061 and creates nothing: delete those
+        facts or change them to match the template first.
 
         Example:
           $ lexq domain-templates apply --template ECOMMERCE
