@@ -21,7 +21,7 @@ export function registerDomainTemplateTools(server: McpServer, callApi: CallApi)
       title: 'Preview Domain Template',
       annotations: { readOnlyHint: true },
       description:
-        'Preview exactly what a domain template will provision before applying it: the fact definitions it registers (inputs carry their allowed values or ranges), the sample rules it creates with a description of each, and an apply plan. This is a read-only dry run; nothing is created. factConflicts lists keys this tenant already has with a different type, or with different allowed values or a different range on an input fact. While it is not empty, apply fails with P-061 and creates nothing: delete those facts or change them to match the template, then apply. plan is null for a template that cannot be applied yet.',
+        'Preview exactly what a domain template will provision before applying it: the fact definitions it registers (an input with a constraint carries its allowed values or range), the sample rules it creates with a description of each, and an apply plan. This is a read-only dry run; nothing is created. factConflicts lists keys this tenant already has with a different type, or with different allowed values or a different range on an input fact. While it is not empty, apply fails with P-061 and creates nothing: delete those facts or change them to match the template, then apply. plan is null for a template that cannot be applied yet.',
       inputSchema: z.object({
         template: z
           .string()
