@@ -1,6 +1,7 @@
 import { type Command } from 'commander';
 import dedent from 'dedent';
-import { apiRequest } from '@/lib/api-client';
+import { apiRequest, apiRequestWithMeta } from '@/lib/api-client';
+import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
 import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -240,8 +241,9 @@ export function registerFactCommands(program: Command): void {
         Only the flags you pass are changed. Leaving out --allowed-values, --min, and --max
         leaves the constraint alone; --clear-value-domain removes it.
 
-        Narrowing a constraint does not rewrite rules that already reference this fact. They keep
-        working, and the next time one is saved it is judged against the new constraint.
+        Narrowing a constraint never blocks the update and does not rewrite rules. When rules compare
+        this fact with a value the new constraint excludes, a warning on stderr lists them by version:
+        drafts and the versions currently deployed.
 
         Pass --type when the accepted values are numbers and you are not also naming the type,
         so "10" is sent as a number rather than a string. --json settles it either way.
@@ -254,14 +256,21 @@ export function registerFactCommands(program: Command): void {
           ? (JSON.parse(opts.json) as UpdateFactRequest)
           : buildUpdateBody(opts);
 
-        const data = await apiRequest<FactSchemaResponse>('PUT', `schema/facts/${opts.id}`, {
-          apiKey: globalOpts.apiKey,
-          baseUrl: globalOpts.baseUrl,
-          dryRun: globalOpts.dryRun,
-          verbose: globalOpts.verbose,
-          body,
-        });
+        const { data, meta } = await apiRequestWithMeta<FactSchemaResponse>(
+          'PUT',
+          `schema/facts/${opts.id}`,
+          {
+            apiKey: globalOpts.apiKey,
+            baseUrl: globalOpts.baseUrl,
+            dryRun: globalOpts.dryRun,
+            verbose: globalOpts.verbose,
+            body,
+          },
+        );
         printJson(data);
+        // stderr, so piping the JSON on stdout still works.
+        const warning = formatValueDomainMismatchWarning(meta);
+        if (warning) console.error(`\n${warning}\n`);
       } catch (error) {
         printError(error);
         process.exit(1);

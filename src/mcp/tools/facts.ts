@@ -110,7 +110,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
           })
           .optional()
           .describe(
-            'Which values this fact accepts. Three states: omit the field to leave the constraint alone, send {} to remove it, or send a populated object to replace it. Narrowing it does not rewrite rules that already reference this fact — they keep working, and the next save is judged against the new constraint.',
+            'Which values this fact accepts. Three states: omit the field to leave the constraint alone, send {} to remove it, or send a populated object to replace it. Narrowing it never blocks the update and does not rewrite rules. When rules compare this fact with a value the new constraint excludes, the result ends with a warning that lists them by version: drafts and the versions currently deployed.',
           ),
       }),
     },

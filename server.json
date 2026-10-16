@@ -3,7 +3,7 @@
   "name": "io.lexq/lexq",
   "title": "LexQ",
   "description": "The Decision Operations Platform for engineering teams",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "websiteUrl": "https://lexq.io",
   "icons": [
     {
@@ -27,7 +27,7 @@
     {
       "registryType": "npm",
       "identifier": "@lexq/cli",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "runtimeHint": "npx",
       "runtimeArguments": [{ "type": "named", "name": "-y" }],
       "packageArguments": [
