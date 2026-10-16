@@ -1,6 +1,7 @@
 import { apiRequestWithMeta, type ApiClientOptions } from '@/lib/api-client';
 import { loadConfig } from '@/lib/config';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
+import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
 import type { ResponseMeta } from '@/types/api';
 
 export interface McpToolResult {
@@ -87,6 +88,8 @@ export function createCallApiFromConfig(): CallApi {
       ];
       const warning = formatUnregisteredFactWarning(meta);
       if (warning) content.push({ type: 'text', text: warning });
+      const domainWarning = formatValueDomainMismatchWarning(meta);
+      if (domainWarning) content.push({ type: 'text', text: domainWarning });
       return { content };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

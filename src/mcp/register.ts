@@ -53,6 +53,7 @@ export const SERVER_INFO: Omit<Implementation, 'version'> = { name: 'lexq', ...s
 // Re-exports for external consumers (lexq-mcp)
 export type { CallApi, McpToolResult } from './tools/_shared';
 export { paginationParams, formatUnregisteredFactWarning } from './tools/_shared';
+export { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
 export { ApiError } from '@/lib/api-client';
 
 /**
