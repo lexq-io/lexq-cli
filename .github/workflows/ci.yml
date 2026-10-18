@@ -95,3 +95,6 @@ jobs:
 
       - name: Value domain flags
         run: node tests/value-domain.mjs
+
+      - name: Fact update flags
+        run: node tests/fact-update.mjs

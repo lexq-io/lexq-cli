@@ -214,7 +214,7 @@ export function registerFactCommands(program: Command): void {
     .description('Update a fact definition')
     .requiredOption('--id <factId>', 'Fact definition ID')
     .option('--name <n>', 'Display name')
-    .option('--description <desc>', 'Description')
+    .option('--description <desc>', 'Description (pass "" to remove it)')
     .option('--required', 'Mark as required')
     .option('--no-required', 'Mark as not required')
     .option('--pii', 'Mark as PII (enables masking)')
@@ -401,7 +401,7 @@ function buildUpdateBody(opts: Record<string, string | boolean | undefined>): Up
   if (opts.description !== undefined) body.description = opts.description as string;
   if (opts.type) body.type = opts.type as UpdateFactRequest['type'];
   if (typeof opts.required === 'boolean') body.isRequired = opts.required;
-  if (typeof opts.isPii === 'boolean') body.isPii = opts.isPii;
+  if (typeof opts.pii === 'boolean') body.isPii = opts.pii;
 
   if (opts.clearValueDomain === true) {
     if (hasDomainFlag(opts)) {

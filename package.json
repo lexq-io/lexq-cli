@@ -43,6 +43,7 @@
     "test:export-format": "node tests/export-format.mjs",
     "test:command-options": "node tests/command-options.mjs",
     "test:value-domain": "pnpm build && node tests/value-domain.mjs",
+    "test:fact-update": "pnpm build && node tests/fact-update.mjs",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.ts\"",
