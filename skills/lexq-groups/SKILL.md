@@ -220,8 +220,9 @@ lexq groups ab-test start --group-id <groupId> --version-id <activeVersionId> --
 
 `--traffic-rate` is the percentage (1–99) of traffic routed to the test version.
 
-The test version must be `ACTIVE` (published) and different from the live version. Starting a test cancels any pending
-scheduled deployment for the group.
+The test version must be a version of the same group, `ACTIVE` (published), and different from the live version. A
+version from another group is rejected with `P-016`. Starting a test cancels any pending scheduled deployment for the
+group.
 
 ### Adjust Traffic
 

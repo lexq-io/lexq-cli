@@ -167,11 +167,16 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
       annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. ' +
+        'The challenger must be a published version of the same group; a version from another ' +
+        'group is rejected with P-016. ' +
         'The split is computed from context.trafficKey on each execution request; requests that ' +
         'omit it never reach the challenger and the test stays at 0%.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
-        testVersionId: z.string().uuid().describe('Challenger version ID to test'),
+        testVersionId: z
+          .string()
+          .uuid()
+          .describe('Challenger version ID. Must be a published version of this group'),
         trafficRate: z
           .number()
           .int()
