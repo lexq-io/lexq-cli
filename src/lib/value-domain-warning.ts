@@ -3,7 +3,7 @@ import type { ResponseMeta, ValueDomainMismatchVersion } from '@/types/api';
 
 /**
  * Builds the warning text for meta.valueDomainMismatch, which a fact update returns when its new
- * value constraint excludes values that existing rules compare against. Returns null when the
+ * value domain excludes values that existing rules compare against. Returns null when the
  * response carries none.
  *
  * The CLI and the MCP server print the same text: `lexq facts update` writes it to stderr and the
@@ -11,23 +11,26 @@ import type { ResponseMeta, ValueDomainMismatchVersion } from '@/types/api';
  * that hosts these tools can append it too. The ids are included so an agent can go straight to
  * the rule.
  *
- * The advice depends on the version. A draft picks up the new constraint when it is published.
- * A deployed version keeps the fact definitions captured when it was published, so live calls are
- * unchanged, but a version cloned from it carries the rule. Values are printed as the rule holds
- * them; this text does not judge whether a condition became always true or always false.
+ * The advice depends on the version. A draft is checked against the new value domain already: its
+ * dry runs reject these values now, and live calls will too once it is published and deployed. A
+ * deployed version keeps the fact definitions captured when it was published, so calls to it are
+ * unaffected, but a version cloned from it carries the rule. Values are printed as the rule holds
+ * them; this text does not judge whether a condition became always true or always false, so it
+ * does not say whether to change a value or remove the condition.
  *
- * Group and rule names are written by users, so they are printed as JSON strings: quoted, with
- * control characters escaped. A name cannot emit terminal escape sequences, break the layout
- * with a newline, or pass as part of the warning an agent reads.
+ * Group and rule names and condition values are written by users, so they are printed as JSON
+ * strings with control characters (C0 and C1), line and paragraph separators, and text-direction
+ * controls escaped. They cannot drive the terminal, break the layout with a new line, reorder the
+ * text around them, or pass as part of the warning an agent reads.
  */
 export function formatValueDomainMismatchWarning(meta: unknown): string | null {
   const mismatch = (meta as ResponseMeta | null | undefined)?.valueDomainMismatch;
-  if (!mismatch || mismatch.versions.length === 0) return null;
+  if (!mismatch || !Array.isArray(mismatch.versions) || mismatch.versions.length === 0) return null;
 
   const n = mismatch.totalRuleCount;
   const subject = n === 1 ? '1 rule compares' : `${n} rules compare`;
   const lines = [
-    `⚠ ${subject} ${mismatch.factKey} with values the new constraint does not accept. The update was still saved.`,
+    `⚠ ${subject} ${mismatch.factKey} with values the new value domain does not accept. The update was still saved.`,
   ];
   for (const version of mismatch.versions) {
     lines.push(...versionLines(mismatch.factKey, version));
@@ -40,12 +43,15 @@ function versionLines(factKey: string, version: ValueDomainMismatchVersion): str
   const lines = [
     `  ${quoted(version.groupName)} v${version.versionNo}, ${draft ? 'draft' : 'deployed'} (groupId ${version.groupId}, versionId ${version.versionId})`,
     draft
-      ? '    Once published, it rejects calls that send these values (P-052), so these conditions no longer work as written. Saving one of these rules again requires a value the constraint accepts (P-051).'
-      : '    It keeps running on the fact definitions captured when it was published, so live calls are unchanged. A version cloned from it carries these rules; fix them in the clone before publishing it.',
+      ? '    Dry runs of this draft already reject calls that send these values (P-052), and live calls will too once it is published and deployed. Saving one of these rules again is refused (P-051) until each listed condition is edited or removed; first check whether each one is still needed.'
+      : '    Calls to it are checked against the fact definitions captured when it was published, so this change does not affect them. A version cloned from it carries these rules; fix them in the clone before publishing it.',
   ];
   for (const rule of version.rules) {
     const conditions = rule.conditions
-      .map((c) => `${factKey} ${c.operator} ${stringifyJson(c.value) ?? String(c.value)}`)
+      .map(
+        (c) =>
+          `${factKey} ${c.operator} ${escapeUnsafe(stringifyJson(c.value) ?? String(c.value))}`,
+      )
       .join('; ');
     lines.push(`    • ${quoted(rule.ruleName)} (ruleId ${rule.ruleId}): ${conditions}`);
   }
@@ -58,5 +64,17 @@ function versionLines(factKey: string, version: ValueDomainMismatchVersion): str
 
 /** A user-written name as a JSON string literal. */
 function quoted(name: string): string {
-  return stringifyJson(String(name)) ?? '""';
+  return escapeUnsafe(stringifyJson(String(name)) ?? '""');
+}
+
+/**
+ * Characters JSON.stringify leaves in place that a terminal or a text renderer still acts on: DEL
+ * and the C1 controls (U+009B starts a control sequence like ESC [), the line and paragraph
+ * separators, and the text-direction marks, embeddings, overrides and isolates.
+ */
+const UNSAFE = /[\u007f-\u009f\u061c\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069]/g;
+
+/** Escapes UNSAFE inside JSON text. The result is still the same JSON value. */
+function escapeUnsafe(json: string): string {
+  return json.replace(UNSAFE, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }

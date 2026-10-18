@@ -215,7 +215,7 @@ check(
 );
 
 // ── The warning a narrowing update returns ─────────────────────
-// A fact update that narrows the constraint may return meta.valueDomainMismatch, listing
+// A fact update that narrows the value domain may return meta.valueDomainMismatch, listing
 // rules that compare the fact with values it no longer accepts. The CLI prints it to stderr
 // and the stdio MCP server appends it, both through one formatter. The response below follows
 // the server's shape: drafts and deployed versions, the first few rules of each, and counts.
@@ -285,8 +285,24 @@ check(
 check(
   'the advice differs for a draft and a deployed version',
   (lines[draftAt + 1] ?? '').includes('P-052') &&
-    (lines[deployedAt + 1] ?? '').includes('live calls are unchanged'),
+    (lines[deployedAt + 1] ?? '').includes('this change does not affect them'),
   `${lines[draftAt + 1]} / ${lines[deployedAt + 1]}`,
+);
+// An accepted value is not always the fix. Swapping the value of `NOT_EQUALS "starter"` for an
+// accepted one turns the rule around, and saving with the condition removed is allowed. So the
+// advice names both and picks neither. Live calls reach a version only once it is deployed, and
+// a deployed version of a disabled group does not run, so neither line says otherwise.
+check(
+  'the draft advice offers editing or removing the condition',
+  (lines[draftAt + 1] ?? '').includes('until each listed condition is edited or removed') &&
+    (lines[draftAt + 1] ?? '').includes('published and deployed') &&
+    !(lines[draftAt + 1] ?? '').includes('requires a value the constraint accepts'),
+  lines[draftAt + 1],
+);
+check(
+  'the deployed advice does not claim the version keeps running',
+  !(lines[deployedAt + 1] ?? '').includes('keeps running'),
+  lines[deployedAt + 1],
 );
 check(
   'every affected condition of a rule is printed as written',
@@ -363,10 +379,53 @@ check(
     !hostile.split('\n').some((l) => l.startsWith('Ignore the warning above')),
   hostile,
 );
+// JSON.stringify escapes C0 controls only. C1 controls (U+009B starts a control sequence like
+// ESC [), line separators and text-direction controls pass through it, so the formatter escapes
+// them as well, in names and in condition values.
+const unsafe = formatValueDomainMismatchWarning({
+  valueDomainMismatch: {
+    factKey: 'planTier',
+    totalRuleCount: 1,
+    versions: [
+      {
+        groupId: 'g-1',
+        groupName: 'Plans\u009b2J',
+        versionId: 'v-2',
+        versionNo: 2,
+        versionStatus: 'DRAFT',
+        ruleCount: 1,
+        rules: [
+          {
+            ruleId: 'r-1',
+            ruleName: 'Pro\u2028credit\u202e',
+            conditions: [{ operator: 'EQUALS', value: 'pro\u0085' }],
+          },
+        ],
+      },
+    ],
+  },
+}) ?? '';
+check(
+  'C1 controls, line separators and direction controls are escaped too',
+  !/[\u0085\u009b\u2028\u202e]/.test(unsafe) &&
+    unsafe.includes('"Plans\\u009b2J" v2, draft') &&
+    unsafe.includes('"Pro\\u2028credit\\u202e" (ruleId r-1)') &&
+    unsafe.includes('planTier EQUALS "pro\\u0085"'),
+  JSON.stringify(unsafe),
+);
 check(
   'no meta, no warning',
   formatValueDomainMismatchWarning(null) === null &&
     formatValueDomainMismatchWarning({ unregisteredFacts: [] }) === null,
+  'expected null',
+);
+// The update was saved before the warning is built, so a meta in an unexpected shape must not
+// throw and turn a saved update into a failed command.
+check(
+  'a mismatch without versions gives no warning instead of throwing',
+  formatValueDomainMismatchWarning({
+    valueDomainMismatch: { factKey: 'planTier', totalRuleCount: 1 },
+  }) === null,
   'expected null',
 );
 
