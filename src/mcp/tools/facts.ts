@@ -85,7 +85,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       inputSchema: z.object({
         factId: z.string().uuid().describe('Fact definition ID'),
         name: z.string().optional().describe('Display name'),
-        description: z.string().optional().describe('Description'),
+        description: z.string().optional().describe('Description. Send "" to remove it.'),
         type: z
           .enum(VALUE_TYPES)
           .optional()
