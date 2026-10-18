@@ -20,8 +20,8 @@ export interface ResponseMeta {
 }
 
 /**
- * Rules whose conditions compare a fact with values its new constraint no longer accepts.
- * A fact update that changed the constraint returns this; when no rule is affected, the key is
+ * Rules whose conditions compare a fact with values its new value domain no longer accepts.
+ * A fact update that changed the value domain returns this; when no rule is affected, the key is
  * absent. The update itself is never blocked.
  */
 export interface ValueDomainMismatch {

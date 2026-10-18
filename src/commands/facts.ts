@@ -184,8 +184,8 @@ export function registerFactCommands(program: Command): void {
                       the rule editor into a dropdown instead of a free text box.
                       STRING types take --allowed-values. NUMBER types take all three.
                       BOOLEAN takes none — it has only two values to begin with.
-                      For list types the constraint applies to each element.
-                      Leave them out for no constraint, which is how facts behaved before.
+                      For list types the value domain applies to each element.
+                      Leave them out for no value domain, which is how facts behaved before.
       `,
     )
     .action(async (opts) => {
@@ -224,7 +224,7 @@ export function registerFactCommands(program: Command): void {
     .option('--allowed-values <csv>', 'Comma-separated list of accepted values')
     .option('--min <number>', 'Lower bound, inclusive (numeric types only)')
     .option('--max <number>', 'Upper bound, inclusive (numeric types only)')
-    .option('--clear-value-domain', 'Remove the value constraint entirely')
+    .option('--clear-value-domain', 'Remove the value domain entirely')
     .option('--json <body>', 'Full request body as JSON (overrides other options)')
     .addHelpText(
       'after',
@@ -239,11 +239,11 @@ export function registerFactCommands(program: Command): void {
           $ lexq facts update --id <factId> --clear-value-domain
 
         Only the flags you pass are changed. Leaving out --allowed-values, --min, and --max
-        leaves the constraint alone; --clear-value-domain removes it.
+        leaves the value domain alone; --clear-value-domain removes it.
 
-        Narrowing a constraint never blocks the update and does not rewrite rules. When rules compare
-        this fact with a value the new constraint excludes, a warning on stderr lists them by version:
-        drafts and the versions currently deployed.
+        Narrowing the value domain never blocks the update and does not rewrite rules. When rules
+        compare this fact with a value the new value domain excludes, a warning on stderr lists them
+        by version: drafts and the versions currently deployed.
 
         Pass --type when the accepted values are numbers and you are not also naming the type,
         so "10" is sent as a number rather than a string. --json settles it either way.
@@ -418,7 +418,7 @@ function buildUpdateBody(opts: Record<string, string | boolean | undefined>): Up
         '--clear-value-domain cannot be combined with --allowed-values, --min, or --max.',
       );
     }
-    // An empty object is what removes the constraint. Omitting the field leaves it alone.
+    // An empty object is what removes the value domain. Omitting the field leaves it alone.
     body.valueDomain = {};
     return body;
   }
@@ -470,7 +470,7 @@ function asDomainValue(text: string, numeric: boolean | undefined): unknown {
   }
 }
 
-/** Build the constraint from the flags, or `undefined` when none was given. */
+/** Build the value domain from the flags, or `undefined` when none was given. */
 function buildValueDomain(
   opts: Record<string, string | boolean | undefined>,
   type: string | undefined,

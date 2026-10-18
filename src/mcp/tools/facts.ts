@@ -61,14 +61,14 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
               .array(z.union([z.string(), z.number()]))
               .optional()
               .describe(
-                'Accepted values. For list types the constraint applies to each element, not to the list as a whole.',
+                'Accepted values. For list types the value domain applies to each element, not to the list as a whole.',
               ),
             min: z.number().optional().describe('Lower bound, inclusive. Numeric types only.'),
             max: z.number().optional().describe('Upper bound, inclusive. Numeric types only.'),
           })
           .optional()
           .describe(
-            'Which values this fact accepts. Omit for no constraint. STRING and LIST_STRING take allowedValues only; NUMBER and LIST_NUMBER take all three; BOOLEAN takes none. Declaring it lets the rule editor offer a dropdown and rejects a rule literal that could never match.',
+            'Which values this fact accepts. Omit for no value domain. STRING and LIST_STRING take allowedValues only; NUMBER and LIST_NUMBER take all three; BOOLEAN takes none. Declaring it lets the rule editor offer a dropdown and rejects a rule literal that could never match.',
           ),
       }),
     },
@@ -103,14 +103,14 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
               .array(z.union([z.string(), z.number()]))
               .optional()
               .describe(
-                'Accepted values. For list types the constraint applies to each element, not to the list as a whole.',
+                'Accepted values. For list types the value domain applies to each element, not to the list as a whole.',
               ),
             min: z.number().optional().describe('Lower bound, inclusive. Numeric types only.'),
             max: z.number().optional().describe('Upper bound, inclusive. Numeric types only.'),
           })
           .optional()
           .describe(
-            'Which values this fact accepts. Three states: omit the field to leave the constraint alone, send {} to remove it, or send a populated object to replace it. Narrowing it never blocks the update and does not rewrite rules. When rules compare this fact with a value the new constraint excludes, the result ends with a warning that lists them by version: drafts and the versions currently deployed.',
+            'Which values this fact accepts. Three states: omit the field to leave the value domain alone, send {} to remove it, or send a populated object to replace it. Narrowing it never blocks the update and does not rewrite rules. When rules compare this fact with a value the new value domain excludes, the result ends with a warning that lists them by version: drafts and the versions currently deployed.',
           ),
       }),
     },

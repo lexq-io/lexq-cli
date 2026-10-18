@@ -14,9 +14,9 @@
 //    assertion is made against the raw text, because parsing the output back would perform
 //    the very rounding under test.
 //
-// 2. Three states on update. Leaving the flags out keeps the existing constraint; passing
+// 2. Three states on update. Leaving the flags out keeps the existing value domain; passing
 //    `--clear-value-domain` sends `{}`, which removes it. A client that collapsed these into
-//    two would make the constraint impossible to remove.
+//    two would make the value domain impossible to remove.
 //
 // The last section reads the warning a narrowing update can return. It calls the formatter
 // from the build directly, so it needs no server either.
@@ -183,7 +183,7 @@ check(
 // ── Update keeps three states ──────────────────────────────────
 const untouched = body(['facts', 'update', '--id', UUID, '--name', 'Renamed']);
 check(
-  'update without the flags leaves the constraint alone',
+  'update without the flags leaves the value domain alone',
   untouched !== null && !('valueDomain' in untouched),
   JSON.stringify(untouched),
 );
