@@ -22,7 +22,7 @@ export interface TemplateFactSpec {
   description: string;
   isRequired: boolean;
   /**
-   * Allowed values or range for an input fact. `null` when there is no constraint: facts the
+   * Allowed values or range for an input fact. `null` when there is no value domain: facts the
    * rules write, BOOLEAN inputs, and inputs that take any value.
    */
   valueDomain: ValueDomain | null;
