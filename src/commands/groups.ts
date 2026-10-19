@@ -303,7 +303,10 @@ export function registerGroupCommands(program: Command): void {
     .command('start')
     .description('Start an A/B test')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
-    .requiredOption('--version-id <versionId>', 'Challenger version ID')
+    .requiredOption(
+      '--version-id <versionId>',
+      'Challenger version ID (a published version of this group)',
+    )
     .requiredOption(
       '--traffic-rate <rate>',
       `Traffic rate for challenger (${MIN_TRAFFIC_RATE}-${MAX_TRAFFIC_RATE})`,

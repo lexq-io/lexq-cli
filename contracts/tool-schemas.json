@@ -37,7 +37,7 @@
         "destructiveHint": false,
         "readOnlyHint": false
       },
-      "description": "Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. The split is computed from context.trafficKey on each execution request; requests that omit it never reach the challenger and the test stays at 0%.",
+      "description": "Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. The challenger must be a published version of the same group; a version from another group is rejected with P-016. The split is computed from context.trafficKey on each execution request; requests that omit it never reach the challenger and the test stays at 0%.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -48,7 +48,7 @@
             "type": "string"
           },
           "testVersionId": {
-            "description": "Challenger version ID to test",
+            "description": "Challenger version ID. Must be a published version of this group",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
