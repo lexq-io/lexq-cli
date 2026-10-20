@@ -2,7 +2,7 @@
   "name": "@lexq/cli",
   "version": "1.1.7",
   "mcpName": "io.lexq/lexq",
-  "description": "LexQ CLI — manage policies, simulate rules, and deploy from the terminal. Built for humans and AI agents.",
+  "description": "The Decision Operations Platform for engineering teams",
   "type": "module",
   "bin": {
     "lexq": "./dist/index.js"
@@ -57,7 +57,11 @@
     "ai-agent",
     "agent-skills",
     "simulation",
-    "business-rules"
+    "business-rules",
+    "developer-tools",
+    "decision-management",
+    "mcp",
+    "mcp-server"
   ],
   "author": "LexQ, LLC",
   "license": "Apache-2.0",
