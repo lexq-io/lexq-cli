@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/server';
+import dedent from 'dedent';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
@@ -46,16 +47,27 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Rollback Deployment',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description:
-        'Rollback to the previous deployed version. Only available if there is a previous version that is still ACTIVE and whose effective end has not passed (P-058).',
+      description: dedent`
+        Roll the group back to the version that was live before the current one. Call lexq_groups_get first: currentVersionName is live now, previousVersionName is what a rollback restores, and a rollback is rejected while canRollback is false. A rollback needs a previous version that is still ACTIVE and whose effective end has not passed (P-058).
+
+        Pass the currentVersionId and currentDeploymentId from that call as expectedCurrentVersionId and expectedCurrentDeploymentId. If anyone deployed, rolled back or undeployed in between, the rollback is rejected with 409 and nothing changes: P-062 if another version or no version is live, P-063 if the same version is live but from a newer deployment. Read the group again and check with the user before retrying.
+      `,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
+        expectedCurrentVersionId: z
+          .string()
+          .uuid()
+          .describe('currentVersionId from your last read of the group'),
+        expectedCurrentDeploymentId: z
+          .string()
+          .uuid()
+          .describe('currentDeploymentId from your last read of the group'),
         memo: z.string().min(1).describe('Rollback reason (required)'),
       }),
     },
-    async ({ groupId, memo }) =>
+    async ({ groupId, expectedCurrentVersionId, expectedCurrentDeploymentId, memo }) =>
       callApi('POST', `policy-groups/${groupId}/rollback`, {
-        body: { memo },
+        body: { memo, expectedCurrentVersionId, expectedCurrentDeploymentId },
       }),
   );
 
@@ -177,7 +189,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       title: 'Deployment Overview',
       annotations: { readOnlyHint: true },
       description:
-        'Show current deployment status of all groups — which version is live, last deployment type, and deployer.',
+        'Show current deployment status of all groups — which version is live, last deployment type, and deployer. Each group also carries currentDeploymentId, previousVersionName (the version a rollback restores) and canRollback, as in lexq_groups_get.',
       inputSchema: z.object({}),
     },
     async () => callApi('GET', 'deployments/overview'),

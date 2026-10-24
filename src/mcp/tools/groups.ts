@@ -24,7 +24,8 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Get Policy Group',
       annotations: { readOnlyHint: true },
-      description: 'Get a single policy group by ID.',
+      description:
+        'Get a single policy group by ID. Its currentVersionId and currentDeploymentId are what lexq_deploy_rollback expects, and previousVersionName is the version a rollback restores.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
       }),

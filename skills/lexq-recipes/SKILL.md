@@ -352,16 +352,23 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 **Goal:** Something went wrong in production — revert to the previous version.
 
 ```bash
-# 1. Check current state
-lexq deploy overview
+# 1. Read the group: currentVersionName is live now, previousVersionName is what a
+#    rollback restores, and a rollback is rejected while canRollback is false
+lexq groups get --id <gid>
 
-# 2. Rollback
-lexq deploy rollback --group-id <gid> --memo "Reverting due to increased error rate"
+# 2. Roll back with the IDs from step 1
+lexq deploy rollback --group-id <gid> --memo "Reverting due to increased error rate" \
+  --expected-current-version-id <currentVersionId> \
+  --expected-current-deployment-id <currentDeploymentId>
 
 # 3. Verify
 lexq deploy overview
 lexq history stats
 ```
+
+If anyone deployed, rolled back or undeployed after step 1, step 2 is rejected with `409` and
+nothing changes: `P-062` if another version or no version is live, `P-063` if the same version is
+live but from a newer deployment. Start again from step 1.
 
 ---
 
