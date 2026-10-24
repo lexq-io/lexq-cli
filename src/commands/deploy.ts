@@ -135,6 +135,14 @@ export function registerDeployCommands(program: Command): void {
     .description('Rollback to the previous deployed version')
     .requiredOption('--group-id <groupId>', 'Policy group ID')
     .requiredOption('--memo <memo>', 'Rollback reason')
+    .option(
+      '--expected-current-version-id <versionId>',
+      'currentVersionId from your last read of the group',
+    )
+    .option(
+      '--expected-current-deployment-id <deploymentId>',
+      'currentDeploymentId from your last read of the group',
+    )
     .option('--force', 'Skip confirmation prompt')
     .addHelpText(
       'after',
@@ -144,8 +152,20 @@ export function registerDeployCommands(program: Command): void {
         Only available if the previous version is still ACTIVE and its effective end
         has not passed (P-058).
 
+        Run lexq groups get first: currentVersionName is live now and
+        previousVersionName is what a rollback restores. Pass the group's
+        currentVersionId and currentDeploymentId with the two --expected-* options.
+        The server checks only the values you pass. If anyone deployed, rolled back
+        or undeployed in between, the rollback is rejected with 409 and nothing
+        changes: P-062 if another version or no version is live, P-063 if the same
+        version is live but from a newer deployment. Read the group again before
+        retrying.
+
         Example:
-          $ lexq deploy rollback --group-id <gid> --memo "High error rate" --force
+          $ lexq groups get --id <gid>
+          $ lexq deploy rollback --group-id <gid> --memo "High error rate" \
+              --expected-current-version-id <currentVersionId> \
+              --expected-current-deployment-id <currentDeploymentId> --force
       `,
     )
     .action(async (opts) => {
@@ -168,7 +188,11 @@ export function registerDeployCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-          body: { memo: opts.memo } satisfies RollbackRequest,
+          body: {
+            memo: opts.memo,
+            expectedCurrentVersionId: opts.expectedCurrentVersionId,
+            expectedCurrentDeploymentId: opts.expectedCurrentDeploymentId,
+          } satisfies RollbackRequest,
         });
         console.log(`✓ Group ${opts.groupId} rolled back.`);
       } catch (error) {

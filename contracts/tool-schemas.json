@@ -323,7 +323,7 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "Show current deployment status of all groups — which version is live, last deployment type, and deployer.",
+      "description": "Show current deployment status of all groups — which version is live, last deployment type, and deployer. Each group also carries currentDeploymentId, previousVersionName (the version a rollback restores) and canRollback, as in lexq_groups_get.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {},
@@ -374,10 +374,22 @@
         "destructiveHint": true,
         "readOnlyHint": false
       },
-      "description": "Rollback to the previous deployed version. Only available if there is a previous version that is still ACTIVE and whose effective end has not passed (P-058).",
+      "description": "Roll the group back to the version that was live before the current one. Call lexq_groups_get first: currentVersionName is live now, previousVersionName is what a rollback restores, and a rollback is rejected while canRollback is false. A rollback needs a previous version that is still ACTIVE and whose effective end has not passed (P-058).\n\nPass the currentVersionId and currentDeploymentId from that call as expectedCurrentVersionId and expectedCurrentDeploymentId. If anyone deployed, rolled back or undeployed in between, the rollback is rejected with 409 and nothing changes: P-062 if another version or no version is live, P-063 if the same version is live but from a newer deployment. Read the group again and check with the user before retrying.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
+          "expectedCurrentDeploymentId": {
+            "description": "currentDeploymentId from your last read of the group",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "expectedCurrentVersionId": {
+            "description": "currentVersionId from your last read of the group",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
           "groupId": {
             "description": "Policy group ID",
             "format": "uuid",
@@ -392,6 +404,8 @@
         },
         "required": [
           "groupId",
+          "expectedCurrentVersionId",
+          "expectedCurrentDeploymentId",
           "memo"
         ],
         "type": "object"
@@ -1005,7 +1019,7 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "Get a single policy group by ID.",
+      "description": "Get a single policy group by ID. Its currentVersionId and currentDeploymentId are what lexq_deploy_rollback expects, and previousVersionName is the version a rollback restores.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

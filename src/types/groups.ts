@@ -33,6 +33,9 @@ export interface PolicyGroupDetail {
   executionLimit: number | null;
   currentVersionId: string | null;
   currentVersionName: string | null;
+  currentDeploymentId: string | null;
+  previousVersionId: string | null;
+  previousVersionName: string | null;
   status: PolicyGroupStatus;
   canRollback: boolean;
   isAbTestActive: boolean;

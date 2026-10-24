@@ -75,6 +75,11 @@ export interface DeploymentStatus {
   currentVersionName: string | null;
   currentVersionEffectiveTo: string | null;
 
+  currentDeploymentId: string | null;
+  previousVersionId: string | null;
+  previousVersionName: string | null;
+  canRollback: boolean;
+
   lastDeploymentType: DeploymentType | null;
   lastDeployedBy: string | null;
   lastDeployedByName: string | null;
@@ -96,6 +101,8 @@ export interface DeployRequest {
 
 export interface RollbackRequest {
   memo: string;
+  expectedCurrentVersionId?: string;
+  expectedCurrentDeploymentId?: string;
 }
 
 export interface UndeployRequest {

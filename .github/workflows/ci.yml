@@ -98,3 +98,6 @@ jobs:
 
       - name: Fact update flags
         run: node tests/fact-update.mjs
+
+      - name: Rollback expectations
+        run: node tests/rollback.mjs
