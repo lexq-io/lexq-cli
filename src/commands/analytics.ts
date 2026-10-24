@@ -55,7 +55,7 @@ export function registerAnalyticsCommands(program: Command): void {
       dedent`
 
         Examples:
-          $ lexq analytics dry-run --version-id <vid> --debug \\
+          $ lexq analytics dry-run --version-id <vid> --debug \
               --json '{"facts": {"paymentAmount": 150000, "customerTier": "VIP"}}'
 
           $ lexq analytics dry-run --version-id <vid> --file test-input.json

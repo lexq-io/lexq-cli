@@ -13,8 +13,14 @@
 // `lexq analytics simulation start --file request.json` failed with
 // "required option '--json <body>' not specified".
 //
+// Help text must not end a line with an escaped backslash. dedent reads a backslash at
+// the end of a line as a line continuation, so `\\` leaves one backslash behind and joins
+// the lines: `lexq analytics dry-run --help` printed `--debug \--json '{...}'`. A single
+// backslash joins them cleanly.
+//
 // This reads the source rather than importing it: it collects the root flags from
-// src/cli.ts and checks every command declared under src/commands.
+// src/cli.ts, checks every command declared under src/commands, and checks every line
+// under src for the backslash.
 //
 // Usage:
 //   node tests/command-options.mjs
@@ -130,6 +136,23 @@ check(
   fileButJsonRequired.join(' | '),
 );
 check(`the scan saw ${commands} commands (at least 90)`, commands >= 90);
+
+const strayBackslash = [];
+let templates = 0;
+for (const rel of sources('src')) {
+  const text = read(rel);
+  templates += text.split('dedent`').length - 1;
+  text.split('\n').forEach((line, i) => {
+    if (line.endsWith('\\\\')) strayBackslash.push(`${rel}:${i + 1}`);
+  });
+}
+
+check(
+  'no line under src ends with an escaped backslash',
+  strayBackslash.length === 0,
+  strayBackslash.join(' | '),
+);
+check(`the scan saw ${templates} dedent templates (at least 80)`, templates >= 80);
 
 console.log(`\n  ${pass} passed, ${fail} failed\n`);
 process.exit(fail === 0 ? 0 : 1);
