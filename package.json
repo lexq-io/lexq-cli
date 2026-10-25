@@ -1,6 +1,6 @@
 {
   "name": "@lexq/cli",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "mcpName": "io.lexq/lexq",
   "description": "The Decision Operations Platform for engineering teams",
   "type": "module",
@@ -45,6 +45,7 @@
     "test:value-domain": "pnpm build && node tests/value-domain.mjs",
     "test:fact-update": "pnpm build && node tests/fact-update.mjs",
     "test:rollback": "pnpm build && node tests/rollback.mjs",
+    "test:dataset-upload": "pnpm build && node tests/dataset-upload.mjs",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.ts\"",

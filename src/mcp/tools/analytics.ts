@@ -8,6 +8,15 @@ import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { DEFAULT_SIMULATION_RECORDS, MAX_SIMULATION_RECORDS } from '@/types/constants';
 
+/** The dataset block an upload tool appends, ready to paste into lexq_simulation_start. */
+export function datasetBlock(path: string): { type: 'text'; text: string } {
+  const dataset = { type: 'UPLOADED', source: 'S3_BUCKET', path };
+  return {
+    type: 'text',
+    text: 'Ready-to-use dataset block for lexq_simulation_start:\n' + stringifyJson({ dataset }, 2),
+  };
+}
+
 export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
   // ── Dry Run ──
 
@@ -221,6 +230,10 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         To use the returned path in lexq_simulation_start, set:
           dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
 
+        The content travels inside the tool call, so this suits small datasets, and the hosted server at
+        mcp.lexq.io limits the size of a request. For a larger file, use lexq_dataset_upload_file on the
+        local server (lexq serve --mcp), or upload it with the CLI or the console and pass the returned path.
+
         CSV example:
         userId,paymentAmount
         user_001,150000
@@ -243,16 +256,14 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
 
       if (!result.isError) {
         try {
-          const uploaded = parseJson(result.content[0]?.text ?? '{}') as { path?: string };
-          if (uploaded.path) {
-            const dataset = { type: 'UPLOADED', source: 'S3_BUCKET', path: uploaded.path };
-            result.content.push({
-              type: 'text',
-              text:
-                'Ready-to-use dataset block for lexq_simulation_start:\n' +
-                stringifyJson({ dataset }, 2),
-            });
-          }
+          // The local server returns the upload itself. The hosted server returns the whole
+          // response, with the upload under `data`.
+          const uploaded = parseJson(result.content[0]?.text ?? '{}') as {
+            path?: unknown;
+            data?: { path?: unknown };
+          };
+          const path = uploaded.data?.path ?? uploaded.path;
+          if (typeof path === 'string' && path) result.content.push(datasetBlock(path));
         } catch {
           // If the path cannot be read, ignore it: the upload response is returned as is.
         }

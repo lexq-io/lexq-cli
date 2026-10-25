@@ -138,7 +138,7 @@
         "destructiveHint": false,
         "readOnlyHint": false
       },
-      "description": "Upload inline CSV or JSON content as a simulation dataset.\nThe content is uploaded to S3 and a path is returned in the \"path\" field.\n\nTo use the returned path in lexq_simulation_start, set:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<returned path>\" }\n\nCSV example:\nuserId,paymentAmount\nuser_001,150000\nuser_002,50000\n\nJSON example: [{\"userId\":\"user_001\",\"paymentAmount\":150000}, {\"userId\":\"user_002\",\"paymentAmount\":50000}]",
+      "description": "Upload inline CSV or JSON content as a simulation dataset.\nThe content is uploaded to S3 and a path is returned in the \"path\" field.\n\nTo use the returned path in lexq_simulation_start, set:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<returned path>\" }\n\nThe content travels inside the tool call, so this suits small datasets, and the hosted server at\nmcp.lexq.io limits the size of a request. For a larger file, use lexq_dataset_upload_file on the\nlocal server (lexq serve --mcp), or upload it with the CLI or the console and pass the returned path.\n\nCSV example:\nuserId,paymentAmount\nuser_001,150000\nuser_002,50000\n\nJSON example: [{\"userId\":\"user_001\",\"paymentAmount\":150000}, {\"userId\":\"user_002\",\"paymentAmount\":50000}]",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

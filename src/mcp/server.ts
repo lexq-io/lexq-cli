@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { McpServer } from '@modelcontextprotocol/server';
 import { createCallApiFromConfig } from './tools/_shared';
+import { registerLocalTools } from './local-tools';
 import { registerAllTools, SERVER_INFO } from './register';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,9 @@ function getVersion(): string {
  *
  * One factory serves both eras. Tools are registered once, so the two cannot drift.
  *
+ * registerLocalTools adds the tools that read this machine's files. The hosted server
+ * registers registerAllTools alone, so they exist only here.
+ *
  * `legacy` stays at its default of `'serve'`. The clients that run this today speak 2025.
  */
 export function startMcpServer(): void {
@@ -38,6 +42,7 @@ export function startMcpServer(): void {
     () => {
       const server = new McpServer({ ...SERVER_INFO, version });
       registerAllTools(server, callApi);
+      registerLocalTools(server);
       return server;
     },
     {

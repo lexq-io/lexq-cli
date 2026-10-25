@@ -3,5 +3,7 @@
   "ignoreExportsUsedInFile": true,
   "ignore": [
     "src/types/**"
-  ]
+  ],
+  // tests/dataset-upload.mjs makes a FIFO with the system's mkfifo. Node has no API for one.
+  "ignoreBinaries": ["mkfifo"]
 }

@@ -66,6 +66,12 @@ const PROSE_MIRRORS = [
     expected: (v) => String(v),
   },
   {
+    constant: 'MAX_DATASET_SIZE',
+    label: 'dataset upload size limit',
+    pattern: /files can be up to (\d+) MB/g,
+    expected: (v) => String(v / 1024 / 1024),
+  },
+  {
     constant: 'REPLAY_WINDOW_MAX_RECORDS',
     label: 'window replay hard cap',
     pattern: /hard cap (\d+)k/g,
