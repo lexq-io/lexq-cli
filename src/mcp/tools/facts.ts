@@ -35,8 +35,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Create Fact Definition',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Register a new input variable. Key starts with a letter, then letters, numbers, and underscores (e.g. paymentAmount). Casing is not enforced. Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER.',
+      description: `Register a new input variable. Key starts with a letter, then letters, numbers, and underscores (e.g. paymentAmount). Casing is not enforced. Types: ${VALUE_TYPES.join(', ')}.`,
       inputSchema: z.object({
         key: z
           .string()

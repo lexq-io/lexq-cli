@@ -4,6 +4,12 @@ import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
 import { END_DAY, FAILURE_LOG_LOOKBACK_DAYS, START_DAY } from '@/lib/dates';
+import { withNotes } from '@/lib/enum-notes';
+
+const ACTION_NOTES = {
+  RESOLVE: 'mark as manually fixed',
+  IGNORE: 'skip intentionally',
+} satisfies Record<FailureAction, string>;
 
 export function registerLogTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -51,8 +57,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Process Failure Log',
       annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Process a single failure log: RESOLVE (mark as manually fixed) or IGNORE (skip intentionally).',
+      description: `Process a single failure log: ${withNotes(ACTION_NOTES).join(' or ')}.`,
       inputSchema: z.object({
         logId: z.string().uuid().describe('Failure log ID'),
         action: z.enum(FailureAction).describe('Action to take'),

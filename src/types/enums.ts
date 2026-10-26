@@ -39,6 +39,23 @@ export type LogicalOperator = (typeof LogicalOperator)[number];
 export const ActionType = ['SET_FACT', 'MUTATE_FACT', 'BLOCK'] as const;
 export type ActionType = (typeof ActionType)[number];
 
+export const MutateOperator = ['ASSIGN', 'ADD', 'SUB', 'MUL', 'DIV'] as const;
+export type MutateOperator = (typeof MutateOperator)[number];
+
+export const CalculationMethod = ['PERCENTAGE', 'AMOUNT'] as const;
+export type CalculationMethod = (typeof CalculationMethod)[number];
+
+export const RoundingPolicy = [
+  'UP',
+  'DOWN',
+  'CEILING',
+  'FLOOR',
+  'HALF_UP',
+  'HALF_DOWN',
+  'HALF_EVEN',
+] as const;
+export type RoundingPolicy = (typeof RoundingPolicy)[number];
+
 export const ValueType = ['STRING', 'NUMBER', 'BOOLEAN', 'LIST_STRING', 'LIST_NUMBER'] as const;
 export type ValueType = (typeof ValueType)[number];
 

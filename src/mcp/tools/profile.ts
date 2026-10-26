@@ -10,6 +10,8 @@ import {
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
+import { PERCENTILE_MIN_N } from '@/lib/percentiles';
+import { ProfileCacheState } from '@/types/enums';
 
 /**
  * The relative-threshold rule, surfaced verbatim on every profile tool.
@@ -43,7 +45,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
       description:
         'Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cache state (HIT = compiled ruleset cache hit, MISS = deep-load + compile), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. ' +
         RELATIVE_THRESHOLD +
-        ` Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 needs n ≥ 6, p95 n ≥ 60, p99 n ≥ 300 — display gate, separate from the n ≥ ${MIN_SAMPLES} judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than ${MIN_COHORT_SIZE} rules qualify. Rule detail comes from a deterministic ${PROFILE_SAMPLE_PERMILLE / 10}% sample of calls; TOTAL is recorded for every call. Defaults: last ${PROFILE_DEFAULT_WINDOW_HOURS}h, live version, cacheState HIT.`,
+        ` Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 needs n ≥ ${PERCENTILE_MIN_N.p50}, p95 n ≥ ${PERCENTILE_MIN_N.p95}, p99 n ≥ ${PERCENTILE_MIN_N.p99} — display gate, separate from the n ≥ ${MIN_SAMPLES} judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than ${MIN_COHORT_SIZE} rules qualify. Rule detail comes from a deterministic ${PROFILE_SAMPLE_PERMILLE / 10}% sample of calls; TOTAL is recorded for every call. Defaults: last ${PROFILE_DEFAULT_WINDOW_HOURS}h, live version, cacheState HIT.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z
@@ -59,7 +61,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
           ),
         to: z.string().optional().describe('Window end, ISO-8601 instant. Default: now'),
         cacheState: z
-          .enum(['HIT', 'MISS'])
+          .enum(ProfileCacheState)
           .optional()
           .describe('Cache dimension for the rule table and judgment (default: HIT)'),
       }),
@@ -76,7 +78,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
       title: 'Rule Latency Detail',
       annotations: { readOnlyHint: true },
       description:
-        `Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (${LATENCY_WINDOW_MILLIS / 1000}s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 n ≥ 6, p95 n ≥ 60, p99 n ≥ 300). ` +
+        `Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (${LATENCY_WINDOW_MILLIS / 1000}s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 n ≥ ${PERCENTILE_MIN_N.p50}, p95 n ≥ ${PERCENTILE_MIN_N.p95}, p99 n ≥ ${PERCENTILE_MIN_N.p99}). ` +
         RELATIVE_THRESHOLD,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),

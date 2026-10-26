@@ -18,6 +18,7 @@ import type {
 } from '@/types/analytics';
 import { loadConfig } from '@/lib/config';
 import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
+import { SimulationDatasetSource, SimulationDatasetType, SimulationStatus } from '@/types/enums';
 
 export function registerAnalyticsCommands(program: Command): void {
   const analytics = program
@@ -250,8 +251,8 @@ export function registerAnalyticsCommands(program: Command): void {
 
           $ lexq analytics simulation start --file simulation.json
 
-        Dataset types: HISTORICAL, UPLOADED, MANUAL
-        Dataset sources: EXECUTION_LOGS, S3_BUCKET, REQUEST_BODY
+        Dataset types: ${SimulationDatasetType.join(', ')}
+        Dataset sources: ${SimulationDatasetSource.join(', ')}
         HISTORICAL from / to are yyyy-MM-dd, whole days in the organization time zone, both inclusive.
       `,
     )
@@ -402,7 +403,7 @@ export function registerAnalyticsCommands(program: Command): void {
   sim
     .command('list')
     .description('List simulation history')
-    .option('--status <status>', 'Filter by status (PENDING, RUNNING, COMPLETED, FAILED, CANCELED)')
+    .option('--status <status>', `Filter by status (${SimulationStatus.join(', ')})`)
     .option('--from <date>', START_DAY)
     .option('--to <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')

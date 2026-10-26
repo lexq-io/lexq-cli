@@ -21,6 +21,7 @@ import type {
   UndeployRequest,
   ScheduleRequest,
 } from '@/types/deploy';
+import { DeploymentType } from '@/types/enums';
 import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
 
 export function registerDeployCommands(program: Command): void {
@@ -252,7 +253,7 @@ export function registerDeployCommands(program: Command): void {
     .command('history')
     .description('List deployment history')
     .option('--group-id <groupId>', 'Filter by policy group')
-    .option('--types <types>', 'Filter by types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)')
+    .option('--types <types>', `Filter by types (comma-separated: ${DeploymentType.join(',')})`)
     .option('--start-date <date>', START_DAY)
     .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')

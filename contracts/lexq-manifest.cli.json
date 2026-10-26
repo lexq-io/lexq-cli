@@ -30,6 +30,15 @@
     "ActionType": {
       "values": ["SET_FACT", "MUTATE_FACT", "BLOCK"]
     },
+    "MutateOperator": {
+      "values": ["ASSIGN", "ADD", "SUB", "MUL", "DIV"]
+    },
+    "CalculationMethod": {
+      "values": ["PERCENTAGE", "AMOUNT"]
+    },
+    "RoundingPolicy": {
+      "values": ["UP", "DOWN", "CEILING", "FLOOR", "HALF_UP", "HALF_DOWN", "HALF_EVEN"]
+    },
     "ValueType": {
       "values": ["STRING", "NUMBER", "BOOLEAN", "LIST_STRING", "LIST_NUMBER"]
     },

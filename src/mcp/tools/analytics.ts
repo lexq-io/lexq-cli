@@ -7,6 +7,7 @@ import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { DEFAULT_SIMULATION_RECORDS, MAX_SIMULATION_RECORDS } from '@/types/constants';
+import { SimulationMetricType, SimulationStatus } from '@/types/enums';
 
 /** The dataset block an upload tool appends, ready to paste into lexq_simulation_start. */
 export function datasetBlock(path: string): { type: 'text'; text: string } {
@@ -121,7 +122,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         options.baselinePolicyVersionId: uuid (optional, for baseline comparison)
         options.includeRuleStats: boolean
         options.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass
-          { "targetVariable": "<fact>", "aggregationType": "COUNT" | "SUM" | "AVG" }
+          { "targetVariable": "<fact>", "aggregationType": ${SimulationMetricType.map((t) => `"${t}"`).join(' | ')} }
 
         Example (uploaded dataset):
         {
@@ -169,10 +170,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
-        status: z
-          .enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'])
-          .optional()
-          .describe('Filter by status'),
+        status: z.enum(SimulationStatus).optional().describe('Filter by status'),
         from: z.string().optional().describe(START_DAY),
         to: z.string().optional().describe(END_DAY),
       }),

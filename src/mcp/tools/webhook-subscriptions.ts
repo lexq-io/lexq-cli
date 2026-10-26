@@ -3,6 +3,12 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { PlatformEventType, WebhookPayloadFormat } from '@/types/enums';
+import { withNotes } from '@/lib/enum-notes';
+
+const FORMAT_NOTES = {
+  GENERIC: 'full JSON',
+  SLACK: '{"text": "..."}',
+} satisfies Record<WebhookPayloadFormat, string>;
 
 export function registerWebhookSubscriptionTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -41,7 +47,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     {
       title: 'Save Webhook Subscription',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description: `Create or update a webhook subscription. Omit id to create, provide id to update. Events: ${PlatformEventType.join(', ')}. Formats: GENERIC (full JSON), SLACK ({"text": "..."}).`,
+      description: `Create or update a webhook subscription. Omit id to create, provide id to update. Events: ${PlatformEventType.join(', ')}. Formats: ${withNotes(FORMAT_NOTES).join(', ')}.`,
       inputSchema: z.object({
         id: z
           .string()

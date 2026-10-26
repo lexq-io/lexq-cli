@@ -4,8 +4,15 @@ import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { FailureLogResponse, BulkActionResponse } from '@/types/logs';
-import { TaskType } from '@/types/enums';
+import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
 import { END_DAY, FAILURE_LOG_LOOKBACK_DAYS, START_DAY, utcMinute } from '@/lib/dates';
+import { withNotes } from '@/lib/enum-notes';
+
+const STATUS_NOTES = {
+  PENDING: 'needs attention',
+  RESOLVED: '',
+  IGNORED: '',
+} satisfies Record<FailureStatus, string>;
 
 export function registerLogCommands(program: Command): void {
   const logs = program
@@ -20,10 +27,10 @@ export function registerLogCommands(program: Command): void {
         Commands:
           list         List failure logs with filters
           get          Get failure log detail (includes the original payload)
-          action       Process a single log (IGNORE, RESOLVE)
+          action       Process a single log (${FailureAction.join(', ')})
           bulk-action  Process multiple logs at once
 
-        Statuses: PENDING (needs attention), RESOLVED, IGNORED
+        Statuses: ${withNotes(STATUS_NOTES).join(', ')}
       `,
     );
 
@@ -32,7 +39,7 @@ export function registerLogCommands(program: Command): void {
     .command('list')
     .description('List failure logs')
     .option('--task-type <taskType>', `Filter by task type (${TaskType.join(', ')})`)
-    .option('--status <status>', 'Filter by status (PENDING, RESOLVED, IGNORED)')
+    .option('--status <status>', `Filter by status (${FailureStatus.join(', ')})`)
     .option('--keyword <keyword>', 'Search keyword')
     .option('--start-date <date>', START_DAY)
     .option('--end-date <date>', END_DAY)
@@ -103,7 +110,7 @@ export function registerLogCommands(program: Command): void {
       dedent`
 
         Includes the full payload that was used for the failed operation.
-        Use this to inspect what went wrong before deciding to IGNORE or RESOLVE.
+        Use this to inspect what went wrong before deciding to ${FailureAction.join(' or ')}.
       `,
     )
     .action(async (opts) => {
@@ -125,9 +132,9 @@ export function registerLogCommands(program: Command): void {
   // ── action ──
   logs
     .command('action')
-    .description('Process a failure log action (IGNORE, RESOLVE)')
+    .description(`Process a failure log action (${FailureAction.join(', ')})`)
     .requiredOption('--id <logId>', 'Log ID')
-    .requiredOption('--action <action>', 'Action: IGNORE or RESOLVE')
+    .requiredOption('--action <action>', `Action: ${FailureAction.join(' or ')}`)
     .addHelpText(
       'after',
       dedent`
@@ -166,7 +173,7 @@ export function registerLogCommands(program: Command): void {
     .command('bulk-action')
     .description('Bulk process failure logs')
     .requiredOption('--ids <logIds>', 'Comma-separated log IDs')
-    .requiredOption('--action <action>', 'Action: IGNORE or RESOLVE')
+    .requiredOption('--action <action>', `Action: ${FailureAction.join(' or ')}`)
     .addHelpText(
       'after',
       dedent`

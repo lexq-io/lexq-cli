@@ -126,7 +126,7 @@ export function registerVersionCommands(program: Command): void {
             }'
 
         Fields:
-          commitMessage    string      Version description (optional, max 255 chars)
+          commitMessage    string      Version description (optional, max 500 chars)
           effectiveFrom    instant     Start of effective period (optional, with Z or an offset)
           effectiveTo      instant     End of effective period (optional, auto-expires)
       `,
