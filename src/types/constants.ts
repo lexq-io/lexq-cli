@@ -46,3 +46,17 @@ export const MAX_CONDITIONS_PER_RULE = 25;
 export const MAX_CONDITION_DEPTH = 10;
 
 export const MAX_SNAPSHOT_BYTES = 131072;
+
+export const STATS_DEFAULT_WINDOW_DAYS = 30;
+
+export const STATS_MAX_WINDOW_DAYS = 31;
+
+export const FAILURE_LOG_LOOKBACK_DAYS = 7;
+
+export const PURGE_AFTER_DAYS = 30;
+
+export const DESCRIPTION_MAX_LENGTH = 255;
+
+export const COMMIT_MESSAGE_MAX_LENGTH = 500;
+
+export const SCHEDULE_TICK_MAX_MILLIS = 60000;

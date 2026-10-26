@@ -1,8 +1,17 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { ConflictResolutionMode, ConflictResolutionStrategy } from '@/types/enums';
-import { MAX_GROUPS_PER_TENANT } from '@/types/constants';
+import {
+  ConflictResolutionMode,
+  ConflictResolutionStrategy,
+  PolicyGroupStatus,
+} from '@/types/enums';
+import {
+  MAX_GROUPS_PER_TENANT,
+  MAX_TRAFFIC_RATE,
+  MIN_TRAFFIC_RATE,
+  PURGE_AFTER_DAYS,
+} from '@/types/constants';
 
 export function registerGroupTools(server: McpServer, callApi: CallApi): void {
   // ── CRUD ──
@@ -91,7 +100,8 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         name: z.string().optional().describe('New name'),
         description: z.string().optional().describe('New description'),
         status: z
-          .enum(['ACTIVE', 'DISABLED'])
+          .enum(PolicyGroupStatus)
+          .extract(['ACTIVE', 'DISABLED'])
           .optional()
           .describe(
             'DISABLED stops production execution of this group: execution calls return 403 (P-009), and a composite call that includes the group is rejected in full. The deployed version and any A/B test are kept, and dry run, Impact Simulation, and Decision Replay keep working, so a fix can be verified before setting ACTIVE again. To go back to the previous version, use lexq_deploy_rollback. To take the version out of production, use lexq_deploy_undeploy.',
@@ -128,8 +138,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Delete Policy Group',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description:
-        'Delete (archive) a policy group. A deployed group cannot be deleted (P-020); undeploy it first with lexq_deploy_undeploy, which also ends a running A/B test. This cannot be undone. The group no longer appears in lexq_groups_list and its name can be reused right away. Calls that change it (settings, versions, rules, starting an A/B test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted after 30 days.',
+      description: `Delete (archive) a policy group. A deployed group cannot be deleted (P-020); undeploy it first with lexq_deploy_undeploy, which also ends a running A/B test. This cannot be undone. The group no longer appears in lexq_groups_list and its name can be reused right away. Calls that change it (settings, versions, rules, starting an A/B test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted after ${PURGE_AFTER_DAYS} days.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
       }),
@@ -181,9 +190,11 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         trafficRate: z
           .number()
           .int()
-          .min(1)
-          .max(99)
-          .describe('Traffic percentage routed to challenger (1-99)'),
+          .min(MIN_TRAFFIC_RATE)
+          .max(MAX_TRAFFIC_RATE)
+          .describe(
+            `Traffic percentage routed to challenger (${MIN_TRAFFIC_RATE}-${MAX_TRAFFIC_RATE})`,
+          ),
       }),
     },
     async ({ groupId, ...body }) => callApi('POST', `policy-groups/${groupId}/ab-test`, { body }),
@@ -214,9 +225,11 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         trafficRate: z
           .number()
           .int()
-          .min(1)
-          .max(99)
-          .describe('New traffic percentage for challenger (1-99)'),
+          .min(MIN_TRAFFIC_RATE)
+          .max(MAX_TRAFFIC_RATE)
+          .describe(
+            `New traffic percentage for challenger (${MIN_TRAFFIC_RATE}-${MAX_TRAFFIC_RATE})`,
+          ),
       }),
     },
     async ({ groupId, ...body }) =>

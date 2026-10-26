@@ -9,9 +9,19 @@ import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
 import { parseJson } from '@/lib/lossless-json';
+import {
+  CalculationMethod,
+  LogicalOperator,
+  MutateOperator,
+  RoundingPolicy,
+  ValueType,
+} from '@/types/enums';
 
 // Condition/Action are deeply nested JSON — accept as opaque object via z.record.
 // The engine validates structure. MCP schema describes the shape in descriptions.
+
+/** `"A"|"B"|"C"`, the way the shapes below write a field's allowed values. */
+const oneOf = (values: readonly string[]): string => values.map((v) => `"${v}"`).join('|');
 
 export function registerRuleTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -67,8 +77,8 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         After saving, lexq_facts_unregistered lists any keys this version references but has not
         defined (non-blocking, version-wide) — use it to decide what to register.
 
-        Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: "AND"|"OR", children: [...] }
-        Value types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
+        Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: ${oneOf(LogicalOperator)}, children: [...] }
+        Value types: ${ValueType.join(', ')}
         Limits: a condition tree may hold at most ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes; GROUP nodes do not count)
         and nest at most ${MAX_CONDITION_DEPTH} levels below the root. A version holds at most ${MAX_RULES_PER_VERSION} rules.
 
@@ -91,7 +101,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         Actions: [{ type, parameters }]
 
         Action parameter schemas:
-        - MUTATE_FACT: { targetVar: string, operator: "ASSIGN"|"ADD"|"SUB"|"MUL"|"DIV", method: "PERCENTAGE"|"AMOUNT", operand: number, refVar?: string, rounding?: RoundingOption }
+        - MUTATE_FACT: { targetVar: string, operator: ${oneOf(MutateOperator)}, method: ${oneOf(CalculationMethod)}, operand: number, refVar?: string, rounding?: RoundingOption }
           targetVar is the fact this action reads and writes. It must be a registered fact
           (ACT-032 otherwise), and the request must send it (P-015 otherwise). Its value must be
           a number when the action runs.
@@ -130,7 +140,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         writes, send that value as an input fact in a second request. If a rule should run
         whenever another one does, put its actions in that rule instead.
 
-        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: "HALF_UP"|"HALF_DOWN"|"HALF_EVEN"|"FLOOR"|"CEILING"|"DOWN"|"UP" } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
+        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: ${oneOf(RoundingPolicy)} } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
       `,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),

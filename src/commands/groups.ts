@@ -1,4 +1,9 @@
-import { MAX_TRAFFIC_RATE, MIN_TRAFFIC_RATE } from '@/types/constants';
+import {
+  DESCRIPTION_MAX_LENGTH,
+  MAX_TRAFFIC_RATE,
+  MIN_TRAFFIC_RATE,
+  PURGE_AFTER_DAYS,
+} from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
@@ -12,6 +17,7 @@ import type {
   StartAbTestRequest,
   AdjustTrafficRateRequest,
 } from '@/types/groups';
+import { ConflictResolutionMode, PolicyGroupStatus } from '@/types/enums';
 import { utcMinute } from '@/lib/dates';
 
 export function registerGroupCommands(program: Command): void {
@@ -34,7 +40,7 @@ export function registerGroupCommands(program: Command): void {
           delete      Archive a group
           ab-test     Manage A/B tests (start, stop, adjust)
 
-        Statuses: ACTIVE, DISABLED, ARCHIVED
+        Statuses: ${PolicyGroupStatus.join(', ')}
           DISABLED stops production execution (403 P-009) and keeps the deployed version and any A/B test.
           Dry run, simulation, and replay still work. Set ACTIVE to resume.
           ARCHIVED means deleted. Only 'lexq groups delete' sets it, and it cannot be undone.
@@ -118,9 +124,9 @@ export function registerGroupCommands(program: Command): void {
 
         Fields:
           name                string    Group name (required, unique per tenant)
-          description         string    Description (optional, max 255 chars)
+          description         string    Description (optional, max ${DESCRIPTION_MAX_LENGTH} chars)
           activationGroup     string    Execution Group — conflict-resolution cluster key (optional)
-          activationMode      string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
+          activationMode      string    ${ConflictResolutionMode.join(' | ')}  [default: NONE]
           activationStrategy  string    HIGHEST_PRIORITY  [default, and currently the only value]
           executionLimit      number    Max rules to fire in MAX_N mode (optional)
           status              string    ACTIVE | DISABLED  [default: ACTIVE]
@@ -198,7 +204,7 @@ export function registerGroupCommands(program: Command): void {
         It cannot be restored, and calls that change it (settings, versions, rules, starting an A/B
         test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever
         executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted
-        after 30 days.
+        after ${PURGE_AFTER_DAYS} days.
 
         Use --force to skip the confirmation prompt.
       `,

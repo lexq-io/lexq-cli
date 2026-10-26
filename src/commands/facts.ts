@@ -12,6 +12,7 @@ import type {
   FactSchemaResponse,
   ValueDomain,
 } from '@/types/facts';
+import { ValueType } from '@/types/enums';
 
 export function registerFactCommands(program: Command): void {
   const facts = program
@@ -147,7 +148,7 @@ export function registerFactCommands(program: Command): void {
     .description('Create a new fact definition')
     .option('--key <key>', 'Fact key (letters, numbers, underscores)')
     .option('--name <n>', 'Display name')
-    .option('--type <type>', 'Value type: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER')
+    .option('--type <type>', `Value type: ${ValueType.join(', ')}`)
     .option('--description <desc>', 'Description')
     .option('--required', 'Mark as required', false)
     .option('--pii', 'Mark as PII — value is masked on every read surface', false)
@@ -175,7 +176,7 @@ export function registerFactCommands(program: Command): void {
           $ lexq facts create --key tier --name "Tier" --type STRING \
               --allowed-values "GOLD, SILVER, BRONZE"
 
-        Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
+        Value Types: ${ValueType.join(', ')}
         Key Format:  starts with a letter, then letters, numbers, and underscores.
                      Casing is yours to choose (e.g., paymentAmount, payment_amount)
 
@@ -220,7 +221,7 @@ export function registerFactCommands(program: Command): void {
     .option('--no-required', 'Mark as not required')
     .option('--pii', 'Mark as PII (enables masking)')
     .option('--no-pii', 'Unmark as PII (disables masking — value becomes visible)')
-    .option('--type <type>', 'Value type: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER')
+    .option('--type <type>', `Value type: ${ValueType.join(', ')}`)
     .option('--allowed-values <csv>', 'Comma-separated list of accepted values')
     .option('--min <number>', 'Lower bound, inclusive (numeric types only)')
     .option('--max <number>', 'Upper bound, inclusive (numeric types only)')

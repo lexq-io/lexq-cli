@@ -16,6 +16,7 @@ import type {
   UpdateRuleRequest,
   ReorderRulesRequest,
 } from '@/types/rules';
+import { ConflictResolutionMode, ValueType } from '@/types/enums';
 
 export function registerRuleCommands(program: Command): void {
   const rules = program
@@ -169,11 +170,11 @@ export function registerRuleCommands(program: Command): void {
           refVar is the percentage base and is optional — omit to use targetVar itself.
           It is only valid in PERCENTAGE × {ASSIGN, ADD, SUB}.
 
-        Value Types: STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER
+        Value Types: ${ValueType.join(', ')}
 
         Mutex (optional — rule-level conflict resolution):
           mutexGroup       string    Logical grouping key (e.g., "best-discount")
-          mutexMode        string    NONE | EXCLUSIVE | MAX_N  [default: NONE]
+          mutexMode        string    ${ConflictResolutionMode.join(' | ')}  [default: NONE]
           mutexStrategy    string    HIGHEST_PRIORITY (currently the only value)
           mutexLimit       number    Max rules to fire in MAX_N mode (required when MAX_N)
 

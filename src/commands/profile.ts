@@ -1,11 +1,14 @@
 import {
   LATENCY_WINDOW_MILLIS,
   PROFILE_DEFAULT_WINDOW_HOURS,
+  PROFILE_SAMPLE_PERMILLE,
   SLOW_MULTIPLIER,
+  TAIL_MIN_OBS,
 } from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
+import { PERCENTILE_MIN_N } from '@/lib/percentiles';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import { ProfileCacheState } from '@/types/enums';
 import type { ProfileOverview, RuleLatencyDetail } from '@/types/profile';
@@ -28,16 +31,19 @@ export function registerProfileCommands(program: Command): void {
       `Window start, ISO-8601 instant (default: ${PROFILE_DEFAULT_WINDOW_HOURS}h ago)`,
     )
     .option('--to <instant>', 'Window end, ISO-8601 instant (default: now)')
-    .option('--cache <state>', 'Cache dimension for the rule table: HIT | MISS (default: HIT)')
+    .option(
+      '--cache <state>',
+      `Cache dimension for the rule table: ${ProfileCacheState.join(' | ')} (default: HIT)`,
+    )
     .addHelpText(
       'after',
       dedent`
 
         Slow-rule judgment is relative only: flagged = p50 ≥ ${SLOW_MULTIPLIER}× the median of
         per-rule p50s within the group. Absolute ms thresholds are intentionally
-        not supported. Each percentile is withheld (–) unless n×(1−q) ≥ 3 —
-        p50 from n ≥ 6, p95 from n ≥ 60, p99 from n ≥ 300. TOTAL is recorded
-        on every call, rule detail from a deterministic 1% sample.
+        not supported. Each percentile is withheld (–) unless n×(1−q) ≥ ${TAIL_MIN_OBS} —
+        p50 from n ≥ ${PERCENTILE_MIN_N.p50}, p95 from n ≥ ${PERCENTILE_MIN_N.p95}, p99 from n ≥ ${PERCENTILE_MIN_N.p99}. TOTAL is recorded
+        on every call, rule detail from a deterministic ${PROFILE_SAMPLE_PERMILLE / 10}% sample.
 
         Examples:
           $ lexq profile <groupId>

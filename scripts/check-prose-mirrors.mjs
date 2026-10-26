@@ -16,8 +16,9 @@
  *
  * What is checked:
  *   Number mismatch — the prose states a number the engine no longer holds.
- *   Table drift     — a table listed in ENUM_TABLES holds a value the manifest dropped, or
- *                     is missing one it added.
+ *   Enum drift      — a table or list in ENUM_TABLES holds a value the manifest dropped, or
+ *                     is missing one it added. A value left out on purpose is named in
+ *                     `omit` with its reason, and that name is checked too.
  *   Zero matches    — the wording changed and the pattern stopped seeing anything. That is
  *                     not a pass. A gate that silently stops looking is worse than no gate,
  *                     because the output still says OK.
@@ -95,25 +96,238 @@ const PROSE_MIRRORS = [
     pattern: /last (\d+)h/g,
     expected: (v) => String(v),
   },
+  {
+    constant: 'STATS_DEFAULT_WINDOW_DAYS',
+    label: 'execution stats default window',
+    pattern: /the window is the last (\d+) days/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'STATS_MAX_WINDOW_DAYS',
+    label: 'execution stats range limit',
+    pattern: /(\d+) days per call/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'FAILURE_LOG_LOOKBACK_DAYS',
+    label: 'failure log default lookback',
+    pattern: /(\d+) days back/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'PURGE_AFTER_DAYS',
+    label: 'deleted group purge delay',
+    pattern: /permanently deleted after (\d+) days/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'SCHEDULE_TICK_MAX_MILLIS',
+    label: 'scheduled deployment delay bound',
+    pattern: /within one tick \(≤(\d+)s\)/g,
+    expected: (v) => String(v / 1000),
+  },
 ];
 
 /**
- * Markdown tables that spell out an enum, one value per row.
+ * Markdown tables and lists that spell out an enum.
  *
- * Each entry names the table's file and the enum it mirrors. The check reads the first cell
- * of every row and compares that set against the manifest, both ways: a value the engine
- * dropped is still in the table, or a value it added is missing from it.
+ * Each entry names the file, the heading line the values sit under, and the enum they mirror.
+ * The values are the code-formatted SCREAMING_CASE words in one of two places:
+ *
+ *   table (default) — the first cell of every row of a table under the heading. `table` picks
+ *                     which one when the section holds more than one (0 = the first).
+ *   list            — the first paragraph under the heading.
+ *
+ * That set is compared against the manifest both ways: a value the engine dropped is still
+ * written, or a value it added is missing. `omit` names values the prose leaves out on purpose,
+ * each with the reason; an omitted value the engine no longer has, or one the prose now shows,
+ * is reported so the reason does not outlive the fact.
  *
  * The check points at a table rather than scanning for anything shaped like an enum value.
  * A shape-based scan cannot tell a status code from an environment variable, so it needs an
  * exception list that grows with the repo.
  */
+const NOT_PRODUCED_YET =
+  'the engine does not produce it yet: a version outside its effective dates leaves no trace';
+
 const ENUM_TABLES = [
+  {
+    enumName: 'ApiExecutionStatus',
+    file: 'skills/lexq-execution/SKILL.md',
+    heading: '### Execution Statuses',
+    label: 'execution statuses',
+  },
+  {
+    enumName: 'TaskType',
+    file: 'skills/lexq-execution/SKILL.md',
+    heading: '## 2. Failure Logs',
+    label: 'failure log task types',
+  },
+  {
+    enumName: 'ConflictResolutionMode',
+    file: 'skills/lexq-groups/SKILL.md',
+    heading: '### Activation Mode (across groups in the same `activationGroup`)',
+    label: 'activation modes',
+  },
+  {
+    enumName: 'ValueType',
+    file: 'skills/lexq-rules/SKILL.md',
+    heading: '### Operators',
+    label: 'fact types in the operator table',
+  },
+  {
+    enumName: 'ConditionOperator',
+    file: 'skills/lexq-rules/SKILL.md',
+    heading: '### Operators',
+    table: 1,
+    label: 'condition operators',
+  },
+  {
+    enumName: 'ValueType',
+    file: 'skills/lexq-rules/SKILL.md',
+    heading: '### Value Types',
+    label: 'value types',
+  },
+  {
+    enumName: 'ActionType',
+    file: 'skills/lexq-rules/SKILL.md',
+    heading: '## Action Types',
+    label: 'action types',
+  },
+  {
+    enumName: 'MutateOperator',
+    file: 'skills/lexq-rules/SKILL.md',
+    heading: '### `MUTATE_FACT` parameters',
+    table: 1,
+    label: 'MUTATE_FACT operators',
+  },
+  {
+    enumName: 'ConflictResolutionMode',
+    file: 'skills/lexq-rules/SKILL.md',
+    heading: '## Mutex (Rule-Level Conflict Resolution)',
+    label: 'mutex modes',
+  },
+  {
+    enumName: 'DecisionStatus',
+    file: 'skills/lexq-simulation/SKILL.md',
+    heading: '### Reading Decision Traces',
+    label: 'decision statuses',
+    omit: { NOT_SELECTED: NOT_PRODUCED_YET },
+  },
+  {
+    enumName: 'DecisionReasonCode',
+    file: 'skills/lexq-simulation/SKILL.md',
+    heading: '### Reading Reason Codes',
+    label: 'decision reason codes',
+    omit: { EFFECTIVE_DATE_INVALID: NOT_PRODUCED_YET },
+  },
   {
     enumName: 'ConditionUnresolvedReason',
     file: 'skills/lexq-simulation/SKILL.md',
     heading: '#### `reasonDetail` on unevaluable conditions',
     label: 'unevaluable-condition codes',
+  },
+  {
+    enumName: 'SimulationDatasetType',
+    file: 'skills/lexq-simulation/SKILL.md',
+    heading: '### Dataset Types',
+    label: 'dataset types',
+  },
+  {
+    enumName: 'SimulationStatus',
+    file: 'skills/lexq-simulation/SKILL.md',
+    heading: '### Check Status (Poll)',
+    label: 'simulation statuses',
+  },
+  {
+    enumName: 'PolicyGroupStatus',
+    file: 'CONTEXT.md',
+    heading: '### Policy Group Status',
+    label: 'policy group statuses',
+  },
+  {
+    enumName: 'PolicyVersionStatus',
+    file: 'CONTEXT.md',
+    heading: '### Policy Version Status',
+    label: 'policy version statuses',
+  },
+  {
+    enumName: 'ConditionOperator',
+    file: 'CONTEXT.md',
+    heading: '### Condition Operators',
+    kind: 'list',
+    label: 'condition operators',
+  },
+  {
+    enumName: 'ValueType',
+    file: 'CONTEXT.md',
+    heading: '### Value Types',
+    kind: 'list',
+    label: 'value types',
+  },
+  {
+    enumName: 'ActionType',
+    file: 'CONTEXT.md',
+    heading: '### Action Types',
+    kind: 'list',
+    label: 'action types',
+  },
+  {
+    enumName: 'ConflictResolutionMode',
+    file: 'CONTEXT.md',
+    heading: '### Conflict Resolution Modes',
+    kind: 'list',
+    label: 'conflict resolution modes',
+  },
+  {
+    enumName: 'ConflictResolutionStrategy',
+    file: 'CONTEXT.md',
+    heading: '### Conflict Resolution Strategies',
+    kind: 'list',
+    label: 'conflict resolution strategies',
+  },
+  {
+    enumName: 'DeploymentType',
+    file: 'CONTEXT.md',
+    heading: '### Deployment Types',
+    kind: 'list',
+    label: 'deployment types',
+  },
+  {
+    enumName: 'ApiExecutionStatus',
+    file: 'CONTEXT.md',
+    heading: '### Execution Statuses',
+    kind: 'list',
+    label: 'execution statuses',
+  },
+  {
+    enumName: 'SimulationStatus',
+    file: 'CONTEXT.md',
+    heading: '### Simulation Statuses',
+    kind: 'list',
+    label: 'simulation statuses',
+  },
+  {
+    enumName: 'DecisionStatus',
+    file: 'CONTEXT.md',
+    heading: '### Decision Statuses',
+    kind: 'list',
+    label: 'decision statuses',
+    omit: { NOT_SELECTED: NOT_PRODUCED_YET },
+  },
+  {
+    enumName: 'PlatformEventType',
+    file: 'CONTEXT.md',
+    heading: '### Platform Event Types (for webhook subscriptions)',
+    kind: 'list',
+    label: 'platform event types',
+  },
+  {
+    enumName: 'WebhookPayloadFormat',
+    file: 'CONTEXT.md',
+    heading: '### Webhook Payload Formats',
+    kind: 'list',
+    label: 'webhook payload formats',
   },
 ];
 
@@ -126,6 +340,41 @@ function fail(msg, detail = []) {
   console.error(`✗ ${msg}`);
   detail.forEach((d) => console.error(`  ${d}`));
   process.exitCode = 1;
+}
+
+/** Code-formatted SCREAMING_CASE words, the way these tables and lists mark enum values. */
+const enumWords = (text) => [...text.matchAll(/`([A-Z][A-Z0-9_]*)`/g)].map((m) => m[1]);
+
+/**
+ * The values an ENUM_TABLES entry writes, read from the lines after its heading: the first
+ * paragraph for a list, or the first cell of every row of the chosen table.
+ */
+function writtenValues(lines, entry) {
+  const written = new Set();
+  if (entry.kind === 'list') {
+    let i = 0;
+    while (i < lines.length && lines[i].trim() === '') i++;
+    for (; i < lines.length && lines[i].trim() !== ''; i++) {
+      enumWords(lines[i]).forEach((v) => written.add(v));
+    }
+    return written;
+  }
+  const wanted = entry.table ?? 0;
+  let index = -1;
+  let inTable = false;
+  for (const line of lines) {
+    if (!line.startsWith('|')) {
+      if (inTable && index === wanted) break; // past the chosen table
+      inTable = false;
+      continue;
+    }
+    if (!inTable) {
+      index++;
+      inTable = true;
+    }
+    if (index === wanted) enumWords(line.slice(1).split('|')[0]).forEach((v) => written.add(v));
+  }
+  return written;
 }
 
 function walk(dir, acc = []) {
@@ -220,8 +469,8 @@ for (const table of ENUM_TABLES) {
     continue;
   }
 
-  // The first table under the named heading. Anchoring on the heading matters: this file
-  // holds several enum tables and an unanchored read would merge them into one set.
+  // Anchoring on the heading matters: these files hold several enum tables and lists, and an
+  // unanchored read would merge them into one set.
   const lines = fs.readFileSync(full, 'utf8').split('\n');
   const start = lines.indexOf(table.heading);
   if (start === -1) {
@@ -233,32 +482,21 @@ for (const table of ENUM_TABLES) {
     continue;
   }
 
-  // First cell of each row, when it holds a single code-formatted SCREAMING_CASE token.
-  const written = new Set();
-  let seenRow = false;
-  for (const line of lines.slice(start + 1)) {
-    if (!line.startsWith('|')) {
-      if (seenRow) break; // past the table
-      continue;
-    }
-    seenRow = true;
-    const cell = line.slice(1).split('|')[0].trim();
-    const m = /^`([A-Z][A-Z0-9_]*)`$/.exec(cell);
-    if (m) written.add(m[1]);
-  }
-
+  const written = writtenValues(lines.slice(start + 1), table);
   if (written.size === 0) {
-    fail(`${table.label} (${table.enumName}) matched no rows`, [
-      `The table in ${table.file} changed shape and this check stopped looking.`,
-      'Fix the entry in ENUM_TABLES, or drop it if the table is gone.',
+    fail(`${table.label} (${table.enumName}) matched nothing under ${table.heading}`, [
+      `The ${table.kind ?? 'table'} in ${table.file} changed shape and this check stopped looking.`,
+      'Fix the entry in ENUM_TABLES, or drop it if the section is gone.',
     ]);
     violations++;
     continue;
   }
 
   const declared = new Set(node.values);
+  const omit = table.omit ?? {};
   const retired = [...written].filter((v) => !declared.has(v));
-  const missing = node.values.filter((v) => !written.has(v));
+  const missing = node.values.filter((v) => !written.has(v) && !(v in omit));
+  const staleOmit = Object.keys(omit).filter((v) => !declared.has(v) || written.has(v));
 
   if (retired.length) {
     fail(`${table.file} lists ${table.label} the engine no longer has`, [
@@ -270,8 +508,22 @@ for (const table of ENUM_TABLES) {
     fail(`${table.file} is missing ${table.label} the engine now has`, [missing.join(', ')]);
     violations += missing.length;
   }
-  if (!retired.length && !missing.length) {
-    console.log(`✓ ${table.label} — ${written.size} row(s), exactly the manifest set`);
+  if (staleOmit.length) {
+    fail(
+      `${table.file}: omit for ${table.label} names values the engine dropped or the prose now shows`,
+      [
+        staleOmit.join(', '),
+        'Update `omit` in ENUM_TABLES, and the sentence that explains the omission.',
+      ],
+    );
+    violations += staleOmit.length;
+  }
+  if (!retired.length && !missing.length && !staleOmit.length) {
+    const left = Object.keys(omit).length;
+    console.log(
+      `✓ ${table.label} (${table.file}) — ${written.size} value(s), the manifest set` +
+        (left ? ` less ${left} left out on purpose` : ''),
+    );
   }
 }
 
@@ -281,5 +533,5 @@ if (violations) {
 }
 console.log(
   `\n${files.length} files checked · ${PROSE_MIRRORS.length} mirrored constants · ` +
-    `${ENUM_TABLES.length} mirrored table(s)`,
+    `${ENUM_TABLES.length} mirrored enum table(s) and list(s)`,
 );

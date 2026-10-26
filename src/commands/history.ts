@@ -8,13 +8,9 @@ import type {
   ExecutionHistoryDetail,
   ExecutionStatsResponse,
 } from '@/types/history';
-import {
-  END_DAY,
-  START_DAY,
-  STATS_DEFAULT_WINDOW_DAYS,
-  STATS_MAX_WINDOW_DAYS,
-  utcMinute,
-} from '@/lib/dates';
+import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
+import { STATS_DEFAULT_WINDOW_DAYS, STATS_MAX_WINDOW_DAYS } from '@/types/constants';
+import { ApiExecutionStatus } from '@/types/enums';
 
 export function registerHistoryCommands(program: Command): void {
   const history = program
@@ -31,7 +27,7 @@ export function registerHistoryCommands(program: Command): void {
           get     Get full execution detail (request facts, traces, decisions)
           stats   Aggregate statistics (success rate, latency, counts)
 
-        Statuses: SUCCESS, NO_MATCH, ERROR, TIMEOUT
+        Statuses: ${ApiExecutionStatus.join(', ')}
       `,
     );
 
@@ -42,7 +38,7 @@ export function registerHistoryCommands(program: Command): void {
     .option('--trace-id <traceId>', 'Filter by trace ID')
     .option('--group-id <groupId>', 'Filter by policy group')
     .option('--version-id <versionId>', 'Filter by version')
-    .option('--status <status>', 'Filter by status (SUCCESS, NO_MATCH, ERROR, TIMEOUT)')
+    .option('--status <status>', `Filter by status (${ApiExecutionStatus.join(', ')})`)
     .option('--start-date <date>', START_DAY)
     .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')

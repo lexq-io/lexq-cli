@@ -30,6 +30,15 @@
     "ActionType": {
       "values": ["SET_FACT", "MUTATE_FACT", "BLOCK"]
     },
+    "MutateOperator": {
+      "values": ["ASSIGN", "ADD", "SUB", "MUL", "DIV"]
+    },
+    "CalculationMethod": {
+      "values": ["PERCENTAGE", "AMOUNT"]
+    },
+    "RoundingPolicy": {
+      "values": ["UP", "DOWN", "CEILING", "FLOOR", "HALF_UP", "HALF_DOWN", "HALF_EVEN"]
+    },
     "ValueType": {
       "values": ["STRING", "NUMBER", "BOOLEAN", "LIST_STRING", "LIST_NUMBER"]
     },
@@ -173,6 +182,13 @@
     "MAX_RULES_PER_VERSION": 100,
     "MAX_CONDITIONS_PER_RULE": 25,
     "MAX_CONDITION_DEPTH": 10,
-    "MAX_SNAPSHOT_BYTES": 131072
+    "MAX_SNAPSHOT_BYTES": 131072,
+    "STATS_DEFAULT_WINDOW_DAYS": 30,
+    "STATS_MAX_WINDOW_DAYS": 31,
+    "FAILURE_LOG_LOOKBACK_DAYS": 7,
+    "PURGE_AFTER_DAYS": 30,
+    "DESCRIPTION_MAX_LENGTH": 255,
+    "COMMIT_MESSAGE_MAX_LENGTH": 500,
+    "SCHEDULE_TICK_MAX_MILLIS": 60000
   }
 }

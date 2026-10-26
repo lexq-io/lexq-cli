@@ -21,6 +21,8 @@ import type {
   UndeployRequest,
   ScheduleRequest,
 } from '@/types/deploy';
+import { DeploymentType } from '@/types/enums';
+import { SCHEDULE_TICK_MAX_MILLIS } from '@/types/constants';
 import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
 
 export function registerDeployCommands(program: Command): void {
@@ -252,7 +254,7 @@ export function registerDeployCommands(program: Command): void {
     .command('history')
     .description('List deployment history')
     .option('--group-id <groupId>', 'Filter by policy group')
-    .option('--types <types>', 'Filter by types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)')
+    .option('--types <types>', `Filter by types (comma-separated: ${DeploymentType.join(',')})`)
     .option('--start-date <date>', START_DAY)
     .option('--end-date <date>', END_DAY)
     .option('--page <number>', 'Page number', '0')
@@ -458,7 +460,7 @@ export function registerDeployCommands(program: Command): void {
       dedent`
 
         The version must be ACTIVE with a future effective start date; the system
-        deploys it automatically at that time (within one scheduler tick, ≤60s).
+        deploys it automatically at that time (within one scheduler tick, ≤${SCHEDULE_TICK_MAX_MILLIS / 1000}s).
         That time is the version's effectiveFrom, set on the DRAFT before publishing;
         this command takes no time of its own.
         One pending schedule per group. Manual deploy/rollback/undeploy, starting

@@ -3,11 +3,17 @@ import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import { PlatformEventType } from '@/types/enums';
+import { PlatformEventType, type WebhookPayloadFormat } from '@/types/enums';
 import type {
   WebhookSubscriptionResponse,
   WebhookSubscriptionTestResponse,
 } from '@/types/webhook-subscriptions';
+import { withNotes } from '@/lib/enum-notes';
+
+const FORMAT_NOTES = {
+  GENERIC: 'full JSON',
+  SLACK: '{"text":"..."}',
+} satisfies Record<WebhookPayloadFormat, string>;
 
 export function registerWebhookSubscriptionCommands(program: Command): void {
   const webhooks = program
@@ -134,7 +140,7 @@ export function registerWebhookSubscriptionCommands(program: Command): void {
           name                string      Subscription name (required, unique per tenant)
           webhookUrl          string      Webhook endpoint URL (required)
           subscribedEvents    string[]    ${PlatformEventType.join(', ')}
-          payloadFormat       string      GENERIC (full JSON) or SLACK ({"text":"..."})  [default: GENERIC]
+          payloadFormat       string      ${withNotes(FORMAT_NOTES).join(' or ')}  [default: GENERIC]
           secret              string      HMAC-SHA256 signing secret (optional)
           isActive            boolean     Enable/disable (optional)  [default: true]
           id                  string      Provide to update, omit to create

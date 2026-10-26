@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { MAX_SNAPSHOT_BYTES } from '@/types/constants';
+import { DeploymentScheduleStatus, DeploymentType } from '@/types/enums';
 import { END_DAY, START_DAY } from '@/lib/dates';
 
 export function registerDeployTools(server: McpServer, callApi: CallApi): void {
@@ -130,8 +131,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Scheduled Deployments',
       annotations: { readOnlyHint: true },
-      description:
-        'List scheduled deployments across all groups (all statuses: PENDING, EXECUTED, CANCELED, FAILED), newest first.',
+      description: `List scheduled deployments across all groups (all statuses: ${DeploymentScheduleStatus.join(', ')}), newest first.`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
@@ -154,7 +154,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
         types: z
           .string()
           .optional()
-          .describe('Filter by deployment types (comma-separated: DEPLOY,ROLLBACK,UNDEPLOY)'),
+          .describe(`Filter by deployment types (comma-separated: ${DeploymentType.join(',')})`),
         startDate: z.string().optional().describe(START_DAY),
         endDate: z.string().optional().describe(END_DAY),
       }),

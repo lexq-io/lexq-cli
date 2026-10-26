@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { PolicyVersionSummary } from '@/types/versions';
+import { COMMIT_MESSAGE_MAX_LENGTH } from '@/types/constants';
 import { INSTANT, utcMinute } from '@/lib/dates';
 
 export function registerVersionCommands(program: Command): void {
@@ -126,7 +127,7 @@ export function registerVersionCommands(program: Command): void {
             }'
 
         Fields:
-          commitMessage    string      Version description (optional, max 255 chars)
+          commitMessage    string      Version description (optional, max ${COMMIT_MESSAGE_MAX_LENGTH} chars)
           effectiveFrom    instant     Start of effective period (optional, with Z or an offset)
           effectiveTo      instant     End of effective period (optional, auto-expires)
       `,
