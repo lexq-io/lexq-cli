@@ -3,7 +3,8 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
 import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
-import { END_DAY, FAILURE_LOG_LOOKBACK_DAYS, START_DAY } from '@/lib/dates';
+import { END_DAY, START_DAY } from '@/lib/dates';
+import { FAILURE_LOG_LOOKBACK_DAYS } from '@/types/constants';
 import { withNotes } from '@/lib/enum-notes';
 
 const ACTION_NOTES = {

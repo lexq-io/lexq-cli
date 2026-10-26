@@ -8,13 +8,8 @@ import type {
   ExecutionHistoryDetail,
   ExecutionStatsResponse,
 } from '@/types/history';
-import {
-  END_DAY,
-  START_DAY,
-  STATS_DEFAULT_WINDOW_DAYS,
-  STATS_MAX_WINDOW_DAYS,
-  utcMinute,
-} from '@/lib/dates';
+import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
+import { STATS_DEFAULT_WINDOW_DAYS, STATS_MAX_WINDOW_DAYS } from '@/types/constants';
 import { ApiExecutionStatus } from '@/types/enums';
 
 export function registerHistoryCommands(program: Command): void {

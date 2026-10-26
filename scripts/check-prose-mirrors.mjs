@@ -96,6 +96,36 @@ const PROSE_MIRRORS = [
     pattern: /last (\d+)h/g,
     expected: (v) => String(v),
   },
+  {
+    constant: 'STATS_DEFAULT_WINDOW_DAYS',
+    label: 'execution stats default window',
+    pattern: /the window is the last (\d+) days/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'STATS_MAX_WINDOW_DAYS',
+    label: 'execution stats range limit',
+    pattern: /(\d+) days per call/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'FAILURE_LOG_LOOKBACK_DAYS',
+    label: 'failure log default lookback',
+    pattern: /(\d+) days back/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'PURGE_AFTER_DAYS',
+    label: 'deleted group purge delay',
+    pattern: /permanently deleted after (\d+) days/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'SCHEDULE_TICK_MAX_MILLIS',
+    label: 'scheduled deployment delay bound',
+    pattern: /within one tick \(≤(\d+)s\)/g,
+    expected: (v) => String(v / 1000),
+  },
 ];
 
 /**

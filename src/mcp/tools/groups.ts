@@ -6,7 +6,12 @@ import {
   ConflictResolutionStrategy,
   PolicyGroupStatus,
 } from '@/types/enums';
-import { MAX_GROUPS_PER_TENANT, MAX_TRAFFIC_RATE, MIN_TRAFFIC_RATE } from '@/types/constants';
+import {
+  MAX_GROUPS_PER_TENANT,
+  MAX_TRAFFIC_RATE,
+  MIN_TRAFFIC_RATE,
+  PURGE_AFTER_DAYS,
+} from '@/types/constants';
 
 export function registerGroupTools(server: McpServer, callApi: CallApi): void {
   // ── CRUD ──
@@ -133,8 +138,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Delete Policy Group',
       annotations: { readOnlyHint: false, destructiveHint: true },
-      description:
-        'Delete (archive) a policy group. A deployed group cannot be deleted (P-020); undeploy it first with lexq_deploy_undeploy, which also ends a running A/B test. This cannot be undone. The group no longer appears in lexq_groups_list and its name can be reused right away. Calls that change it (settings, versions, rules, starting an A/B test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted after 30 days.',
+      description: `Delete (archive) a policy group. A deployed group cannot be deleted (P-020); undeploy it first with lexq_deploy_undeploy, which also ends a running A/B test. This cannot be undone. The group no longer appears in lexq_groups_list and its name can be reused right away. Calls that change it (settings, versions, rules, starting an A/B test, publish, deploy, rollback, scheduling a deployment) return 409 P-059. If it was ever executed, deployed, or replayed, it is kept for audit; otherwise it is permanently deleted after ${PURGE_AFTER_DAYS} days.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
       }),

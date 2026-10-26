@@ -5,7 +5,8 @@ import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { FailureLogResponse, BulkActionResponse } from '@/types/logs';
 import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
-import { END_DAY, FAILURE_LOG_LOOKBACK_DAYS, START_DAY, utcMinute } from '@/lib/dates';
+import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
+import { FAILURE_LOG_LOOKBACK_DAYS } from '@/types/constants';
 import { withNotes } from '@/lib/enum-notes';
 
 const STATUS_NOTES = {

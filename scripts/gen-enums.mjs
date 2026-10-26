@@ -75,6 +75,13 @@ const CONSTANTS = [
   'PolicyRuleService.MAX_CONDITIONS_PER_RULE',
   'PolicyRuleService.MAX_CONDITION_DEPTH',
   'RulesSnapshotWeigher.MAX_SNAPSHOT_BYTES',
+  'ExecutionHistoryService.STATS_DEFAULT_WINDOW_DAYS',
+  'ExecutionHistoryService.STATS_MAX_WINDOW_DAYS',
+  'FailureLogService.FAILURE_LOG_LOOKBACK_DAYS',
+  'ArchivedGroupPurgeService.PURGE_AFTER_DAYS',
+  'PolicyGroup.DESCRIPTION_MAX_LENGTH',
+  'PolicyVersion.COMMIT_MESSAGE_MAX_LENGTH',
+  'ScheduledDeploymentProcessor.SCHEDULE_TICK_MAX_MILLIS',
 ];
 
 /** Enums this CLI exposes, in output order. The manifest is wider; anything not listed stays out. */

@@ -22,15 +22,6 @@ export const INSTANT =
   'ISO-8601 instant with Z or an offset, e.g. 2026-10-01T00:00:00Z or 2026-10-01T09:00:00+09:00. A bare date or a time without an offset is rejected.';
 
 /**
- * The server's default windows for execution stats and failure logs, and its limit for stats. The
- * contract manifest does not carry them yet, so they are typed here once, and the CLI help and the
- * MCP descriptions both read them from here.
- */
-export const STATS_DEFAULT_WINDOW_DAYS = 30;
-export const STATS_MAX_WINDOW_DAYS = 31;
-export const FAILURE_LOG_LOOKBACK_DAYS = 7;
-
-/**
  * A server instant for a human-readable table: cut to the minute, kept in UTC, with the `Z` left
  * on. Without it, 2026-09-30T15:00 reads as local time, and for Seoul that is nine hours off.
  */

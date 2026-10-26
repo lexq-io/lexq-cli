@@ -2,7 +2,8 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
-import { END_DAY, START_DAY, STATS_DEFAULT_WINDOW_DAYS, STATS_MAX_WINDOW_DAYS } from '@/lib/dates';
+import { END_DAY, START_DAY } from '@/lib/dates';
+import { STATS_DEFAULT_WINDOW_DAYS, STATS_MAX_WINDOW_DAYS } from '@/types/constants';
 import { ApiExecutionStatus } from '@/types/enums';
 
 export function registerHistoryTools(server: McpServer, callApi: CallApi): void {
