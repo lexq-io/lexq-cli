@@ -61,6 +61,7 @@ const CONSTANTS = [
   'ReplayJobService.REPLAY_WINDOW_MAX_RECORDS',
   'AnalyticsService.DEFAULT_SIMULATION_RECORDS',
   'AnalyticsService.MAX_SIMULATION_RECORDS',
+  'AnalyticsService.MAX_DATASET_SIZE',
   'DeterministicSampler.PROFILE_SAMPLE_PERMILLE',
   'LatencyWindowFlusher.LATENCY_WINDOW_MILLIS',
   'QuantileDisplayGate.TAIL_MIN_OBS',

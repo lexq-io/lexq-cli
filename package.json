@@ -1,6 +1,6 @@
 {
   "name": "@lexq/cli",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "mcpName": "io.lexq/lexq",
   "description": "The Decision Operations Platform for engineering teams",
   "type": "module",
@@ -45,6 +45,7 @@
     "test:value-domain": "pnpm build && node tests/value-domain.mjs",
     "test:fact-update": "pnpm build && node tests/fact-update.mjs",
     "test:rollback": "pnpm build && node tests/rollback.mjs",
+    "test:dataset-upload": "pnpm build && node tests/dataset-upload.mjs",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -76,16 +77,16 @@
   },
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
-    "@modelcontextprotocol/server": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.3.1",
     "cli-table3": "^0.6.5",
     "commander": "^13.1.0",
     "dedent": "^1.7.2",
     "lossless-json": "4.3.1",
-    "zod": "^4.5.4"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
-    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/client": "^2.3.1",
     "@types/node": "^22.12.0",
     "eslint": "^10.2.0",
     "knip": "^6.29.0",

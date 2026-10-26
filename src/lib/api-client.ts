@@ -20,7 +20,21 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = ApiClientOptions & { body?: unknown; params?: Record<string, string> };
+type RequestOptions = ApiClientOptions & {
+  body?: unknown;
+  /** A multipart body, sent in place of `body`. fetch writes the boundary into Content-Type. */
+  form?: FormData;
+  params?: Record<string, string>;
+};
+
+/** One line per field of a multipart body. A file shows its name, size and type, never its bytes. */
+function describeForm(form: FormData): string[] {
+  return [...form.entries()].map(([name, value]) =>
+    typeof value === 'string'
+      ? `  ${name}: ${value}`
+      : `  ${name}: ${value.name} (${value.size} bytes, ${value.type})`,
+  );
+}
 
 async function doFetch(method: string, path: string, options: RequestOptions): Promise<Response> {
   const config = loadConfig();
@@ -39,7 +53,7 @@ async function doFetch(method: string, path: string, options: RequestOptions): P
   }
 
   const headers: Record<string, string> = { 'X-API-KEY': apiKey, Accept: 'application/json' };
-  if (options.body) headers['Content-Type'] = 'application/json';
+  if (options.body && !options.form) headers['Content-Type'] = 'application/json';
 
   if (options.dryRun) {
     const masked =
@@ -49,8 +63,11 @@ async function doFetch(method: string, path: string, options: RequestOptions): P
     console.log(`${method} ${url.toString()}`);
     console.log('Headers:');
     console.log(`  X-API-KEY: ${masked}`);
-    console.log(`  Content-Type: application/json`);
-    if (options.body) {
+    console.log(`  Content-Type: ${options.form ? 'multipart/form-data' : 'application/json'}`);
+    if (options.form) {
+      console.log('Body:');
+      for (const line of describeForm(options.form)) console.log(line);
+    } else if (options.body) {
       console.log('Body:');
       // What is printed here must be what would be sent.
       console.log(`  ${stringifyJson(options.body, 2) ?? ''}`);
@@ -59,12 +76,15 @@ async function doFetch(method: string, path: string, options: RequestOptions): P
     process.exit(0);
   }
 
-  if (options.verbose) console.error(`→ ${method} ${url.toString()}`);
+  if (options.verbose) {
+    console.error(`→ ${method} ${url.toString()}`);
+    if (options.form) for (const line of describeForm(options.form)) console.error(line);
+  }
   const startTime = Date.now();
   const response = await fetch(url.toString(), {
     method,
     headers,
-    body: options.body ? stringifyJson(options.body) : undefined,
+    body: options.form ?? (options.body ? stringifyJson(options.body) : undefined),
   });
   if (options.verbose) {
     console.error(`← ${response.status} ${response.statusText} (${Date.now() - startTime}ms)`);
@@ -89,13 +109,32 @@ function isFileResponse(response: Response): boolean {
 }
 
 function assertOk<T>(response: Response, json: ApiResponse<T>): void {
-  if (!response.ok || json.result !== 'SUCCESS') {
+  if (json.result !== 'SUCCESS') {
     throw new ApiError(
       response.status,
       json.errorCode,
       json.message ?? `Request failed with status ${response.status}`,
     );
   }
+}
+
+/**
+ * The error for a refused request. The API refuses with an envelope that carries a code and a
+ * message. A proxy in front of it can refuse with a page of its own or with no body at all, and
+ * then the status is all there is to report.
+ */
+async function refusal(response: Response): Promise<ApiError> {
+  let json: Partial<ApiResponse<unknown>> | undefined;
+  try {
+    json = parseJson(await response.text()) as Partial<ApiResponse<unknown>>;
+  } catch {
+    // not JSON
+  }
+  return new ApiError(
+    response.status,
+    json?.errorCode ?? null,
+    json?.message ?? `Request failed with status ${response.status}`,
+  );
 }
 
 export async function apiRequest<T>(
@@ -113,6 +152,10 @@ export async function apiRequestWithMeta<T>(
   options: RequestOptions = {},
 ): Promise<{ data: T; meta: ResponseMeta | null }> {
   const response = await doFetch(method, path, options);
+
+  // Status first. Read as a file, as no content or as an envelope, a proxy's error page or an
+  // empty 413 would pass for a result.
+  if (!response.ok) throw await refusal(response);
 
   // File responses (export endpoints) — no envelope, no meta.
   //

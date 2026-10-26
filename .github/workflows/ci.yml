@@ -101,3 +101,6 @@ jobs:
 
       - name: Rollback expectations
         run: node tests/rollback.mjs
+
+      - name: Dataset upload
+        run: node tests/dataset-upload.mjs

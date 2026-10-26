@@ -1,13 +1,14 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import { basename } from 'node:path';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
+import { uploadDataset } from '@/lib/dataset-upload';
 import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
 import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
 import { groupLabel, printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
-  DatasetUploadResponse,
   DryRunCompareResponse,
   DryRunResponse,
   RequirementsResponse,
@@ -568,50 +569,13 @@ export function registerAnalyticsCommands(program: Command): void {
     .action(async (opts) => {
       try {
         const globalOpts = program.opts();
-        const config = loadConfig();
-        const baseUrl = globalOpts.baseUrl ?? config.baseUrl;
-        const apiKey = globalOpts.apiKey ?? config.apiKey;
-
-        if (!apiKey) {
-          throw new Error('Not authenticated. Run "lexq auth login" first.');
-        }
-
         const filePath = opts.file as string;
-        const fileBuffer = readFileSync(filePath);
-        const fileName = filePath.split('/').pop() ?? 'dataset';
-
-        const ext = fileName.split('.').pop()?.toLowerCase();
-        let contentType = 'application/octet-stream';
-        if (ext === 'csv') contentType = 'text/csv';
-        else if (ext === 'json') contentType = 'application/json';
-
-        const blob = new Blob([fileBuffer], { type: contentType });
-        const formData = new FormData();
-        formData.append('file', blob, fileName);
-
-        const url = new URL(
-          'analytics/datasets/upload',
-          baseUrl.endsWith('/') ? baseUrl : baseUrl + '/',
-        );
-
-        if (globalOpts.verbose) {
-          console.error(`→ POST ${url.toString()}`);
-          console.error(`  File: ${filePath} (${fileBuffer.length} bytes)`);
-        }
-
-        const response = await fetch(url.toString(), {
-          method: 'POST',
-          headers: { 'X-API-KEY': apiKey },
-          body: formData,
+        const result = await uploadDataset(readFileSync(filePath), basename(filePath), {
+          apiKey: globalOpts.apiKey,
+          baseUrl: globalOpts.baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
         });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Upload failed (${response.status}): ${errorText}`);
-        }
-
-        const envelope = (await response.json()) as { data: DatasetUploadResponse };
-        const result = envelope.data;
         console.log(`✓ Dataset uploaded: ${result.path}`);
         console.log(`  File: ${result.filename} (${result.size} bytes)`);
         printJson(result);

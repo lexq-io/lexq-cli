@@ -1,6 +1,6 @@
 import { apiRequestWithMeta, type ApiClientOptions } from '@/lib/api-client';
 import { loadConfig } from '@/lib/config';
-import { parseJson, stringifyJson } from '@/lib/lossless-json';
+import { stringifyJson } from '@/lib/lossless-json';
 import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
 import type { ResponseMeta } from '@/types/api';
 
@@ -28,59 +28,38 @@ export type CallApi = (
 ) => Promise<McpToolResult>;
 
 /**
+ * Where the stdio MCP server sends requests. The environment comes first, then
+ * ~/.lexq/config.json. The same variables the test suites use let Inspector, CI and a
+ * client's env block target any environment without touching the config file.
+ */
+export function localApiOptions(): ApiClientOptions {
+  const stored = loadConfig();
+  return {
+    baseUrl: process.env.PARTNER_BASE_URL ?? stored.baseUrl,
+    apiKey: process.env.LEXQ_API_KEY ?? stored.apiKey,
+  };
+}
+
+/**
  * Creates a CallApi bound to the local config file (~/.lexq/config.json).
  * Used by the CLI's stdio MCP server.
  */
 export function createCallApiFromConfig(): CallApi {
   return async (method, path, opts) => {
     try {
-      // Env overrides (same vocabulary as the test suites) — lets Inspector,
-      // CI, and Claude Desktop env blocks target any environment without
-      // touching ~/.lexq/config.json. Precedence: env > stored config.
-      const stored = loadConfig();
-      const config = {
-        ...stored,
-        baseUrl: process.env.PARTNER_BASE_URL ?? stored.baseUrl,
-        apiKey: process.env.LEXQ_API_KEY ?? stored.apiKey,
-      };
-
-      // ── Upload (multipart/form-data) ──
+      // Inline content goes as text/plain, the same as the hosted server sends it. The
+      // response is read like any other, so a refused upload comes back as an error.
+      let form: FormData | undefined;
       if (opts?.upload) {
-        const url = new URL(
-          path,
-          config.baseUrl.endsWith('/') ? config.baseUrl : config.baseUrl + '/',
-        );
-        if (opts.params) {
-          for (const [key, value] of Object.entries(opts.params)) {
-            if (value !== undefined) url.searchParams.set(key, value);
-          }
-        }
-
-        if (!config.apiKey) {
-          throw new Error('Not authenticated. Run "lexq auth login" first.');
-        }
-
+        form = new FormData();
         const blob = new Blob([opts.upload.content], { type: 'text/plain' });
-        const formData = new FormData();
-        formData.append(opts.upload.fieldName, blob, opts.upload.filename);
-
-        const response = await fetch(url.toString(), {
-          method,
-          headers: { 'X-API-KEY': config.apiKey },
-          body: formData,
-        });
-
-        const data = parseJson(await response.text());
-        return { content: [{ type: 'text', text: stringifyJson(data, 2) ?? '' }] };
+        form.append(opts.upload.fieldName, blob, opts.upload.filename);
       }
 
-      const clientOpts: ApiClientOptions = {
-        apiKey: config.apiKey,
-        baseUrl: config.baseUrl,
-      };
       const { data, meta } = await apiRequestWithMeta(method, path, {
-        ...clientOpts,
+        ...localApiOptions(),
         body: opts?.body,
+        form,
         params: opts?.params,
       });
       const content: Array<{ type: 'text'; text: string }> = [

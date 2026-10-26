@@ -280,6 +280,11 @@ lexq analytics simulation start --json '{
 **CSV format:** Header row with fact keys, data rows with values. Types auto-detected.
 **JSON format:** Array of objects `[{"key": "value"}, ...]`
 
+Dataset files can be up to 10 MB. Over MCP, the local server (`lexq serve --mcp`) has
+`lexq_dataset_upload_file`, which takes the absolute path of a `.csv` or `.json` file and reads it from
+disk. The hosted server has only `lexq_dataset_upload`, which takes the content inline and suits small
+datasets. For a larger file there, upload it with the command above and pass the returned `path`.
+
 ### Check Status (Poll)
 
 ```bash
