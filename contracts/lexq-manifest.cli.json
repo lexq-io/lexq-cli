@@ -111,9 +111,6 @@
     "FailureStatus": {
       "values": ["PENDING", "RESOLVED", "IGNORED"]
     },
-    "FailureAction": {
-      "values": ["IGNORE", "RESOLVE"]
-    },
     "TaskType": {
       "values": ["PLATFORM_WEBHOOK", "SCHEDULED_DEPLOYMENT"]
     },

@@ -157,4 +157,4 @@ implemented).
 | **Traffic Rate**         | Percentage (1–99) of traffic routed to the A/B test version.                                                                                                   |
 | **Webhook Subscription** | A platform event listener — receives notifications on deployment lifecycle events. Tenant-level.                                                               |
 | **Platform Event**       | A lifecycle event emitted by the engine itself (`VERSION_PUBLISHED`, `DEPLOYED`, `ROLLED_BACK`, `UNDEPLOYED`, `DEPLOY_SCHEDULED`, `DEPLOY_SCHEDULE_CANCELED`). |
-| **Failure Log**          | A record of a background task failure (platform webhook delivery, scheduled deployment). Mark as `RESOLVE` or `IGNORE` — there is no retry.                    |
+| **Failure Log**          | A record of a background task failure (platform webhook delivery, scheduled deployment). An admin resolves or ignores it in the console — there is no retry.   |

@@ -71,7 +71,7 @@ lexq profile <groupId>
 lexq history list|get|stats
 lexq replay decision|start|list|get|cancel|export
 lexq provenance get|reveal-audits
-lexq logs list|get|action|bulk-action
+lexq logs list|get
 lexq webhook-subscriptions list|get|save|delete|test
 ```
 

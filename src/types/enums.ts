@@ -144,9 +144,6 @@ export type Role = (typeof Role)[number];
 export const FailureStatus = ['PENDING', 'RESOLVED', 'IGNORED'] as const;
 export type FailureStatus = (typeof FailureStatus)[number];
 
-export const FailureAction = ['IGNORE', 'RESOLVE'] as const;
-export type FailureAction = (typeof FailureAction)[number];
-
 export const TaskType = ['PLATFORM_WEBHOOK', 'SCHEDULED_DEPLOYMENT'] as const;
 export type TaskType = (typeof TaskType)[number];
 

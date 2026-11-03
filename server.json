@@ -20,7 +20,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://mcp.lexq.io/mcp"
+      "url": "https://mcp.lexq.io"
     }
   ],
   "packages": [

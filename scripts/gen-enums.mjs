@@ -113,7 +113,6 @@ const ORDER = [
   'ExportFormat',
   'Role',
   'FailureStatus',
-  'FailureAction',
   'TaskType',
   'PlatformEventType',
   'WebhookPayloadFormat',
