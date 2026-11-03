@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, paginationParams } from './_shared';
 import { FailureStatus, TaskType } from '@/types/enums';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { FAILURE_LOG_LOOKBACK_DAYS } from '@/types/constants';
@@ -12,7 +12,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_list',
     {
       title: 'List Failure Logs',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: `List system failure logs from background tasks (platform event webhooks, scheduled deployments). Without dates the window is ${FAILURE_LOG_LOOKBACK_DAYS} days back through today, in the organization time zone; pass startDate to look further back. ${FAILURE_LOG_CONSOLE_NOTE}`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
@@ -39,7 +39,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     'lexq_logs_get',
     {
       title: 'Get Failure Log',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: `Get failure log detail by ID. ${FAILURE_LOG_CONSOLE_NOTE}`,
       inputSchema: z.object({
         logId: z.string().uuid().describe('Failure log ID'),

@@ -7,7 +7,7 @@ import dedent from 'dedent';
 import { datasetContentType, uploadDataset } from '@/lib/dataset-upload';
 import { stringifyJson } from '@/lib/lossless-json';
 import { MAX_DATASET_SIZE } from '@/types/constants';
-import { localApiOptions, type McpToolResult } from './tools/_shared';
+import { ADDITIVE, localApiOptions, type McpToolResult } from './tools/_shared';
 import { datasetBlock } from './tools/analytics';
 
 const MAX_DATASET_MB = MAX_DATASET_SIZE / 1024 / 1024;
@@ -92,7 +92,7 @@ export function registerLocalTools(server: McpServer): void {
     'lexq_dataset_upload_file',
     {
       title: 'Upload Dataset File',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: dedent`
         Upload a CSV or JSON file from this computer as a simulation dataset, up to ${MAX_DATASET_MB} MB.
         The server reads the file from disk, so its content never passes through the conversation.

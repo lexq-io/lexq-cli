@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, ADDITIVE, DESTRUCTIVE, paginationParams } from './_shared';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
@@ -25,7 +25,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dry_run',
     {
       title: 'Dry Run',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: dedent`
         Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.
         
@@ -61,7 +61,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dry_run_compare',
     {
       title: 'Dry Run Compare',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: dedent`
         Compare dry run results between two versions using the same input facts. Useful for validating changes.
         
@@ -89,7 +89,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_requirements',
     {
       title: 'Analyze Requirements',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Analyze which input facts a version requires. Returns required keys, types, and an example request body.',
       inputSchema: z.object({
@@ -107,7 +107,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_start',
     {
       title: 'Start Simulation',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: DESTRUCTIVE,
       description: dedent`
         Start an Impact Simulation against historical, uploaded, or inline data.
 
@@ -152,7 +152,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_status',
     {
       title: 'Simulation Status',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'Get simulation status and results. Poll until status is COMPLETED or FAILED.',
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
@@ -165,7 +165,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_list',
     {
       title: 'List Simulations',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'List simulation history with optional filters.',
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
@@ -188,7 +188,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_cancel',
     {
       title: 'Cancel Simulation',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: 'Cancel a running or pending simulation.',
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
@@ -201,7 +201,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_export',
     {
       title: 'Export Simulation',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'Export simulation results as JSON or CSV. Returns the raw data.',
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
@@ -220,7 +220,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dataset_upload',
     {
       title: 'Upload Dataset',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: dedent`
         Upload inline CSV or JSON content as a simulation dataset.
         The content is uploaded to S3 and a path is returned in the "path" field.
@@ -277,7 +277,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dataset_template',
     {
       title: 'Download Dataset Template',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Generate a sample CSV or JSON template based on the required facts of a version. Use this to understand the expected data format before uploading a dataset.',
       inputSchema: z.object({

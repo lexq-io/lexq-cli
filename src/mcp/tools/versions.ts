@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, ADDITIVE, DESTRUCTIVE, paginationParams } from './_shared';
 import { MAX_DRAFT_VERSIONS_PER_GROUP, MAX_RULES_PER_VERSION } from '@/types/constants';
 import { INSTANT } from '@/lib/dates';
 
@@ -10,7 +10,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_list',
     {
       title: 'List Policy Versions',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'List all versions of a policy group.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -28,7 +28,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_get',
     {
       title: 'Get Policy Version',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'Get a single version by ID, including its rules and fact requirements.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -43,7 +43,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_create',
     {
       title: 'Create Policy Version',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: `Create a new DRAFT version in a policy group. Optionally provide a commit message and effective date range. A group can hold at most ${MAX_DRAFT_VERSIONS_PER_GROUP} DRAFT versions at a time; published versions do not count. Publish or delete drafts to make room.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -59,7 +59,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_update',
     {
       title: 'Update Policy Version',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Update a DRAFT version. Only DRAFT versions can be modified. Omitted fields keep their current values. To remove an end of the effective window, set clearEffectiveFrom or clearEffectiveTo to true instead of sending a value.',
       inputSchema: z.object({
@@ -92,7 +92,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_delete',
     {
       title: 'Delete Policy Version',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: 'Delete a DRAFT version. Only DRAFT versions can be deleted.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -107,7 +107,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
     'lexq_versions_clone',
     {
       title: 'Clone Policy Version',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: `Clone an existing version to create a new DRAFT. Useful when the source version is already published. The new DRAFT counts toward the limit of ${MAX_DRAFT_VERSIONS_PER_GROUP} DRAFT versions per group, and a source with more than ${MAX_RULES_PER_VERSION} rules cannot be cloned.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),

@@ -2,7 +2,7 @@ import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, DESTRUCTIVE, paginationParams } from './_shared';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { WINDOW_END_DAY, WINDOW_START_DAY } from '@/lib/dates';
 
@@ -11,7 +11,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     'lexq_replay_decision',
     {
       title: 'Replay a Decision',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous and free of charge (TPS throttle only). A replay sends no webhook, notification, or event: rule actions produce no outward effects.',
       inputSchema: z.object({
@@ -27,7 +27,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     'lexq_replay_start',
     {
       title: 'Start Window Replay (Blast Radius)',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: DESTRUCTIVE,
       description:
         'Submit an async job that replays a date window of past executions against a candidate version and measures the blast radius (how many decisions change). Billed per replayed record (REPLAY metric); VIEWER role cannot submit. Poll with lexq_replay_status.',
       inputSchema: z.object({
@@ -52,7 +52,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     'lexq_replay_status',
     {
       title: 'Get Replay Job Status',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Poll a window replay job. RUNNING shows progress 0–100; COMPLETED fills summary and changedSamples; FAILED carries errorMessage. capped=true means the window exceeded the sample cap and only part was replayed.',
       inputSchema: z.object({
@@ -66,7 +66,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     'lexq_replay_list',
     {
       title: 'List Replay Jobs',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'List window replay job history (reverse-chronological). Lightweight items — use lexq_replay_status for summary and changed samples.',
       inputSchema: z.object({
@@ -82,7 +82,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     'lexq_replay_cancel',
     {
       title: 'Cancel Replay Job',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Cooperatively cancel a PENDING or RUNNING window replay job. Other states are rejected. VIEWER role cannot cancel.',
       inputSchema: z.object({
@@ -96,7 +96,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     'lexq_replay_export',
     {
       title: 'Export Replay Result',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text.',
       inputSchema: z.object({

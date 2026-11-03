@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, DESTRUCTIVE, paginationParams } from './_shared';
 import { PlatformEventType, WebhookPayloadFormat } from '@/types/enums';
 import { withNotes } from '@/lib/enum-notes';
 
@@ -15,7 +15,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_list',
     {
       title: 'List Webhook Subscriptions',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'List platform event webhook subscriptions. These receive deployment lifecycle notifications: publish, deploy, rollback, and undeploy, plus a deployment being scheduled or a schedule being canceled.',
       inputSchema: z.object({
@@ -33,7 +33,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_get',
     {
       title: 'Get Webhook Subscription',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'Get webhook subscription detail by ID.',
       inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
@@ -46,7 +46,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_save',
     {
       title: 'Save Webhook Subscription',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: { ...DESTRUCTIVE, openWorldHint: true },
       description: `Create or update a webhook subscription. Omit id to create, provide id to update. Events: ${PlatformEventType.join(', ')}. Formats: ${withNotes(FORMAT_NOTES).join(', ')}.`,
       inputSchema: z.object({
         id: z
@@ -80,7 +80,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_delete',
     {
       title: 'Delete Webhook Subscription',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: 'Delete a webhook subscription by ID.',
       inputSchema: z.object({
         id: z.string().uuid().describe('Webhook subscription ID'),
@@ -93,7 +93,7 @@ export function registerWebhookSubscriptionTools(server: McpServer, callApi: Cal
     'lexq_webhook_subscriptions_test',
     {
       title: 'Test Webhook Subscription',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: { ...DESTRUCTIVE, openWorldHint: true },
       description:
         'Send a test event to verify webhook connectivity. Returns the HTTP status code and success/failure message.',
       inputSchema: z.object({
