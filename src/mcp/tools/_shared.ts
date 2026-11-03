@@ -147,8 +147,8 @@ export function formatUnregisteredFactWarning(meta: unknown): string | null {
   });
 
   return [
-    `⚠ The saved rule references ${facts.length} fact(s) not defined in the schema. The rule was saved — this does not block — but undefined facts skip type validation and the dry-run requirements analyzer.`,
+    `⚠ The saved rule references ${facts.length} fact(s) not defined in the schema. The rule was saved, but the engine does not check request values for these keys against a type or value domain, and lexq_requirements lists them with type UNKNOWN.`,
     ...lines,
-    `Register them now so the rule validates as intended, or call lexq_facts_unregistered to review the version's full list.`,
+    `Register them before the version is published to have those values checked, or call lexq_facts_unregistered to review the version's full list.`,
   ].join('\n');
 }

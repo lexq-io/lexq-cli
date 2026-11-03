@@ -5,7 +5,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { McpServer } from '@modelcontextprotocol/server';
 import { createCallApiFromConfig } from './tools/_shared';
 import { registerLocalTools } from './local-tools';
-import { registerAllTools, SERVER_INFO } from './register';
+import { registerAllTools, SERVER_INFO, SERVER_INSTRUCTIONS } from './register';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -40,7 +40,10 @@ export function startMcpServer(): void {
 
   serveStdio(
     () => {
-      const server = new McpServer({ ...SERVER_INFO, version });
+      const server = new McpServer(
+        { ...SERVER_INFO, version },
+        { instructions: SERVER_INSTRUCTIONS },
+      );
       registerAllTools(server, callApi);
       registerLocalTools(server);
       return server;
