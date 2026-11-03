@@ -118,26 +118,15 @@ see it.
 lexq logs get --id <logId>
 ```
 
-Includes the original payload and error message. Use it to diagnose before marking the log.
+Includes the original payload and error message. Use it to diagnose the failure.
 
-### Mark a Log
+### Resolve or Ignore a Log
 
-There is no retry action — the engine does not re-execute a failed task on request. Fix the cause
-at the source (webhook endpoint, version state), then mark the log.
-
-```bash
-lexq logs action --id <logId> --action RESOLVE   # cause was fixed
-lexq logs action --id <logId> --action IGNORE    # does not need fixing
-```
-
-Both remove the log from `PENDING`; they differ only in recorded intent.
-
-### Bulk Operations
-
-```bash
-lexq logs bulk-action --ids "id1,id2,id3" --action RESOLVE
-lexq logs bulk-action --ids "id4,id5" --action IGNORE
-```
+The CLI can read failure logs but cannot resolve or ignore them. An organization admin does that in
+the console: Management → Failure Logs (https://console.lexq.io/management/failure-logs). Resolving
+and ignoring both remove the log from `PENDING`; they differ only in recorded intent. There is no
+retry action either: the engine does not re-execute a failed task on request. Fix the cause at the
+source (webhook endpoint, version state), then ask an admin to resolve the log.
 
 ## 3. Deployment Monitoring
 
@@ -278,9 +267,8 @@ lexq provenance get --trace-id <traceId>
 # 4. Check for system failures (covers 7 days back by default; add --start-date for older ones)
 lexq logs list --status PENDING --page 0 --size 10
 
-# 5. Inspect and mark
+# 5. Inspect a failure. Once the cause is fixed, an admin resolves it in the console
 lexq logs get --id <logId>
-lexq logs action --id <logId> --action RESOLVE
 
 # 6. Verify deployment integrity
 lexq deploy overview

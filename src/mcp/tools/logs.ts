@@ -2,15 +2,10 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { paginationParams } from './_shared';
-import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
+import { FailureStatus, TaskType } from '@/types/enums';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { FAILURE_LOG_LOOKBACK_DAYS } from '@/types/constants';
-import { withNotes } from '@/lib/enum-notes';
-
-const ACTION_NOTES = {
-  RESOLVE: 'mark as manually fixed',
-  IGNORE: 'skip intentionally',
-} satisfies Record<FailureAction, string>;
+import { FAILURE_LOG_CONSOLE_NOTE } from '@/lib/console';
 
 export function registerLogTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
@@ -18,7 +13,7 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'List Failure Logs',
       annotations: { readOnlyHint: true },
-      description: `List system failure logs from background tasks (platform event webhooks, scheduled deployments). Without dates the window is ${FAILURE_LOG_LOOKBACK_DAYS} days back through today, in the organization time zone; pass startDate to look further back.`,
+      description: `List system failure logs from background tasks (platform event webhooks, scheduled deployments). Without dates the window is ${FAILURE_LOG_LOOKBACK_DAYS} days back through today, in the organization time zone; pass startDate to look further back. ${FAILURE_LOG_CONSOLE_NOTE}`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
@@ -45,46 +40,11 @@ export function registerLogTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Get Failure Log',
       annotations: { readOnlyHint: true },
-      description: 'Get failure log detail by ID.',
+      description: `Get failure log detail by ID. ${FAILURE_LOG_CONSOLE_NOTE}`,
       inputSchema: z.object({
         logId: z.string().uuid().describe('Failure log ID'),
       }),
     },
     async ({ logId }) => callApi('GET', `failure-logs/${logId}`),
-  );
-
-  server.registerTool(
-    'lexq_logs_action',
-    {
-      title: 'Process Failure Log',
-      annotations: { readOnlyHint: false, destructiveHint: false },
-      description: `Process a single failure log: ${withNotes(ACTION_NOTES).join(' or ')}.`,
-      inputSchema: z.object({
-        logId: z.string().uuid().describe('Failure log ID'),
-        action: z.enum(FailureAction).describe('Action to take'),
-      }),
-    },
-    async ({ logId, action }) =>
-      callApi('POST', `failure-logs/${logId}/actions`, {
-        params: { action },
-      }),
-  );
-
-  server.registerTool(
-    'lexq_logs_bulk_action',
-    {
-      title: 'Bulk Process Failure Logs',
-      annotations: { readOnlyHint: false, destructiveHint: false },
-      description:
-        'Process multiple failure logs at once. Provide an array of log IDs and the action.',
-      inputSchema: z.object({
-        logIds: z.array(z.string().uuid()).describe('Array of failure log IDs'),
-        action: z.enum(FailureAction).describe('Action to apply to all logs'),
-      }),
-    },
-    async ({ logIds, action }) =>
-      callApi('POST', 'failure-logs/bulk-actions', {
-        body: { logIds, action },
-      }),
   );
 }

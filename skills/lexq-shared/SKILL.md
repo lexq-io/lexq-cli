@@ -99,7 +99,7 @@ Every command accepts these flags:
 | `history`               | `list`, `get`, `stats`                                                                                                     | Execution history               |
 | `replay`                | `decision`, `start`, `list`, `get`, `cancel`                                                                               | Decision replay                 |
 | `provenance`            | `get`, `reveal-audits`                                                                                                     | Decision provenance + PII audit |
-| `logs`                  | `list`, `get`, `action`, `bulk-action`                                                                                     | Failure log management          |
+| `logs`                  | `list`, `get`                                                                                                              | Failure logs (read-only)        |
 | `webhook-subscriptions` | `list`, `get`, `save`, `delete`, `test`                                                                                    | Platform event webhooks         |
 | `serve`                 | `--mcp`                                                                                                                    | MCP server over stdio           |
 

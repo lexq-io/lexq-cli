@@ -214,7 +214,7 @@ lexq analytics dataset     upload | template
 lexq profile               <groupId> — per-rule latency profile
 lexq history               list | get | stats
 lexq replay                decision | start | list | get | cancel
-lexq logs                  list | get | action | bulk-action
+lexq logs                  list | get
 lexq provenance            get | reveal-audits
 lexq webhook-subscriptions list | get | save | delete | test
 ```
