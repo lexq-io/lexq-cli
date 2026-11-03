@@ -27,6 +27,45 @@ export type CallApi = (
   },
 ) => Promise<McpToolResult>;
 
+/*
+ * Tool annotations: the three hints a client reads to decide whether to ask before a tool runs.
+ * Every tool sets all three to true or false. A hint left out takes the protocol default: a tool
+ * is open-world unless it says otherwise, and a tool that is not read-only is destructive unless
+ * it says otherwise. The Claude connector directory also checks each tool for the hint that
+ * applies.
+ *
+ * openWorldHint is false in all three: these tools work only inside the caller's LexQ
+ * organization. A tool that sends to an address the caller chooses sets it to true.
+ */
+
+/**
+ * Reads or computes and changes nothing. Dry runs and single-decision replays are reads even
+ * though they are POST requests: they save nothing and do not count toward the plan's usage.
+ */
+export const READ_ONLY = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  openWorldHint: false,
+} as const;
+
+/** Creates something new and leaves everything that already exists as it was. */
+export const ADDITIVE = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+} as const;
+
+/**
+ * Deletes, overwrites, or cancels something, changes live traffic, cannot be undone (publishing a
+ * version, sending a test webhook), or counts toward the plan's usage (simulations and window
+ * replays).
+ */
+export const DESTRUCTIVE = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  openWorldHint: false,
+} as const;
+
 /**
  * Where the stdio MCP server sends requests. The environment comes first, then
  * ~/.lexq/config.json. The same variables the test suites use let Inspector, CI and a

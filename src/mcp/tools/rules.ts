@@ -8,6 +8,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
+import { READ_ONLY, ADDITIVE, DESTRUCTIVE } from './_shared';
 import { parseJson } from '@/lib/lossless-json';
 import {
   CalculationMethod,
@@ -28,7 +29,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_list',
     {
       title: 'List Rules',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'List all rules in a version (priority ASC). Returns summary with conditionSummary and actionSummary.',
       inputSchema: z.object({
@@ -44,7 +45,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_get',
     {
       title: 'Get Rule Detail',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'Get full rule detail including condition tree and action definitions.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -60,7 +61,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_create',
     {
       title: 'Create Rule',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: dedent`
         Create a rule in a DRAFT version. Requires name, condition tree, and actions array. priority is auto-assigned (appended last); use lexq_rules_reorder to change order.
 
@@ -163,7 +164,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_update',
     {
       title: 'Update Rule',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root. Saving re-checks every action in the rule, including ones you did not change, and fails with ACT-032 if any action's targetVar is not a registered fact.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -188,7 +189,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_delete',
     {
       title: 'Delete Rule',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: 'Delete a rule from a DRAFT version.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -213,7 +214,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_reorder',
     {
       title: 'Reorder Rules',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Reorder rules by specifying rule IDs in desired order. Priorities are assigned 1...N (1-based, continuous); array index 0 = priority 1 (highest precedence).',
       inputSchema: z.object({
@@ -237,7 +238,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     'lexq_rules_toggle',
     {
       title: 'Toggle Rule',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: 'Enable or disable a rule without deleting it.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),

@@ -71,8 +71,9 @@ Protocol to manage policy groups, versions, rules, and facts, run simulations
 and replays, deploy versions, and read execution history.
 
 Approval happens in your MCP client, which decides which tool calls you confirm.
-The deploy, rollback, and undeploy tools are marked as destructive, so a client
-can ask you before running them.
+A tool is marked as destructive when it deletes, overwrites, or cancels
+something, changes live traffic, cannot be undone, or counts toward your plan's
+usage, so a client can ask you before running it.
 
 ### Claude.ai (cloud, no install)
 

@@ -161,29 +161,34 @@ if (drifted.length > 0) {
 }
 const localTools = served.filter((tool) => !shared.has(tool.name));
 
-/* Every tool has to say who it is and what it does to the caller's data. The Claude
-   Connectors Directory refuses a submission that is missing either, and the reason it
-   asks is the reason it matters here too: a client decides whether to confirm a call
-   from these, and `destructiveHint` defaults to true only when `readOnlyHint` is false,
-   so a write that adds nothing but is left unannotated reads as one that might delete.
+/* Every tool has to say who it is and what it does to the caller's data, with all three
+   hints set to true or false. A client decides whether to confirm a call from these, and
+   a hint left out takes the protocol default: a tool is open-world unless it says
+   otherwise, and a tool that is not read-only is destructive unless it says otherwise. A
+   tool that only reads or only adds would then look riskier than it is. The Claude
+   connector directory also checks each tool for the hint that applies. A tool marked both
+   read-only and destructive contradicts itself, so that fails as well.
 
    Checked at the wire rather than in the source: the annotation has to survive
    registration to mean anything, and a tool added to a new file would slip past a grep. */
+const HINTS = ['readOnlyHint', 'destructiveHint', 'openWorldHint'];
 const unannotated = [...tools, ...localTools].filter(
   (tool) =>
     !tool.title ||
     !tool.annotations ||
-    (tool.annotations.readOnlyHint !== true &&
-      typeof tool.annotations.destructiveHint !== 'boolean'),
+    HINTS.some((hint) => typeof tool.annotations[hint] !== 'boolean') ||
+    (tool.annotations.readOnlyHint && tool.annotations.destructiveHint),
 );
 if (unannotated.length > 0) {
   console.error(
-    `✗ ${unannotated.length} tool(s) missing a title or a read-only/destructive hint\n`,
+    `✗ ${unannotated.length} tool(s) missing a title or one of ${HINTS.join(', ')}, or marked both read-only and destructive\n`,
   );
   for (const tool of unannotated) {
     console.error(`  ${tool.name}  ${JSON.stringify(tool.annotations ?? null)}`);
   }
-  console.error('\n  Add `annotations` beside `title` in src/mcp.');
+  console.error(
+    '\n  Set `annotations` beside `title` to READ_ONLY, ADDITIVE, or DESTRUCTIVE from src/mcp/tools/_shared.ts.',
+  );
   process.exit(1);
 }
 

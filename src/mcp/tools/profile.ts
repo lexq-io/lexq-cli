@@ -10,6 +10,7 @@ import {
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
+import { READ_ONLY } from './_shared';
 import { PERCENTILE_MIN_N } from '@/lib/percentiles';
 import { ProfileCacheState } from '@/types/enums';
 
@@ -41,7 +42,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
     'lexq_profile_overview',
     {
       title: 'Group Latency Profile',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cache state (HIT = compiled ruleset cache hit, MISS = deep-load + compile), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. ' +
         RELATIVE_THRESHOLD +
@@ -76,7 +77,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
     'lexq_profile_rule',
     {
       title: 'Rule Latency Detail',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         `Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (${LATENCY_WINDOW_MILLIS / 1000}s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 n ≥ ${PERCENTILE_MIN_N.p50}, p95 n ≥ ${PERCENTILE_MIN_N.p95}, p99 n ≥ ${PERCENTILE_MIN_N.p99}). ` +
         RELATIVE_THRESHOLD,
