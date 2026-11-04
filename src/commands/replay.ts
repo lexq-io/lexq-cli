@@ -2,7 +2,7 @@ import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, fileFormat, runExport } from '@/lib/export';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
@@ -217,11 +217,11 @@ export function registerReplayCommands(program: Command): void {
           $ lexq replay export --id <jobId> --as json
       `,
     )
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       try {
         const globalOpts = program.opts();
 
-        await runExport(`replay/jobs/${opts.id}/export`, parseFormat(opts.as), {
+        await runExport(`replay/jobs/${opts.id}/export`, fileFormat(command), {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,

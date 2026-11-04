@@ -1,8 +1,25 @@
 import Table from 'cli-table3';
+import { InvalidArgumentError } from 'commander';
 import { stringifyJson } from '@/lib/lossless-json';
 import type { UnregisteredFact } from '@/types/api';
 
-export type OutputFormat = 'json' | 'table';
+/** How a command prints its result. The format of an exported file is `--as`, not this. */
+export const OUTPUT_FORMATS = ['json', 'table'] as const;
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
+
+/**
+ * Read the root `--format` value, rejecting anything that is not an output format.
+ *
+ * Commands check only for `table` and print JSON otherwise, so without this check
+ * `--format csv` and `--format tabel` would print JSON without a word. `csv` is a file
+ * format, which the commands that write a file take as `--as`.
+ */
+export function parseOutputFormat(value: string): OutputFormat {
+  if ((OUTPUT_FORMATS as readonly string[]).includes(value)) return value as OutputFormat;
+  throw new InvalidArgumentError(
+    `Use ${OUTPUT_FORMATS.join(' or ')}. The format of an exported file is chosen with --as.`,
+  );
+}
 
 /** Every command's JSON output. Long decimals are printed as they came from the engine. */
 export function printJson(data: unknown): void {

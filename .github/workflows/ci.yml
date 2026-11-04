@@ -110,3 +110,6 @@ jobs:
 
       - name: Export limit
         run: node tests/export-limit.mjs
+
+      - name: Output format and file format
+        run: node tests/format-options.mjs
