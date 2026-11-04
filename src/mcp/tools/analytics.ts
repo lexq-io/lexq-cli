@@ -2,7 +2,14 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
-import { READ_ONLY, ADDITIVE, DESTRUCTIVE, paginationParams } from './_shared';
+import {
+  READ_ONLY,
+  ADDITIVE,
+  DESTRUCTIVE,
+  EXPORT_LIMIT_NOTE,
+  limitExport,
+  paginationParams,
+} from './_shared';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
@@ -204,16 +211,19 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     {
       title: 'Export Simulation',
       annotations: READ_ONLY,
-      description: 'Export simulation results as JSON or CSV. Returns the raw data.',
+      description: `Export simulation results as JSON or CSV. Returns the raw data. ${EXPORT_LIMIT_NOTE}`,
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
         format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),
       }),
     },
     async ({ simulationId, format }) =>
-      callApi('GET', `analytics/simulations/${simulationId}/export`, {
-        params: { format },
-      }),
+      limitExport(
+        await callApi('GET', `analytics/simulations/${simulationId}/export`, {
+          params: { format },
+        }),
+        `lexq analytics simulation export --id ${simulationId} --as ${format} --output <file>`,
+      ),
   );
 
   // ── Dataset Upload ──

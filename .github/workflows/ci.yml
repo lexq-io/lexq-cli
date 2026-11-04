@@ -104,3 +104,6 @@ jobs:
 
       - name: Dataset upload
         run: node tests/dataset-upload.mjs
+
+      - name: Export limit
+        run: node tests/export-limit.mjs

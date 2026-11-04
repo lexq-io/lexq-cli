@@ -2,7 +2,13 @@ import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { READ_ONLY, DESTRUCTIVE, paginationParams } from './_shared';
+import {
+  READ_ONLY,
+  DESTRUCTIVE,
+  EXPORT_LIMIT_NOTE,
+  limitExport,
+  paginationParams,
+} from './_shared';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { WINDOW_END_DAY, WINDOW_START_DAY } from '@/lib/dates';
 
@@ -97,14 +103,16 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Export Replay Result',
       annotations: READ_ONLY,
-      description:
-        'Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text.',
+      description: `Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text. ${EXPORT_LIMIT_NOTE}`,
       inputSchema: z.object({
         jobId: z.string().describe('Replay job ID'),
         format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),
       }),
     },
     async ({ jobId, format }) =>
-      callApi('GET', `replay/jobs/${jobId}/export`, { params: { format } }),
+      limitExport(
+        await callApi('GET', `replay/jobs/${jobId}/export`, { params: { format } }),
+        `lexq replay export --id ${jobId} --as ${format} --output <file>`,
+      ),
   );
 }

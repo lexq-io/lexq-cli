@@ -1,5 +1,6 @@
 import { apiRequestWithMeta, type ApiClientOptions } from '@/lib/api-client';
 import { loadConfig } from '@/lib/config';
+import { CONSOLE_URL } from '@/lib/console';
 import { stringifyJson } from '@/lib/lossless-json';
 import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
 import type { ResponseMeta } from '@/types/api';
@@ -101,9 +102,11 @@ export function createCallApiFromConfig(): CallApi {
         form,
         params: opts?.params,
       });
-      const content: Array<{ type: 'text'; text: string }> = [
-        { type: 'text', text: stringifyJson(data, 2) ?? '' },
-      ];
+      // A file (an export or a dataset template) is the only response whose data is a string.
+      // It goes back as its text. Written as JSON, it would arrive as one quoted line with its
+      // line breaks and quotes escaped.
+      const text = typeof data === 'string' ? data : (stringifyJson(data, 2) ?? '');
+      const content: Array<{ type: 'text'; text: string }> = [{ type: 'text', text }];
       const warning = formatUnregisteredFactWarning(meta);
       if (warning) content.push({ type: 'text', text: warning });
       const domainWarning = formatValueDomainMismatchWarning(meta);
@@ -124,6 +127,40 @@ export function paginationParams(page?: number, size?: number): Record<string, s
   if (page !== undefined) params.page = String(page);
   if (size !== undefined) params.size = String(size);
   return params;
+}
+
+/**
+ * The longest export a tool returns, in characters. claude.ai and Claude Desktop accept a tool
+ * result of up to about 150,000 characters.
+ */
+const MAX_EXPORT_CHARS = 100_000;
+
+const formatCount = (count: number): string => count.toLocaleString('en-US');
+
+/** Ends the description of each tool that returns an export. */
+export const EXPORT_LIMIT_NOTE = `An export longer than ${formatCount(MAX_EXPORT_CHARS)} characters is refused.`;
+
+/**
+ * Returns an export, or refuses one longer than MAX_EXPORT_CHARS. An export is a whole file, and a
+ * cut one reads as the whole thing, so it is refused rather than cut. `command` is the CLI command
+ * that downloads the same file. `narrower` says how to ask for less, where the tool can.
+ */
+export function limitExport(
+  result: McpToolResult,
+  command: string,
+  narrower?: string,
+): McpToolResult {
+  if (result.isError) return result;
+  const length = result.content.reduce((sum, block) => sum + block.text.length, 0);
+  if (length <= MAX_EXPORT_CHARS) return result;
+  const text = [
+    `The export is ${formatCount(length)} characters long, and this tool returns at most ${formatCount(MAX_EXPORT_CHARS)}.`,
+    narrower,
+    `To get the whole file, download it from the LexQ console (${CONSOLE_URL}) or with \`${command}\`.`,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return { content: [{ type: 'text', text }], isError: true };
 }
 
 /**
