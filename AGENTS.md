@@ -46,7 +46,7 @@ Detailed documentation lives in the `skills/` directory. **Read the relevant ski
 2. **Always dry-run before publishing.** Run `lexq analytics dry-run` to validate.
 3. **Never modify a non-DRAFT version.** Check version status first. Clone if needed.
 4. **Always check facts before creating rules.** Run `lexq facts list` to know available keys and types.
-5. **Use `--format json` for parsing.** This is the default. Don't change it.
+5. **Leave `--format` at its default, `json`, and parse the output.** A command that writes a file chooses the file's format with `--as`, not `--format`.
 6. **Copy full UUIDs from output.** Never guess or truncate IDs.
 7. **Memo is required for all deploy operations.** `publish`, `live`, `rollback`, `undeploy` — every one needs `--memo`.
 8. **Handle errors gracefully.** Check the error code and follow the action table in `lexq-shared/SKILL.md`.

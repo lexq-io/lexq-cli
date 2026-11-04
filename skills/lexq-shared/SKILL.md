@@ -72,15 +72,18 @@ Every command accepts these flags:
 
 | Flag                     | Description                                | Default                               |
 |--------------------------|--------------------------------------------|---------------------------------------|
-| `--format <json\|table>` | Output format                              | `json`                                |
+| `--format <json\|table>` | How results are printed                    | `json`                                |
 | `--api-key <key>`        | Override stored API key                    | from config                           |
 | `--base-url <url>`       | Override API base URL                      | `https://api.lexq.io/api/v1/partners` |
 | `--dry-run`              | Preview the HTTP request without executing | off                                   |
 | `--verbose`              | Show request/response details              | off                                   |
 | `--no-color`             | Disable colored output                     | off                                   |
 
-**Agent best practice:** Always use `--format json` (the default). Parse JSON output programmatically. Use
+**Agent best practice:** Leave `--format` at its default, `json`, and parse the output programmatically. Use
 `--format table` only when displaying to humans.
+
+`--format` does not change a file. The commands that write one (`facts export`, `analytics simulation export`,
+`replay export`, `analytics dataset template`) choose its format with `--as csv` or `--as json`.
 
 ## Command Groups
 

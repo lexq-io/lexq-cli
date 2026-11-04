@@ -4,7 +4,7 @@ import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import { uploadDataset } from '@/lib/dataset-upload';
-import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, fileFormat, runExport } from '@/lib/export';
 import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
 import { groupLabel, printJson, printTable, printError, type OutputFormat } from '@/lib/output';
@@ -513,11 +513,11 @@ export function registerAnalyticsCommands(program: Command): void {
           $ lexq analytics simulation export --id <simId> --as json
       `,
     )
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       try {
         const globalOpts = program.opts();
 
-        await runExport(`analytics/simulations/${opts.id}/export`, parseFormat(opts.as), {
+        await runExport(`analytics/simulations/${opts.id}/export`, fileFormat(command), {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
@@ -601,7 +601,7 @@ export function registerAnalyticsCommands(program: Command): void {
           $ lexq analytics dataset template --group-id <gid> --version-id <vid> --as json
       `,
     )
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       try {
         const globalOpts = program.opts();
         const config = loadConfig();
@@ -612,7 +612,7 @@ export function registerAnalyticsCommands(program: Command): void {
           throw new Error('Not authenticated. Run "lexq auth login" first.');
         }
 
-        const fmt = parseFormat(opts.as);
+        const fmt = fileFormat(command);
         const url = new URL(
           `analytics/groups/${opts.groupId}/versions/${opts.versionId}/dataset-template`,
           baseUrl.endsWith('/') ? baseUrl : baseUrl + '/',

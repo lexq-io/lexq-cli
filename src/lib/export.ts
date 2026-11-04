@@ -1,4 +1,6 @@
 import { writeFileSync } from 'node:fs';
+import { extname } from 'node:path';
+import type { Command } from 'commander';
 import { apiRequest, type ApiClientOptions } from '@/lib/api-client';
 import { ExportFormat as ExportFormatName } from '@/types/enums';
 
@@ -31,13 +33,52 @@ export const EXPORT_FORMATS = ExportFormatName.map((name) => name.toLowerCase())
  * contradicted the command's own default: `lexq facts export --as CSV` announced csv
  * and delivered json. A typo should not change the file you get.
  */
-export function parseFormat(value: unknown): ExportFormat {
+function parseFormat(value: unknown): ExportFormat {
   if (typeof value === 'string' && (EXPORT_FORMATS as readonly string[]).includes(value)) {
     return value as ExportFormat;
   }
   throw new Error(
     `Unsupported export format: ${String(value)}. Use ${EXPORT_FORMATS.join(' or ')}.`,
   );
+}
+
+/**
+ * Read the file format of an export or a dataset template from the command's `--as`.
+ *
+ * `--as` alone sets it. When the call suggests another format, the command still runs and says
+ * on stderr which format the file has. Neither case below fails: each is a valid call, and the
+ * file it writes does not change.
+ *
+ * - The `--output` name ends in `.csv` or `.json`, and the file holds the other one.
+ *   `lexq facts export --output facts.json` writes CSV, the command's default. A name that
+ *   matches the format needs no note.
+ * - The name says nothing, `--format` was given, and `--as` was not. `--format` belongs to
+ *   the root program and sets how results are printed. Commander accepts it on these
+ *   commands, which do not read it, and `--format json` here usually means the file.
+ */
+export function fileFormat(command: Command): ExportFormat {
+  const opts = command.opts();
+  const format = parseFormat(opts.as);
+  const extension =
+    typeof opts.output === 'string' ? extname(opts.output).slice(1).toLowerCase() : '';
+  let root = command;
+  while (root.parent) root = root.parent;
+
+  if ((EXPORT_FORMATS as readonly string[]).includes(extension)) {
+    if (extension !== format) {
+      console.error(
+        `Note: ${opts.output} will hold ${format}. Pass --as ${extension} to write ${extension}.`,
+      );
+    }
+  } else if (
+    root.getOptionValueSource('format') === 'cli' &&
+    command.getOptionValueSource('as') !== 'cli'
+  ) {
+    console.error(
+      `Note: --format sets how results are printed, not the file. This file is ${format}; choose ${EXPORT_FORMATS.join(' or ')} with --as.`,
+    );
+  }
+  return format;
 }
 
 /**

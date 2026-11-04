@@ -224,12 +224,14 @@ lexq webhook-subscriptions list | get | save | delete | test
 
 | Flag                     | Description                                |
 |--------------------------|--------------------------------------------|
-| `--format <json\|table>` | Output format (default: `json`)            |
+| `--format <json\|table>` | How results are printed (default: `json`)  |
 | `--api-key <key>`        | Override stored API key                    |
 | `--base-url <url>`       | Override API base URL                      |
 | `--dry-run`              | Preview the HTTP request without executing |
 | `--verbose`              | Show request/response details              |
 | `--no-color`             | Disable colored output                     |
+
+`--format` only changes how results are printed. A command that writes a file, such as `lexq facts export`, chooses the file's format with `--as csv` or `--as json`.
 
 ## Configuration
 

@@ -2,7 +2,7 @@ import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest, apiRequestWithMeta } from '@/lib/api-client';
 import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
-import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, fileFormat, runExport } from '@/lib/export';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import { isLosslessNumber, parseJson } from '@/lib/lossless-json';
@@ -342,11 +342,11 @@ export function registerFactCommands(program: Command): void {
           $ lexq facts export --keyword user --as json
       `,
     )
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       try {
         const globalOpts = program.opts();
 
-        await runExport('schema/facts/export', parseFormat(opts.as), {
+        await runExport('schema/facts/export', fileFormat(command), {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
