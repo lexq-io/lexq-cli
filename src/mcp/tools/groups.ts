@@ -181,7 +181,9 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         'The challenger must be a published version of the same group; a version from another ' +
         'group is rejected with P-016. ' +
         'The split is computed from context.trafficKey on each execution request; requests that ' +
-        'omit it never reach the challenger and the test stays at 0%.',
+        'omit it never reach the challenger and the test stays at 0%. ' +
+        "Starting cancels the group's pending scheduled deployment. Starting while a test is " +
+        'already running replaces its challenger and traffic rate.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         testVersionId: z

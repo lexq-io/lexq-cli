@@ -9,14 +9,17 @@ import { EXPORT_FORMATS } from '@/lib/export';
 /** Generated from the engine contract manifest. A literal here would drift. */
 const VALUE_TYPES = ValueType;
 
+/** The engine keeps isRequired on a definition but evaluates nothing with it. */
+const IS_REQUIRED_NOTE =
+  'isRequired is stored on the definition only; the engine does not read it.';
+
 export function registerFactTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
     'lexq_facts_list',
     {
       title: 'List Fact Definitions',
       annotations: READ_ONLY,
-      description:
-        'List all fact definitions (input variable schema). Shows key, type, required, and PII status. Always check this before creating rules.',
+      description: `List all fact definitions (input variable schema): key, name, type, description, PII and system flags, and value domain. ${IS_REQUIRED_NOTE}`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
@@ -44,10 +47,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
         name: z.string().describe('Display name'),
         type: z.enum(VALUE_TYPES).describe('Value type'),
         description: z.string().optional().describe('Description'),
-        isRequired: z
-          .boolean()
-          .default(false)
-          .describe('Whether this fact is required for rule evaluation'),
+        isRequired: z.boolean().default(false).describe(IS_REQUIRED_NOTE),
         isPii: z
           .boolean()
           .default(false)
@@ -91,7 +91,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
           .describe(
             'Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule outside a deleted group references the fact.',
           ),
-        isRequired: z.boolean().optional().describe('Required flag'),
+        isRequired: z.boolean().optional().describe(IS_REQUIRED_NOTE),
         isPii: z
           .boolean()
           .optional()
@@ -148,7 +148,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'List Unregistered Facts',
       annotations: READ_ONLY,
       description:
-        "List facts referenced by a version's rules but not yet defined (read-only). Keys that rules only read do not block publish/deploy; a rule whose action targetVar is not a registered fact is rejected at save and publish with ACT-032. Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+        "List facts referenced by a version's rules but not yet defined (read-only). Keys that rules only read do not block publish/deploy; a rule whose action targetVar is not a registered fact is rejected at save and publish with ACT-032. Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Registering one with lexq_facts_create before the version is published makes the engine check request values for it against its type (P-060) and any value domain (P-052).",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
@@ -164,7 +164,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
       title: 'Export Fact Catalog',
       annotations: READ_ONLY,
       description:
-        'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet; JSON matches the shape that batch create accepts, so it can be fed straight back in, which is why it leaves out the fields that endpoint does not take. Returns the file contents as text.',
+        'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet, without value domains; JSON lists each definition with only the fields a new definition takes (key, name, type, description, isRequired, isPii, valueDomain), without IDs. Returns the file contents as text.',
       inputSchema: z.object({
         format: z.enum(EXPORT_FORMATS).default('csv').describe('Export format'),
         keyword: z.string().optional().describe('Filter by key or name'),

@@ -65,11 +65,6 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       description: dedent`
         Create a rule in a DRAFT version. Requires name, condition tree, and actions array. priority is auto-assigned (appended last); use lexq_rules_reorder to change order.
 
-        Before creating rules with new fact keys, call lexq_facts_list to check existing facts.
-        If a required key is missing, ask the user to confirm the type, isRequired, and description
-        before calling lexq_facts_create — registering facts enables type validation, Console UI
-        autocomplete, and the dry-run requirements analyzer.
-
         An action's targetVar (SET_FACT, MUTATE_FACT) must be a registered fact. Saving or
         publishing a rule whose targetVar is not registered fails with ACT-032, so register it
         with lexq_facts_create first. Keys a rule only reads (condition fields, refVar) may stay
@@ -195,19 +190,10 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
         ruleId: z.string().uuid().describe('Rule ID'),
-        force: z
-          .boolean()
-          .default(false)
-          .describe('Skip confirmation (for the last rule in a version)'),
       }),
     },
-    async ({ groupId, versionId, ruleId, force }) => {
-      const params: Record<string, string> = {};
-      if (force) params.force = 'true';
-      return callApi('DELETE', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}`, {
-        params,
-      });
-    },
+    async ({ groupId, versionId, ruleId }) =>
+      callApi('DELETE', `policy-groups/${groupId}/versions/${versionId}/rules/${ruleId}`),
   );
 
   server.registerTool(

@@ -36,8 +36,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           executionTraces   — per-rule match status
           decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)
         
-        Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }
-        Always dry-run before publishing to validate rule behavior.`,
+        Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }`,
       inputSchema: z.object({
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"paymentAmount":100000}'),
@@ -110,6 +109,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       annotations: DESTRUCTIVE,
       description: dedent`
         Start an Impact Simulation against historical, uploaded, or inline data.
+
+        Starting checks the plan's simulation usage limit. The records a simulation processes
+        count toward that usage when it completes or is canceled.
 
         dataset.type and dataset.source are BOTH required, and must be paired:
           HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days
