@@ -18,7 +18,7 @@ export default defineConfig([
             options.alias = { '@': './src' };
         },
     },
-    // ── MCP Library (for lexq-mcp consumption) ──────────────────
+    // ── MCP Library (exported as @lexq/cli/mcp) ─────────────────
     {
         entry: { 'mcp/register': 'src/mcp/register.ts' },
         format: ['esm'],

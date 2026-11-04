@@ -175,8 +175,6 @@ The MCP toolset mirrors the CLI command inventory one-to-one.
 
 - CLI commands and MCP tools stay in lock-step — a new command lands with its MCP tool in the same PR, sharing
   the single api-client layer.
-- The hosted MCP server consumes this package from npm. Publish (`v*` tag) **before** redeploying it — CI cannot
-  catch that ordering.
 - Releasing is two steps, in this order. Raise `version` in package.json inside the pull request, so a reviewer
   sees the number beside the change that justifies it. After it merges, push the matching `v<version>` tag — that
   tag is what publishes. A tag that disagrees with package.json is rejected before anything reaches npm.

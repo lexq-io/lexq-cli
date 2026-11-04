@@ -208,8 +208,7 @@ export function registerReplayCommands(program: Command): void {
       'after',
       dedent`
 
-        Only COMPLETED jobs can be exported. A running job has no full result yet, and a
-        partial one reads as the whole thing on the receiving end.
+        Only COMPLETED jobs can be exported.
 
         The two formats carry different things. CSV holds the effect blast radius, whose
         columns are fixed. JSON holds the changed samples and action parameters, which

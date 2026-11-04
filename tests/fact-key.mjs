@@ -72,8 +72,8 @@ const ACCEPTED = [
 
 const REJECTED = [
   ['1payment', 'leading digit'],
-  ['_leading', 'leading underscore is the engine-injected namespace'],
-  ['__ctx_channel', 'engine-injected key'],
+  ['_leading', 'leading underscore'],
+  ['__key', 'leading double underscore'],
   ['has space', 'space'],
   ['has-dash', 'dash'],
   ['has.dot', 'dot'],

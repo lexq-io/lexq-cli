@@ -90,7 +90,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
       title: 'Cancel Replay Job',
       annotations: DESTRUCTIVE,
       description:
-        'Cooperatively cancel a PENDING or RUNNING window replay job. Other states are rejected. VIEWER role cannot cancel.',
+        'Cancel a PENDING or RUNNING window replay job. Other states are rejected. VIEWER role cannot cancel.',
       inputSchema: z.object({
         jobId: z.string().describe('Replay job ID'),
       }),
@@ -103,7 +103,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Export Replay Result',
       annotations: READ_ONLY,
-      description: `Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text. ${EXPORT_LIMIT_NOTE}`,
+      description: `Export a COMPLETED window replay job; a job that has not completed is rejected. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text. ${EXPORT_LIMIT_NOTE}`,
       inputSchema: z.object({
         jobId: z.string().describe('Replay job ID'),
         format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),

@@ -144,7 +144,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Upload inline CSV or JSON content as a simulation dataset.\nThe content is uploaded to S3 and a path is returned in the \"path\" field.\n\nTo use the returned path in lexq_simulation_start, set:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<returned path>\" }\n\nThe content travels inside the tool call, so this suits small datasets, and the hosted server at\nmcp.lexq.io limits the size of a request. For a larger file, use lexq_dataset_upload_file on the\nlocal server (lexq serve --mcp), or upload it with the CLI or the console and pass the returned path.\n\nCSV example:\nuserId,paymentAmount\nuser_001,150000\nuser_002,50000\n\nJSON example: [{\"userId\":\"user_001\",\"paymentAmount\":150000}, {\"userId\":\"user_002\",\"paymentAmount\":50000}]",
+      "description": "Upload inline CSV or JSON content as a simulation dataset.\nThe content is stored as a dataset, and its path is returned in the \"path\" field.\n\nTo use the returned path in lexq_simulation_start, set:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<returned path>\" }\n\nThe content travels inside the tool call, so this suits small datasets, and the hosted server at\nmcp.lexq.io limits the size of a request. For a larger file, use lexq_dataset_upload_file on the\nlocal server (lexq serve --mcp), or upload it with the CLI or the console and pass the returned path.\n\nCSV example:\nuserId,paymentAmount\nuser_001,150000\nuser_002,50000\n\nJSON example: [{\"userId\":\"user_001\",\"paymentAmount\":150000}, {\"userId\":\"user_002\",\"paymentAmount\":50000}]",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -438,7 +438,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
+      "description": "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. A scheduled deployment uses exactly the rules that were scheduled; if they do not match when it runs, it fails with HASH_MISMATCH and nothing is deployed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -627,7 +627,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share a limit of 60 evaluations per minute for each organization; a compare counts as two. Past the limit, a call fails with 429 (C-007) until the next minute starts.\n\nReturns:\n  inputFacts        — normalized input facts\n  mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)\n  generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)\n  executionTraces   — per-rule match status\n  decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)\n\nExample input: { \"facts\": { \"paymentAmount\": 100000, \"customerTier\": \"VIP\" } }",
+      "description": "Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share a limit of 60 evaluations per minute for each organization; a compare counts as two. Past the limit, a call fails with 429 (C-007); wait a minute before trying again.\n\nReturns:\n  inputFacts        — normalized input facts\n  mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)\n  generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)\n  executionTraces   — per-rule match status\n  decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)\n\nExample input: { \"facts\": { \"paymentAmount\": 100000, \"customerTier\": \"VIP\" } }",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -662,7 +662,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Compare dry run results between two versions using the same input facts. Useful for validating changes. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share a limit of 60 evaluations per minute for each organization; a compare counts as two. Past the limit, a call fails with 429 (C-007) until the next minute starts.\n\nReturns:\n  resultA / resultB — full DryRunResponse for each version\n  diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})\n  diff.generatedDiff — changes in generatedVariables between A and B",
+      "description": "Compare dry run results between two versions using the same input facts. Useful for validating changes. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share a limit of 60 evaluations per minute for each organization; a compare counts as two. Past the limit, a call fails with 429 (C-007); wait a minute before trying again.\n\nReturns:\n  resultA / resultB — full DryRunResponse for each version\n  diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})\n  diff.generatedDiff — changes in generatedVariables between A and B",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1453,7 +1453,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cache state (HIT = compiled ruleset cache hit, MISS = deep-load + compile), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. flagged = p50 ≥ 10× median of per-rule p50s within the group; absolute thresholds are intentionally not supported. Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ 3 (p50 needs n ≥ 6, p95 n ≥ 60, p99 n ≥ 300 — display gate, separate from the n ≥ 100 judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than 3 rules qualify. Rule detail comes from a deterministic 1% sample of calls; TOTAL is recorded for every call. Defaults: last 24h, live version, cacheState HIT.",
+      "description": "Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cacheState (HIT = calls on a version already prepared for execution, MISS = calls that had to prepare the version first and run slower), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. flagged = p50 ≥ 10× median of per-rule p50s within the group; absolute thresholds are intentionally not supported. Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ 3 (p50 needs n ≥ 6, p95 n ≥ 60, p99 n ≥ 300 — display gate, separate from the n ≥ 100 judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than 3 rules qualify. Rule detail comes from a 1% sample of calls; TOTAL is recorded for every call. Defaults: last 24h, live version, cacheState HIT.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1569,7 +1569,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Cooperatively cancel a PENDING or RUNNING window replay job. Other states are rejected. VIEWER role cannot cancel.",
+      "description": "Cancel a PENDING or RUNNING window replay job. Other states are rejected. VIEWER role cannot cancel.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1592,7 +1592,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share a limit of 60 evaluations per minute for each organization; a compare counts as two. Past the limit, a call fails with 429 (C-007) until the next minute starts. A replay sends no webhook, notification, or event: rule actions produce no outward effects.",
+      "description": "Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share a limit of 60 evaluations per minute for each organization; a compare counts as two. Past the limit, a call fails with 429 (C-007); wait a minute before trying again. A replay sends no webhook, notification, or event: rule actions produce no outward effects.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1622,7 +1622,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Export a COMPLETED window replay job. A running job is rejected — a partial result reads as the whole thing on the receiving end. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text. An export longer than 100,000 characters is refused.",
+      "description": "Export a COMPLETED window replay job; a job that has not completed is rejected. The two formats carry different things: CSV holds the effect blast radius, whose columns are fixed; JSON holds the changed samples and action parameters, which nest and whose keys differ per tenant. JSON is not a superset of CSV. Returns the file contents as text. An export longer than 100,000 characters is refused.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2165,7 +2165,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\nStarting checks the plan's simulation usage limit. The records a simulation processes\ncount toward that usage when it completes or is canceled.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days\n               in the organization time zone, both inclusive)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000). When omitted, HISTORICAL and UPLOADED run at\n  most 1000 records and MANUAL runs every record sent.\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
+      "description": "Start an Impact Simulation against historical, uploaded, or inline data.\n\nEvery record a simulation processes counts toward the plan's simulation usage, including\nrecords processed before a cancel. When the plan's limit is reached, a new simulation\ncannot start.\n\ndataset.type and dataset.source are BOTH required, and must be paired:\n  HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days\n               in the organization time zone, both inclusive)\n  UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)\n  MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)\n\noptions.maxRecords: number (max 100000). When omitted, HISTORICAL and UPLOADED run at\n  most 1000 records and MANUAL runs every record sent.\noptions.baselinePolicyVersionId: uuid (optional, for baseline comparison)\noptions.includeRuleStats: boolean\noptions.metricConfig: optional — omit for plain execution count. To aggregate a fact, pass\n  { \"targetVariable\": \"<fact>\", \"aggregationType\": \"COUNT\" | \"SUM\" | \"AVG\" }\n\nExample (uploaded dataset):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<path from lexq_dataset_upload>\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true, \"maxRecords\": 10000 }\n}\n\nExample (historical):\n{\n  \"policyVersionId\": \"<uuid>\",\n  \"dataset\": { \"type\": \"HISTORICAL\", \"source\": \"EXECUTION_LOGS\", \"from\": \"2026-01-01\", \"to\": \"2026-01-31\" },\n  \"options\": { \"baselinePolicyVersionId\": \"<uuid>\", \"includeRuleStats\": true }\n}",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

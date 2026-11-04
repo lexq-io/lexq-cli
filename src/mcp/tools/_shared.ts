@@ -15,8 +15,8 @@ export interface McpToolResult {
  * Function signature for making API calls.
  * Injected into tool registration functions for testability and reuse.
  *
- * - lexq-cli (stdio): uses createCallApiFromConfig() — reads ~/.lexq/config.json
- * - lexq-mcp (HTTP):  uses createApiCaller(apiKey) — Bearer token from request
+ * - lexq serve --mcp (stdio): createCallApiFromConfig() reads ~/.lexq/config.json.
+ * - A host serving these tools over HTTP passes its own CallApi.
  */
 export type CallApi = (
   method: string,
@@ -167,8 +167,8 @@ export function limitExport(
  * Builds a salient, actionable warning from a response's meta when it reports facts that
  * rules reference but the schema does not define. Returns null when there is nothing to warn.
  *
- * Shared by both CallApi implementations (CLI stdio here, lexq-mcp HTTP via @lexq/cli/mcp)
- * so the agent-facing text is identical on every surface. The backend only populates
+ * Shared by every CallApi (the stdio server here, and any host through @lexq/cli/mcp) so the
+ * agent-facing text is identical on every surface. The API only populates
  * meta.unregisteredFacts on rule create/update, so this only ever fires there.
  */
 export function formatUnregisteredFactWarning(meta: unknown): string | null {

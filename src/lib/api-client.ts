@@ -120,8 +120,9 @@ function assertOk<T>(response: Response, json: ApiResponse<T>): void {
 
 /**
  * The error for a refused request. The API refuses with an envelope that carries a code and a
- * message. A proxy in front of it can refuse with a page of its own or with no body at all, and
- * then the status is all there is to report.
+ * message. An intermediary between the caller and the API (a proxy or gateway, possibly the
+ * caller's own) can refuse with a page of its own or with no body at all, and then the status is
+ * all there is to report.
  */
 async function refusal(response: Response): Promise<ApiError> {
   let json: Partial<ApiResponse<unknown>> | undefined;

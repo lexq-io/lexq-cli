@@ -26,7 +26,7 @@ simulation, deploy to production, and execute via REST API — all without modif
 └─────────────────────────────────────────────────────┘
                          │
                          ▼
-              api.lexq.io (ALB, path-routed)
+                    api.lexq.io
                          │
           ┌──────────────┴──────────────┐
           ▼                             ▼
@@ -38,8 +38,7 @@ simulation, deploy to production, and execute via REST API — all without modif
                   LexQ Policy Engine
 ```
 
-The CLI exclusively calls the Partner API. Execution requests (runtime rule evaluation) use a separate path-routed
-endpoint.
+The CLI calls only the Partner API. Your service evaluates rules through the Execution API.
 
 **Partner Base URL:** `https://api.lexq.io/api/v1/partners`
 **Execution Base URL:** `https://api.lexq.io/api/v1/execution`
@@ -77,7 +76,7 @@ Tenant
 | `DRAFT`    | Editable. Rules can be added/modified.                   |
 | `ACTIVE`   | Published. Locked — no modifications allowed.            |
 | `ARCHIVED` | Superseded by a newer version.                           |
-| `EXPIRED`  | Past `effectiveTo` date. Auto-transitioned by scheduler. |
+| `EXPIRED`  | Past its `effectiveTo` date.                             |
 
 ### Condition Operators
 
@@ -123,8 +122,7 @@ Publishing (DRAFT → ACTIVE) is a qualification event, not a deployment — it 
 `BLOCKED` means the rule matched but lost conflict resolution — the round and reason are in `reasonCode` (
 `MUTEX_PRIORITY_LOST`, `GROUP_LIMIT_REACHED`, …). It is unrelated to the `BLOCK` action, whose rule stays `SELECTED`.
 
-`NOT_SELECTED` exists in the enum but the engine never produces it (reserved for effective-date filtering, not yet
-implemented).
+`NOT_SELECTED` is part of the enum but is not returned today.
 
 ### Platform Event Types (for webhook subscriptions)
 
@@ -153,7 +151,7 @@ implemented).
 | **A/B Test**             | Splitting traffic between the current live version and a test version by percentage.                                                                           |
 | **Execution Trace**      | Per-rule evaluation result showing whether the condition matched and what actions were generated.                                                              |
 | **Decision Trace**       | Final disposition of a rule after conflict resolution (`SELECTED`, `BLOCKED`, …), with a `reasonCode` explaining why.                                          |
-| **Snapshot Hash**        | SHA-256 hash of a version's rule snapshot at deployment time. Used to verify integrity.                                                                        |
+| **Snapshot Hash**        | A fingerprint of a version's rules, recorded at deployment and used to check that the deployed rules did not change.                                           |
 | **Traffic Rate**         | Percentage (1–99) of traffic routed to the A/B test version.                                                                                                   |
 | **Webhook Subscription** | A platform event listener — receives notifications on deployment lifecycle events. Tenant-level.                                                               |
 | **Platform Event**       | A lifecycle event emitted by the engine itself (`VERSION_PUBLISHED`, `DEPLOYED`, `ROLLED_BACK`, `UNDEPLOYED`, `DEPLOY_SCHEDULED`, `DEPLOY_SCHEDULE_CANCELED`). |

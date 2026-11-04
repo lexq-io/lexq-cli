@@ -67,7 +67,6 @@ export const ConflictResolutionStrategy = ['HIGHEST_PRIORITY'] as const;
 export type ConflictResolutionStrategy = (typeof ConflictResolutionStrategy)[number];
 
 // ── Deployment ──
-// PUBLISH removed — publishing is a qualification event, not a deployment (server enum dropped it).
 export const DeploymentType = ['DEPLOY', 'ROLLBACK', 'UNDEPLOY'] as const;
 export type DeploymentType = (typeof DeploymentType)[number];
 

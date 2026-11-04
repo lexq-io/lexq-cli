@@ -49,7 +49,7 @@ export function createCli(): Command {
     .option('--api-key <key>', 'Override stored API key')
     .option(
       '--base-url <url>',
-      'Override API base URL — must include the API prefix, e.g. http://localhost:8080/api/v1/partners',
+      'Override API base URL — must include the API prefix, e.g. https://api.lexq.io/api/v1/partners',
     )
     .option('--dry-run', 'Preview the HTTP request without executing')
     .option('--verbose', 'Show request/response details')

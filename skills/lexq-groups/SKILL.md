@@ -152,12 +152,7 @@ tables of `lexq deploy history`, `deploy schedules`, `history list`, and
 **Constraint:** All groups sharing the same `activationGroup` **must** use identical
 `activationMode` and `activationStrategy`. The API rejects mismatches with a `P-` error.
 
-Groups are selected by the order you set, not by comparing action values. `FIRST_MATCH` and
-`MAX_BENEFIT` were removed on 2026-08-01 — the former resolved identically to
-`HIGHEST_PRIORITY` (candidates are evaluated in priority order, so "first match" *is* "lowest
-priority number"), and the latter compared post-action values as scores, which made a 20%
-discount lose to a 10% discount. The engine cannot know which direction is "better" for your
-domain.
+Groups are selected by the priority order you set, not by comparing action values.
 
 ### Example: Exclusive Discount Groups
 
@@ -187,9 +182,8 @@ Split traffic between the current live version and a test version.
 
 ### Traffic Identity Key
 
-**Every execution request has to carry `context.trafficKey`.** That value is what the split is
-computed from: the server hashes it together with the group ID and assigns the request to a
-bucket, so the same key value always reaches the same version for that group.
+**Every execution request has to carry `context.trafficKey`.** That value decides the split: the
+same key value always reaches the same version for that group.
 
 Send it in `context`, not in `facts`. Routing never reads `facts`.
 
@@ -202,11 +196,10 @@ Send it in `context`, not in `facts`. Routing never reads `facts`.
 
 If the key is missing or empty, no request is ever assigned to the test version. The test still
 reports as running and execution logs keep accumulating, so **the failure does not surface in the
-response** — only a server-side warning records it. This is the most common reason a test sits
-at 0%.
+response**. This is the most common reason a test sits at 0%.
 
 Pick a value that is stable per experiment unit (a customer ID, a merchant ID, a session ID) and
-opaque — the whole `context` object is stored on the execution ledger, so send a hash or a
+opaque — the whole `context` object is stored in execution history, so send a hash or a
 surrogate key rather than an email address. A value that changes every request, such as a request
 ID, scatters one user across both versions and destroys the comparison.
 

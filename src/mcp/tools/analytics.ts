@@ -118,8 +118,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       description: dedent`
         Start an Impact Simulation against historical, uploaded, or inline data.
 
-        Starting checks the plan's simulation usage limit. The records a simulation processes
-        count toward that usage when it completes or is canceled.
+        Every record a simulation processes counts toward the plan's simulation usage, including
+        records processed before a cancel. When the plan's limit is reached, a new simulation
+        cannot start.
 
         dataset.type and dataset.source are BOTH required, and must be paired:
           HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days
@@ -236,7 +237,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       annotations: ADDITIVE,
       description: dedent`
         Upload inline CSV or JSON content as a simulation dataset.
-        The content is uploaded to S3 and a path is returned in the "path" field.
+        The content is stored as a dataset, and its path is returned in the "path" field.
 
         To use the returned path in lexq_simulation_start, set:
           dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
