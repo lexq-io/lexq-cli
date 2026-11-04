@@ -1,7 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { READ_ONLY, ADDITIVE, DESTRUCTIVE, paginationParams } from './_shared';
+import {
+  READ_ONLY,
+  ADDITIVE,
+  DESTRUCTIVE,
+  EXPORT_LIMIT_NOTE,
+  limitExport,
+  paginationParams,
+} from './_shared';
 import { FACT_KEY_PATTERN } from '@/types/facts';
 import { ValueType } from '@/types/enums';
 import { EXPORT_FORMATS } from '@/lib/export';
@@ -163,16 +170,19 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Export Fact Catalog',
       annotations: READ_ONLY,
-      description:
-        'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet, without value domains; JSON lists each definition with only the fields a new definition takes (key, name, type, description, isRequired, isPii, valueDomain), without IDs. Returns the file contents as text.',
+      description: `Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet, without value domains; JSON lists each definition with only the fields a new definition takes (key, name, type, description, isRequired, isPii, valueDomain), without IDs. Returns the file contents as text. ${EXPORT_LIMIT_NOTE}`,
       inputSchema: z.object({
         format: z.enum(EXPORT_FORMATS).default('csv').describe('Export format'),
         keyword: z.string().optional().describe('Filter by key or name'),
       }),
     },
     async ({ format, keyword }) =>
-      callApi('GET', 'schema/facts/export', {
-        params: keyword ? { format, keyword } : { format },
-      }),
+      limitExport(
+        await callApi('GET', 'schema/facts/export', {
+          params: keyword ? { format, keyword } : { format },
+        }),
+        `lexq facts export --as ${format} --output <file>`,
+        'Pass keyword to export fewer facts.',
+      ),
   );
 }

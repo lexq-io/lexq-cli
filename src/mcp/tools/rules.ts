@@ -63,80 +63,37 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
       title: 'Create Rule',
       annotations: ADDITIVE,
       description: dedent`
-        Create a rule in a DRAFT version. Requires name, condition tree, and actions array. priority is auto-assigned (appended last); use lexq_rules_reorder to change order.
+        Create a rule in a DRAFT version. It goes last in priority order; lexq_rules_reorder changes the order.
 
-        An action's targetVar (SET_FACT, MUTATE_FACT) must be a registered fact. Saving or
-        publishing a rule whose targetVar is not registered fails with ACT-032, so register it
-        with lexq_facts_create first. Keys a rule only reads (condition fields, refVar) may stay
-        unregistered.
-
-        After saving, lexq_facts_unregistered lists any keys this version references but has not
-        defined (non-blocking, version-wide) — use it to decide what to register.
+        An action's targetVar must be a registered fact (ACT-032 otherwise). Keys a rule only reads (condition fields, refVar) may stay unregistered.
 
         Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: ${oneOf(LogicalOperator)}, children: [...] }
         Value types: ${ValueType.join(', ')}
-        Limits: a condition tree may hold at most ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes; GROUP nodes do not count)
-        and nest at most ${MAX_CONDITION_DEPTH} levels below the root. A version holds at most ${MAX_RULES_PER_VERSION} rules.
+        Limits: ${MAX_CONDITIONS_PER_RULE} SINGLE conditions per rule (GROUP nodes do not count), ${MAX_CONDITION_DEPTH} levels of nesting below the root, ${MAX_RULES_PER_VERSION} rules per version.
 
-        Operators are constrained by the LEFT fact's type (from lexq_facts_list). Using one outside
-        its type is rejected by the server — check the fact type before choosing an operator.
-        - STRING fact:       EQUALS, NOT_EQUALS, CONTAINS, IN, NOT_IN
-        - NUMBER fact:       EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, IN, NOT_IN
-        - BOOLEAN fact:      EQUALS, NOT_EQUALS
-        - LIST_* fact:       HAS_ANY, HAS_ALL, HAS_NONE (only these)
-
-        HAS_* query list-typed facts. Value is always an array whose element type matches the fact:
-        - HAS_ANY: fact has at least one of the given values
-        - HAS_ALL: fact has all of the given values
-        - HAS_NONE: fact has none of the given values
+        Operators that work on each fact type:
+        - STRING: EQUALS, NOT_EQUALS, CONTAINS (substring), IN, NOT_IN
+        - NUMBER: EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL, IN, NOT_IN
+        - BOOLEAN: EQUALS, NOT_EQUALS
+        - LIST_STRING, LIST_NUMBER: HAS_ANY, HAS_ALL, HAS_NONE
+        IN and NOT_IN test whether the fact's value is in the array. HAS_ANY, HAS_ALL and HAS_NONE match when the fact's list holds at least one, all, or none of the array's values. The array holds values of the fact's type, or for a list fact, of its element type.
         Example: { "type": "SINGLE", "field": "userTags", "operator": "HAS_ANY", "value": ["VIP","GOLD"], "valueType": "LIST_STRING" }
 
-        Do NOT use CONTAINS on a list fact — CONTAINS is substring match on STRING facts only.
-        IN is the mirror of HAS_*: IN takes a scalar fact with a list value; HAS_* takes lists on both sides.
-
         Actions: [{ type, parameters }]
+        - MUTATE_FACT: { targetVar, operator: ${oneOf(MutateOperator)}, method: ${oneOf(CalculationMethod)}, operand: number, refVar?, rounding? }
+          Reads and writes targetVar. The request must send it (P-015 otherwise), and it must hold a number when the action runs. operand may be negative, and a percent may be over 100.
+                    AMOUNT                  PERCENTAGE (base = refVar, or targetVar when omitted)
+            ASSIGN  targetVar = operand     targetVar = base × operand/100
+            ADD     targetVar += operand    targetVar += base × operand/100
+            SUB     targetVar -= operand    targetVar -= base × operand/100
+            MUL     targetVar *= operand    targetVar *= (operand/100 + 1)
+            DIV     targetVar /= operand    invalid
+          refVar is allowed only with PERCENTAGE and ASSIGN, ADD or SUB. DIV with AMOUNT needs a nonzero operand.
+          rounding: { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: ${oneOf(RoundingPolicy)} }. mode defaults to HALF_UP. Without rounding, the result keeps full precision.
+        - SET_FACT: { targetVar, value: string|number|boolean }. The request does not have to send targetVar.
+        - BLOCK: { reason? } sets isBlocked to true and blockReason to the reason, or "Policy Violation" without one. It does not stop later actions or rules; the caller enforces the block. Only BLOCK writes these two keys: a SET_FACT or MUTATE_FACT targeting either is rejected (ACT-033).
 
-        Action parameter schemas:
-        - MUTATE_FACT: { targetVar: string, operator: ${oneOf(MutateOperator)}, method: ${oneOf(CalculationMethod)}, operand: number, refVar?: string, rounding?: RoundingOption }
-          targetVar is the fact this action reads and writes. It must be a registered fact
-          (ACT-032 otherwise), and the request must send it (P-015 otherwise). Its value must be
-          a number when the action runs.
-          A missing required fact throws (no 0 default).
-          operand is the arithmetic operand; the unit is dictated by method (percent when
-          PERCENTAGE, absolute amount when AMOUNT). Ranges are not constrained — negative values
-          and >100 percentages are valid (refunds, surcharges).
-          refVar is the base for percentage calculation and is OPTIONAL — omit it to use targetVar
-          itself. It is only meaningful in PERCENTAGE × {ASSIGN, ADD, SUB}; specifying it in any
-          other cell is an error. Use it when the base differs from the target, e.g.
-          "points += orderTotal × 5%" → { targetVar: "points", refVar: "orderTotal",
-          operator: "ADD", method: "PERCENTAGE", operand: 5 }.
-          operator × method matrix:
-            ASSIGN  targetVar = operand              | targetVar = refVar × operand/100
-            ADD     targetVar += operand             | targetVar += refVar × operand/100
-            SUB     targetVar -= operand             | targetVar -= refVar × operand/100
-            MUL     targetVar *= operand             | targetVar *= (operand/100 + 1)
-            DIV     targetVar /= operand             | invalid
-          Constraints: DIV + PERCENTAGE is invalid (use MUL with the inverse). DIV + AMOUNT
-          requires operand !== 0.
-        - SET_FACT: { targetVar: string, value: string|number|boolean } targetVar must be a
-          registered fact (ACT-032 otherwise). The request does not have to send it: SET_FACT is
-          the only action whose targetVar may be absent from the input facts. MUTATE_FACT requires
-          its target to be present in the input facts.
-        - BLOCK: { reason?: string } Records a rejection decision. It does NOT halt rule execution —
-          subsequent actions and subsequent winning rules still run. Enforcement is the caller's
-          responsibility; the decision surfaces as isBlocked (true) and blockReason (reason, or
-          "Policy Violation" when omitted).
-          Only BLOCK writes those two keys: saving or publishing a rule whose SET_FACT or
-          MUTATE_FACT targets either one fails with ACT-033.
-
-        Evaluation order: every rule's condition is checked against the input facts before any
-        action runs, so a condition never sees a value an action writes in the same request. Then
-        the actions of the winning rules run in priority order. Each action works on the values
-        the actions before it left, in its own rule or an earlier one. To test a value an action
-        writes, send that value as an input fact in a second request. If a rule should run
-        whenever another one does, put its actions in that rule instead.
-
-        RoundingOption (optional, MUTATE_FACT only): { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: ${oneOf(RoundingPolicy)} } mode defaults to HALF_UP. When omitted, calculator output is preserved at full precision (lossless).
+        Every condition is checked against the input facts before any action runs, so a condition never sees a value an action writes in the same request. The winning rules' actions then run in priority order, each on the values the actions before it left.
       `,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
