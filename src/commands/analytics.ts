@@ -4,6 +4,7 @@ import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import { uploadDataset } from '@/lib/dataset-upload';
+import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
 import { EXPORT_FORMATS, fileFormat, runExport } from '@/lib/export';
 import { parseJson, stringifyJson, type LosslessNumber } from '@/lib/lossless-json';
 import type { PageResponse } from '@/types/api';
@@ -63,6 +64,8 @@ export function registerAnalyticsCommands(program: Command): void {
           $ lexq analytics dry-run --version-id <vid> --file test-input.json
 
         The request body must include a "facts" object. Use --debug for execution traces
+
+        ${DRY_RUN_LIMIT_NOTE}
       `,
     )
     .action(async (opts) => {
@@ -115,6 +118,8 @@ export function registerAnalyticsCommands(program: Command): void {
             }'
 
         Shows side-by-side which rules matched and what actions fired for each version.
+
+        ${DRY_RUN_LIMIT_NOTE}
       `,
     )
     .action(async (opts) => {

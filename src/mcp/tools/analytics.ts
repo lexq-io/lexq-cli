@@ -14,6 +14,7 @@ import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { DEFAULT_SIMULATION_RECORDS, MAX_SIMULATION_RECORDS } from '@/types/constants';
+import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
 import { SimulationMetricType, SimulationStatus } from '@/types/enums';
 
 /** The dataset block an upload tool appends, ready to paste into lexq_simulation_start. */
@@ -34,7 +35,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Dry Run',
       annotations: READ_ONLY,
       description: dedent`
-        Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.
+        Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. ${DRY_RUN_LIMIT_NOTE}
         
         Returns:
           inputFacts        — normalized input facts
@@ -69,7 +70,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Dry Run Compare',
       annotations: READ_ONLY,
       description: dedent`
-        Compare dry run results between two versions using the same input facts. Useful for validating changes.
+        Compare dry run results between two versions using the same input facts. Useful for validating changes. ${DRY_RUN_LIMIT_NOTE}
         
         Returns:
           resultA / resultB — full DryRunResponse for each version

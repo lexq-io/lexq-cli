@@ -82,6 +82,7 @@ const CONSTANTS = [
   'PolicyGroup.DESCRIPTION_MAX_LENGTH',
   'PolicyVersion.COMMIT_MESSAGE_MAX_LENGTH',
   'ScheduledDeploymentProcessor.SCHEDULE_TICK_MAX_MILLIS',
+  'TrafficControlService.MAX_DRY_RUN_EVALUATIONS_PER_MINUTE',
 ];
 
 /** Enums this CLI exposes, in output order. The manifest is wider; anything not listed stays out. */

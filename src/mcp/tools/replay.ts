@@ -1,4 +1,5 @@
 import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
+import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
@@ -18,8 +19,7 @@ export function registerReplayTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Replay a Decision',
       annotations: READ_ONLY,
-      description:
-        'Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous and free of charge (TPS throttle only). A replay sends no webhook, notification, or event: rule actions produce no outward effects.',
+      description: `Re-evaluate a past execution (traceId) against a candidate version and return the decision diff (decisionChanged, effect changes, fired rules) plus a determinism verdict. Synchronous. ${DRY_RUN_LIMIT_NOTE} A replay sends no webhook, notification, or event: rule actions produce no outward effects.`,
       inputSchema: z.object({
         traceId: z.string().describe('Trace ID of the past execution to replay'),
         candidateVersionId: z.string().uuid().describe('Version to re-evaluate against'),
