@@ -1,4 +1,5 @@
 import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
+import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
@@ -43,8 +44,10 @@ export function registerReplayCommands(program: Command): void {
       'after',
       dedent`
 
-        Free of charge (TPS throttle only). Returns decisionChanged, effect
-        changes, fired rules on both sides, and a determinism verdict.
+        Returns decisionChanged, effect changes, fired rules on both sides,
+        and a determinism verdict.
+
+        ${DRY_RUN_LIMIT_NOTE}
 
         Example:
           $ lexq replay decision --trace-id <tid> --version-id <vid>
