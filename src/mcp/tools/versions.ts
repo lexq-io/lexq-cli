@@ -77,7 +77,9 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
         clearEffectiveFrom: z
           .boolean()
           .optional()
-          .describe('Set to true to remove the effective start. Do not send effectiveFrom with it.'),
+          .describe(
+            'Set to true to remove the effective start. Do not send effectiveFrom with it.',
+          ),
         clearEffectiveTo: z
           .boolean()
           .optional()

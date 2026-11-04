@@ -517,17 +517,13 @@ export function registerAnalyticsCommands(program: Command): void {
       try {
         const globalOpts = program.opts();
 
-        await runExport(
-          `analytics/simulations/${opts.id}/export`,
-          parseFormat(opts.as),
-          {
-            apiKey: globalOpts.apiKey,
-            baseUrl: globalOpts.baseUrl,
-            dryRun: globalOpts.dryRun,
-            verbose: globalOpts.verbose,
-            output: opts.output,
-          },
-        );
+        await runExport(`analytics/simulations/${opts.id}/export`, parseFormat(opts.as), {
+          apiKey: globalOpts.apiKey,
+          baseUrl: globalOpts.baseUrl,
+          dryRun: globalOpts.dryRun,
+          verbose: globalOpts.verbose,
+          output: opts.output,
+        });
       } catch (error) {
         printError(error);
         process.exit(1);
