@@ -24,7 +24,7 @@ export function registerLogCommands(program: Command): void {
       'after',
       dedent`
 
-        System failure logs (DLQ) for background tasks — platform event webhooks and scheduled deployments.
+        Failure logs for platform event webhooks and scheduled deployments that failed.
 
         Commands:
           list         List failure logs with filters

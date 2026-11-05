@@ -1,6 +1,6 @@
 {
   "name": "@lexq/cli",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "mcpName": "io.lexq/lexq",
   "description": "The Decision Operations Platform for engineering teams",
   "type": "module",

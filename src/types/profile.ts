@@ -1,6 +1,9 @@
 import type { BaselineStatus, ProfileCacheState, ProfilePhase } from './enums';
 
-/** Merged percentile summary. p50/p95/p99 are null when n < 100 (withheld, never fabricated). */
+/**
+ * Merged percentile summary. Each of p50/p95/p99 is null until the sample is large enough to
+ * show it (see PERCENTILE_MIN_N); a withheld percentile is never estimated.
+ */
 export interface PercentileStats {
   n: number;
   minNanos: number;
@@ -18,8 +21,8 @@ export interface GroupSummary {
 /**
  * Rule-scoped phase. TOTAL never appears here.
  *
- * The engine enforces the shape in ProfileKey: GROUP scope has no ruleId and phase TOTAL,
- * RULE scope has a ruleId and phase CONDITION or ACTION. Group-wide timing is not a phase
+ * The engine guarantees the shape: GROUP scope has no ruleId and phase TOTAL; RULE scope has a
+ * ruleId and phase CONDITION or ACTION. Group-wide timing is not a phase
  * label at all — it comes back as GroupSummary.total.
  */
 export type RuleProfilePhase = Exclude<ProfilePhase, 'TOTAL'>;

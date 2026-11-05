@@ -76,8 +76,8 @@ const MARKER = 'content-marker-5d1c';
 // ── Fake engine ──
 // Records each upload and answers like the engine: the stored path inside an envelope. A file
 // whose name starts with "refused" gets the engine's error envelope instead. Names starting with
-// "proxy-" get what a proxy in front of the engine can send: a 413 with no body and no
-// Content-Type, or a 502 page in HTML.
+// "proxy-" get what an HTTP intermediary can send: a 413 with no body and no Content-Type, or a
+// 502 page in HTML.
 
 const requests = [];
 const engine = createServer(async (req, res) => {

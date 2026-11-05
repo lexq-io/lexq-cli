@@ -197,7 +197,7 @@ Each code says **who fixes it**.
 
 `CONDITION_VALUE_TYPE_INVALID` is worth escalating. The right-hand side of a condition belongs
 to the rule, not to your request, so changing the payload will not help — the rule fails the
-same way for every caller. It also got past the check that is supposed to reject it on save.
+same way for every caller.
 
 A rule from another group referencing facts you did not send yields `FACT_NOT_PROVIDED` — this
 is normal, not an error.
@@ -263,7 +263,7 @@ lexq analytics dataset template \
 
 # 2. Upload dataset
 lexq analytics dataset upload --file ./my-data.csv
-# → path: datasets/<tenantId>/a1b2c3d4e5f6.csv
+# → returns a path. Pass it to simulation start unchanged.
 
 # 3. Start simulation with uploaded path
 lexq analytics simulation start --json '{

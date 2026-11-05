@@ -43,7 +43,7 @@ export function registerProfileCommands(program: Command): void {
         per-rule p50s within the group. Absolute ms thresholds are intentionally
         not supported. Each percentile is withheld (–) unless n×(1−q) ≥ ${TAIL_MIN_OBS} —
         p50 from n ≥ ${PERCENTILE_MIN_N.p50}, p95 from n ≥ ${PERCENTILE_MIN_N.p95}, p99 from n ≥ ${PERCENTILE_MIN_N.p99}. TOTAL is recorded
-        on every call, rule detail from a deterministic ${PROFILE_SAMPLE_PERMILLE / 10}% sample.
+        on every call, rule detail from a ${PROFILE_SAMPLE_PERMILLE / 10}% sample of calls.
 
         Examples:
           $ lexq profile <groupId>
@@ -114,7 +114,9 @@ export function registerProfileCommands(program: Command): void {
           console.log(`baseline ${b.phase.padEnd(9)}: ${base}`);
         }
         if (data.droppedRows > 0) {
-          console.log(`⚠ droppedRows=${data.droppedRows} (corrupt histogram rows skipped)`);
+          console.log(
+            `⚠ droppedRows=${data.droppedRows} (some samples could not be read and are not included)`,
+          );
         }
 
         printTable(

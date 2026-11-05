@@ -7,11 +7,9 @@ import { END_DAY, START_DAY } from '@/lib/dates';
 /**
  * Decision Provenance tools — read-only lineage + reveal audit ledger.
  *
- * Deliberately NOT exposed: the PII reveal endpoint (POST provenance/{traceId}/reveal).
- * Revealing routes PII plaintext into the calling agent's context (a third-party
- * surface), which violates the write-then-reveal contract's purpose of avoiding
- * plaintext replication. Reveal is console-only, by design.
- * Do not add a reveal tool here.
+ * Revealing a masked PII value is deliberately not a tool. It would put the plaintext into
+ * the calling agent's context, so revealing stays in the console. Do not add a reveal tool
+ * here.
  */
 export function registerProvenanceTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(

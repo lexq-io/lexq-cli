@@ -178,8 +178,7 @@ export interface MetricSummary {
  * averaged one, because the record that moved most is a property of the variable itself.
  *
  * The field is `null` in two cases: when no baseline version was compared, and when the run
- * completed before this field existed. A stored snapshot is replayed as-is, so older rows carry
- * no such key.
+ * completed before this field existed.
  *
  * `measuredRecords` is not the denominator of the three change counts, because the two are
  * counted over different populations. The change counts run over every processed record and

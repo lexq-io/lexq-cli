@@ -96,7 +96,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
       title: 'Schedule Deployment',
       annotations: DESTRUCTIVE,
       description:
-        "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
+        "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. A scheduled deployment uses exactly the rules that were scheduled; if they do not match when it runs, it fails with HASH_MISMATCH and nothing is deployed.",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z

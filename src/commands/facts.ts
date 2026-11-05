@@ -186,7 +186,7 @@ export function registerFactCommands(program: Command): void {
                       STRING types take --allowed-values. NUMBER types take all three.
                       BOOLEAN takes none — it has only two values to begin with.
                       For list types the value domain applies to each element.
-                      Leave them out for no value domain, which is how facts behaved before.
+                      Leave them out for no value domain.
       `,
     )
     .action(async (opts) => {

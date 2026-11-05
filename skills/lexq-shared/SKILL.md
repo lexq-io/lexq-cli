@@ -108,7 +108,7 @@ Every command accepts these flags:
 
 ## Pagination
 
-All list endpoints return a `PageResponse`:
+All list endpoints return one page of results:
 
 ```json
 {

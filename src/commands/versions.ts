@@ -17,7 +17,8 @@ export function registerVersionCommands(program: Command): void {
 
         A version is an immutable snapshot of rules within a policy group.
 
-        Lifecycle: DRAFT → ACTIVE (publish) → ARCHIVED (superseded) | EXPIRED (past effectiveTo)
+        Lifecycle: DRAFT → ACTIVE (publish) → EXPIRED (past effectiveTo)
+        A version stays ACTIVE after a newer version goes live, so you can roll back to it.
 
         Commands:
           list      List versions for a group

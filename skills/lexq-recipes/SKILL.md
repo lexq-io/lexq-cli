@@ -376,11 +376,10 @@ live but from a newer deployment. Start again from step 1.
 
 **Goal:** Check for pending failures and find their cause.
 
-Failure logs are a dead-letter record for background tasks — platform event webhooks and scheduled
-deployments. There is no retry action: the engine does not re-execute a failed task on request.
-Fix the cause at the source (webhook endpoint, version state). The CLI can read failure logs but
-cannot resolve or ignore them: an organization admin does that in the console, under
-Management → Failure Logs (https://console.lexq.io/management/failure-logs).
+Failure logs record platform event webhooks and scheduled deployments that failed. There is no
+retry action; fix the cause at the source (webhook endpoint, version state). The CLI can read
+failure logs but cannot resolve or ignore them: an organization admin does that in the console,
+under Management → Failure Logs (https://console.lexq.io/management/failure-logs).
 
 ```bash
 # 1. List pending failures

@@ -22,7 +22,8 @@ import { registerDomainTemplateTools } from './tools/domain-templates';
  * Registers all MCP tools on the given server.
  *
  * @param server - McpServer instance
- * @param callApi - API caller function (config-based for CLI, Bearer-based for HTTP)
+ * @param callApi - how tool calls reach the LexQ API. The stdio server builds one from
+ *   ~/.lexq/config.json; a host passes its own.
  */
 export function registerAllTools(server: McpServer, callApi: CallApi): void {
   registerStatusTools(server, callApi);
@@ -64,7 +65,7 @@ export const SERVER_INSTRUCTIONS = [
   `- For anything these tools cannot do, point the user to the LexQ console at ${CONSOLE_URL}.`,
 ].join('\n');
 
-// Re-exports for external consumers (lexq-mcp)
+// Re-exports for hosts that serve these tools
 export type { CallApi, McpToolResult } from './tools/_shared';
 export { paginationParams, formatUnregisteredFactWarning } from './tools/_shared';
 export { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
