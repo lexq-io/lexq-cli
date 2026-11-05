@@ -48,7 +48,7 @@ The CLI calls only the Partner API. Your service evaluates rules through the Exe
 ```
 Tenant
  ├── PolicyGroup (ACTIVE | DISABLED | ARCHIVED)
- │    ├── PolicyVersion (DRAFT → ACTIVE → ARCHIVED | EXPIRED)
+ │    ├── PolicyVersion (DRAFT → ACTIVE → EXPIRED; ARCHIVED if deleted after it was executed)
  │    │    └── PolicyRule (condition + actions, priority-ordered)
  │    ├── PolicyDeployment (DEPLOY | ROLLBACK | UNDEPLOY)
  │    └── A/B Test (testVersionId + trafficRate)
@@ -71,12 +71,12 @@ Tenant
 
 ### Policy Version Status
 
-| Value      | Description                                              |
-|------------|----------------------------------------------------------|
-| `DRAFT`    | Editable. Rules can be added/modified.                   |
-| `ACTIVE`   | Published. Locked — no modifications allowed.            |
-| `ARCHIVED` | Superseded by a newer version.                           |
-| `EXPIRED`  | Past its `effectiveTo` date.                             |
+| Value      | Description                                                                                                  |
+|------------|--------------------------------------------------------------------------------------------------------------|
+| `DRAFT`    | Editable. Rules can be added/modified.                                                                       |
+| `ACTIVE`   | Published. Locked — no modifications allowed. Stays `ACTIVE` after a newer version goes live.                |
+| `ARCHIVED` | Deleted after it was executed. Kept for audit, hidden from the version list, and no longer usable (`P-008`). |
+| `EXPIRED`  | Past its `effectiveTo` date.                                                                                 |
 
 ### Condition Operators
 

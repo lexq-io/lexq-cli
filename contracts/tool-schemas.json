@@ -2282,7 +2282,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Delete a DRAFT version. Only DRAFT versions can be deleted.",
+      "description": "Delete a DRAFT, ACTIVE, or EXPIRED version. A version that is live, in an A/B test (P-017), or targeted by a pending scheduled deployment (P-043) cannot be deleted. A version that has been executed is kept as ARCHIVED instead of removed: it no longer appears in lexq_versions_list and cannot be deployed, executed, simulated, replayed, cloned, or used in a dry run (P-008). Deleting it again does nothing.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
