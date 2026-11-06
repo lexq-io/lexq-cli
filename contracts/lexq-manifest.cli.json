@@ -97,7 +97,7 @@
       "values": ["HISTORICAL", "UPLOADED", "MANUAL"]
     },
     "SimulationDatasetSource": {
-      "values": ["EXECUTION_LOGS", "S3_BUCKET", "REQUEST_BODY"]
+      "values": ["EXECUTION_LOGS", "UPLOADED_FILE", "REQUEST_BODY"]
     },
     "SimulationMetricType": {
       "values": ["COUNT", "SUM", "AVG"]
@@ -187,6 +187,7 @@
     "DESCRIPTION_MAX_LENGTH": 255,
     "COMMIT_MESSAGE_MAX_LENGTH": 500,
     "SCHEDULE_TICK_MAX_MILLIS": 60000,
-    "MAX_DRY_RUN_EVALUATIONS_PER_MINUTE": 60
+    "MAX_DRY_RUN_EVALUATIONS_PER_MINUTE": 60,
+    "MAX_DRY_RUN_EVALUATIONS_PER_DAY": 1000
   }
 }

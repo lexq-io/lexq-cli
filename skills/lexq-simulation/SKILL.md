@@ -249,7 +249,7 @@ lexq analytics simulation start --json '{
 |--------------|------------------|-------------------------------------------|
 | `HISTORICAL` | `EXECUTION_LOGS` | Replay past executions from a date range  |
 | `MANUAL`     | `REQUEST_BODY`   | Provide `manualData` array in the request |
-| `UPLOADED`   | `S3_BUCKET`      | Reference an uploaded dataset by `path`   |
+| `UPLOADED`   | `UPLOADED_FILE`  | Reference an uploaded dataset by `path`   |
 
 `HISTORICAL` takes `from` / `to` as `yyyy-MM-dd`, whole days in the organization time zone, both
 inclusive.
@@ -270,14 +270,16 @@ lexq analytics simulation start --json '{
   "policyVersionId": "<vid>",
   "dataset": {
     "type": "UPLOADED",
-    "source": "S3_BUCKET",
+    "source": "UPLOADED_FILE",
     "path": "<path returned by dataset upload>"
   },
   "options": { "includeRuleStats": true, "maxRecords": 10000 }
 }'
 ```
 
-**CSV format:** Header row with fact keys, data rows with values. Types auto-detected.
+**CSV format:** Header row with fact keys, data rows with values. Types auto-detected. A cell holding a
+JSON array, such as `["gold","vip"]`, is read as a list; quote the cell, as CSV requires for a value with
+commas.
 **JSON format:** Array of objects `[{"key": "value"}, ...]`
 
 Dataset files can be up to 10 MB. Over MCP, the local server (`lexq serve --mcp`) has

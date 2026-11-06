@@ -82,6 +82,7 @@ const CONSTANTS = [
   'COMMIT_MESSAGE_MAX_LENGTH',
   'SCHEDULE_TICK_MAX_MILLIS',
   'MAX_DRY_RUN_EVALUATIONS_PER_MINUTE',
+  'MAX_DRY_RUN_EVALUATIONS_PER_DAY',
 ];
 
 /** Enums this CLI exposes, in output order. The manifest is wider; anything not listed stays out. */

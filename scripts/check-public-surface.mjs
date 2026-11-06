@@ -83,8 +83,7 @@ const NON_LATIN = /[\uAC00-\uD7A3]/;
 const LEXQ_NAME = /lexq-[a-z0-9]+/g;
 
 /* Generic infrastructure vocabulary, much wider than any one stack, so the list says nothing
-   about which of these the server uses. `S3_BUCKET` is a request value and does not match:
-   the underscore keeps the word boundary from falling after "S3". */
+   about which of these the server uses. */
 const SERVER_STACK =
   /\b(redis|valkey|memcached|hazelcast|postgres(?:ql)?|mysql|mariadb|aurora|dynamodb|mongodb|cassandra|cockroachdb|spanner|firestore|bigtable|cosmos ?db|kafka|rabbitmq|nats|sqs|sns|kinesis|pub\/sub|service bus|event hubs|s3|gcs|blob storage|cloudfront|cloudflare|fastly|akamai|alb|elb|nlb|nginx|envoy|haproxy|traefik|ecs|eks|gke|aks|ec2|fargate|cloud run|kubernetes|k8s|dead[- ]letter|dlq|fixed window|sliding window|token bucket|leaky bucket|presigned|scheduler tick)\b/i;
 
