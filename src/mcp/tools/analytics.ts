@@ -15,11 +15,21 @@ import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { DEFAULT_SIMULATION_RECORDS, MAX_SIMULATION_RECORDS } from '@/types/constants';
 import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
-import { SimulationMetricType, SimulationStatus } from '@/types/enums';
+import {
+  type SimulationDatasetSource,
+  SimulationMetricType,
+  SimulationStatus,
+} from '@/types/enums';
+
+/**
+ * The dataset source of an uploaded file. Typed against the generated enum, so a name the server
+ * stops using fails the type check instead of staying in the tool descriptions.
+ */
+export const UPLOADED_DATASET_SOURCE: SimulationDatasetSource = 'UPLOADED_FILE';
 
 /** The dataset block an upload tool appends, ready to paste into lexq_simulation_start. */
 export function datasetBlock(path: string): { type: 'text'; text: string } {
-  const dataset = { type: 'UPLOADED', source: 'S3_BUCKET', path };
+  const dataset = { type: 'UPLOADED', source: UPLOADED_DATASET_SOURCE, path };
   return {
     type: 'text',
     text: 'Ready-to-use dataset block for lexq_simulation_start:\n' + stringifyJson({ dataset }, 2),
@@ -125,7 +135,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         dataset.type and dataset.source are BOTH required, and must be paired:
           HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days
                        in the organization time zone, both inclusive)
-          UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)
+          UPLOADED   → source ${UPLOADED_DATASET_SOURCE},  with dataset.path (the path returned by lexq_dataset_upload)
           MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)
 
         options.maxRecords: number (max ${MAX_SIMULATION_RECORDS}). When omitted, HISTORICAL and UPLOADED run at
@@ -138,7 +148,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         Example (uploaded dataset):
         {
           "policyVersionId": "<uuid>",
-          "dataset": { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<path from lexq_dataset_upload>" },
+          "dataset": { "type": "UPLOADED", "source": "${UPLOADED_DATASET_SOURCE}", "path": "<path from lexq_dataset_upload>" },
           "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true, "maxRecords": 10000 }
         }
 
@@ -240,7 +250,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         The content is stored as a dataset, and its path is returned in the "path" field.
 
         To use the returned path in lexq_simulation_start, set:
-          dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
+          dataset: { "type": "UPLOADED", "source": "${UPLOADED_DATASET_SOURCE}", "path": "<returned path>" }
 
         The content travels inside the tool call, so this suits small datasets, and the hosted server at
         mcp.lexq.io limits the size of a request. For a larger file, use lexq_dataset_upload_file on the
@@ -250,6 +260,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         userId,paymentAmount
         user_001,150000
         user_002,50000
+
+        In CSV, a cell holding a JSON array, such as ["gold","vip"], is read as a list; quote the cell,
+        as CSV requires for a value with commas.
 
         JSON example: [{"userId":"user_001","paymentAmount":150000}, {"userId":"user_002","paymentAmount":50000}]
       `,

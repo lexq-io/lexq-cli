@@ -119,7 +119,7 @@ export type SimulationStatus = (typeof SimulationStatus)[number];
 export const SimulationDatasetType = ['HISTORICAL', 'UPLOADED', 'MANUAL'] as const;
 export type SimulationDatasetType = (typeof SimulationDatasetType)[number];
 
-export const SimulationDatasetSource = ['EXECUTION_LOGS', 'S3_BUCKET', 'REQUEST_BODY'] as const;
+export const SimulationDatasetSource = ['EXECUTION_LOGS', 'UPLOADED_FILE', 'REQUEST_BODY'] as const;
 export type SimulationDatasetSource = (typeof SimulationDatasetSource)[number];
 
 export const SimulationMetricType = ['COUNT', 'SUM', 'AVG'] as const;

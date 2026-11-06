@@ -562,6 +562,8 @@ export function registerAnalyticsCommands(program: Command): void {
       dedent`
 
         Supported formats: CSV (with header row), JSON (array of objects).
+        In CSV, a cell holding a JSON array, such as ["gold","vip"], is read as a list; quote the
+        cell, as CSV requires for a value with commas.
         Use "dataset template" to generate a correctly formatted template.
 
         Example:
