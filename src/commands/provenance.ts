@@ -5,6 +5,7 @@ import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type { RevealAuditItem } from '@/types/provenance';
 import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
+import { LineageUnavailableReason } from '@/types/enums';
 
 /**
  * PII reveal itself is console-only by contract, so there is no reveal subcommand here.
@@ -19,6 +20,9 @@ export function registerProvenanceCommands(program: Command): void {
       dedent`
 
         Trace who authored, published, and deployed the rules behind a decision.
+        lineage.unavailableReason is null when all three layers (authored, published,
+        deployed) are present. Otherwise it says why one or more layers are null:
+        ${LineageUnavailableReason.join(', ')}.
 
         Commands:
           get            Get the lineage of one decision (PII facts masked)

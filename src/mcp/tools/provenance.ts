@@ -3,6 +3,17 @@ import { z } from 'zod';
 import type { CallApi } from './_shared';
 import { READ_ONLY, paginationParams } from './_shared';
 import { END_DAY, START_DAY } from '@/lib/dates';
+import { withNotes } from '@/lib/enum-notes';
+import type { LineageUnavailableReason } from '@/types/enums';
+
+const UNAVAILABLE_REASON_NOTES = {
+  COMPOSITE_EXECUTION:
+    'a composite execution ran several groups in one request, so there is no single version or deployment and all three layers are null',
+  NOT_LIVE_VERSION:
+    "the version that ran, such as an A/B test or fallback version, was not the live deployment's version at that moment, so deployed is null",
+  NOT_RECORDED:
+    'a layer is null and the record does not say why, usually because the decision was recorded before LexQ began storing reasons',
+} satisfies Record<LineageUnavailableReason, string>;
 
 /**
  * Decision Provenance tools — read-only lineage + reveal audit ledger.
@@ -17,8 +28,7 @@ export function registerProvenanceTools(server: McpServer, callApi: CallApi): vo
     {
       title: 'Get Decision Provenance',
       annotations: READ_ONLY,
-      description:
-        'Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint.',
+      description: `Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint. lineage.unavailableReason is null when all three layers (authored, published, deployed) are present. Otherwise it says why one or more layers are null: ${withNotes(UNAVAILABLE_REASON_NOTES).join('; ')}.`,
       inputSchema: z.object({
         traceId: z.string().describe('Trace ID of the execution'),
       }),

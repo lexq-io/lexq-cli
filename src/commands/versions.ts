@@ -19,8 +19,9 @@ export function registerVersionCommands(program: Command): void {
 
         Lifecycle: DRAFT → ACTIVE (publish) → EXPIRED (past effectiveTo)
         A version stays ACTIVE after a newer version goes live, so you can roll back to it.
-        Deleting a version that has been executed keeps it as ARCHIVED, hidden from
-        'lexq versions list'. It can no longer be deployed, executed, tested, or cloned.
+        Deleting a DRAFT removes it. Deleting a published version (ACTIVE or EXPIRED)
+        keeps it as ARCHIVED instead, hidden from 'lexq versions list'. It can no longer
+        be deployed, executed, tested, or cloned.
 
         Commands:
           list      List versions for a group
@@ -220,8 +221,8 @@ export function registerVersionCommands(program: Command): void {
 
         DRAFT, ACTIVE, and EXPIRED versions can be deleted. A version that is live,
         in an A/B test (P-017), or targeted by a pending scheduled deployment (P-043)
-        cannot be deleted. A version that has been executed is kept as ARCHIVED
-        instead of removed. Use --force to skip confirmation.
+        cannot be deleted. Deleting a DRAFT removes it. Deleting a published (ACTIVE or
+        EXPIRED) version keeps it as ARCHIVED instead. Use --force to skip confirmation.
       `,
     )
     .action(async (opts) => {
