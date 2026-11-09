@@ -3,11 +3,12 @@ import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
-import type { FailureLogResponse, BulkActionResponse } from '@/types/logs';
-import { FailureAction, FailureStatus, TaskType } from '@/types/enums';
+import type { FailureLogResponse } from '@/types/logs';
+import { FailureStatus, TaskType } from '@/types/enums';
 import { END_DAY, START_DAY, utcMinute } from '@/lib/dates';
 import { FAILURE_LOG_LOOKBACK_DAYS } from '@/types/constants';
 import { withNotes } from '@/lib/enum-notes';
+import { FAILURE_LOG_CONSOLE_NOTE } from '@/lib/console';
 
 const STATUS_NOTES = {
   PENDING: 'needs attention',
@@ -23,13 +24,13 @@ export function registerLogCommands(program: Command): void {
       'after',
       dedent`
 
-        System failure logs (DLQ) for background tasks — platform event webhooks and scheduled deployments.
+        Failure logs for platform event webhooks and scheduled deployments that failed.
 
         Commands:
           list         List failure logs with filters
           get          Get failure log detail (includes the original payload)
-          action       Process a single log (${FailureAction.join(', ')})
-          bulk-action  Process multiple logs at once
+
+        ${FAILURE_LOG_CONSOLE_NOTE}
 
         Statuses: ${withNotes(STATUS_NOTES).join(', ')}
       `,
@@ -111,7 +112,8 @@ export function registerLogCommands(program: Command): void {
       dedent`
 
         Includes the full payload that was used for the failed operation.
-        Use this to inspect what went wrong before deciding to ${FailureAction.join(' or ')}.
+        Use this to inspect what went wrong. Resolving or ignoring a log happens in the
+        console; see lexq logs --help.
       `,
     )
     .action(async (opts) => {
@@ -122,80 +124,6 @@ export function registerLogCommands(program: Command): void {
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,
           verbose: globalOpts.verbose,
-        });
-        printJson(data);
-      } catch (error) {
-        printError(error);
-        process.exit(1);
-      }
-    });
-
-  // ── action ──
-  logs
-    .command('action')
-    .description(`Process a failure log action (${FailureAction.join(', ')})`)
-    .requiredOption('--id <logId>', 'Log ID')
-    .requiredOption('--action <action>', `Action: ${FailureAction.join(' or ')}`)
-    .addHelpText(
-      'after',
-      dedent`
-
-        Actions:
-          IGNORE   Mark as intentionally skipped (won't appear in PENDING)
-          RESOLVE  Mark as manually resolved (e.g., fixed via external system)
-
-        Example:
-          $ lexq logs action --id <logId> --action RESOLVE
-      `,
-    )
-    .action(async (opts) => {
-      try {
-        const globalOpts = program.opts();
-        const data = await apiRequest<FailureLogResponse>(
-          'POST',
-          `failure-logs/${opts.id}/actions`,
-          {
-            apiKey: globalOpts.apiKey,
-            baseUrl: globalOpts.baseUrl,
-            dryRun: globalOpts.dryRun,
-            verbose: globalOpts.verbose,
-            params: { action: opts.action },
-          },
-        );
-        printJson(data);
-      } catch (error) {
-        printError(error);
-        process.exit(1);
-      }
-    });
-
-  // ── bulk-action ──
-  logs
-    .command('bulk-action')
-    .description('Bulk process failure logs')
-    .requiredOption('--ids <logIds>', 'Comma-separated log IDs')
-    .requiredOption('--action <action>', `Action: ${FailureAction.join(' or ')}`)
-    .addHelpText(
-      'after',
-      dedent`
-
-        Processes each log individually. Failures are skipped with a warning.
-
-        Example:
-          $ lexq logs bulk-action --ids "id1,id2,id3" --action RESOLVE
-      `,
-    )
-    .action(async (opts) => {
-      try {
-        const globalOpts = program.opts();
-        const logIds = (opts.ids as string).split(',').map((id: string) => id.trim());
-
-        const data = await apiRequest<BulkActionResponse>('POST', 'failure-logs/bulk-actions', {
-          apiKey: globalOpts.apiKey,
-          baseUrl: globalOpts.baseUrl,
-          dryRun: globalOpts.dryRun,
-          verbose: globalOpts.verbose,
-          body: { logIds, action: opts.action },
         });
         printJson(data);
       } catch (error) {

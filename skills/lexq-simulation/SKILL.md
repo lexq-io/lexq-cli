@@ -197,7 +197,7 @@ Each code says **who fixes it**.
 
 `CONDITION_VALUE_TYPE_INVALID` is worth escalating. The right-hand side of a condition belongs
 to the rule, not to your request, so changing the payload will not help — the rule fails the
-same way for every caller. It also got past the check that is supposed to reject it on save.
+same way for every caller.
 
 A rule from another group referencing facts you did not send yields `FACT_NOT_PROVIDED` — this
 is normal, not an error.
@@ -249,7 +249,7 @@ lexq analytics simulation start --json '{
 |--------------|------------------|-------------------------------------------|
 | `HISTORICAL` | `EXECUTION_LOGS` | Replay past executions from a date range  |
 | `MANUAL`     | `REQUEST_BODY`   | Provide `manualData` array in the request |
-| `UPLOADED`   | `S3_BUCKET`      | Reference an uploaded dataset by `path`   |
+| `UPLOADED`   | `UPLOADED_FILE`  | Reference an uploaded dataset by `path`   |
 
 `HISTORICAL` takes `from` / `to` as `yyyy-MM-dd`, whole days in the organization time zone, both
 inclusive.
@@ -263,21 +263,23 @@ lexq analytics dataset template \
 
 # 2. Upload dataset
 lexq analytics dataset upload --file ./my-data.csv
-# → path: datasets/<tenantId>/a1b2c3d4e5f6.csv
+# → returns a path. Pass it to simulation start unchanged.
 
 # 3. Start simulation with uploaded path
 lexq analytics simulation start --json '{
   "policyVersionId": "<vid>",
   "dataset": {
     "type": "UPLOADED",
-    "source": "S3_BUCKET",
+    "source": "UPLOADED_FILE",
     "path": "<path returned by dataset upload>"
   },
   "options": { "includeRuleStats": true, "maxRecords": 10000 }
 }'
 ```
 
-**CSV format:** Header row with fact keys, data rows with values. Types auto-detected.
+**CSV format:** Header row with fact keys, data rows with values. Types auto-detected. A cell holding a
+JSON array, such as `["gold","vip"]`, is read as a list; quote the cell, as CSV requires for a value with
+commas.
 **JSON format:** Array of objects `[{"key": "value"}, ...]`
 
 Dataset files can be up to 10 MB. Over MCP, the local server (`lexq serve --mcp`) has

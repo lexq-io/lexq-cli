@@ -1,4 +1,4 @@
-import type { FailureAction, FailureStatus, TaskType } from './enums';
+import type { FailureStatus, TaskType } from './enums';
 
 // ══════════════════════════════════════════
 // Response
@@ -28,18 +28,4 @@ export interface FailureLogSearchRequest {
   searchKeyword?: string;
   startDate?: string;
   endDate?: string;
-}
-
-export interface BulkActionRequest {
-  logIds: string[];
-  action: FailureAction;
-}
-
-// ══════════════════════════════════════════
-// Response — Bulk
-// ══════════════════════════════════════════
-
-export interface BulkActionResponse {
-  processedCount: number;
-  totalCount: number;
 }

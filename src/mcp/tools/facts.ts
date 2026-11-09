@@ -1,7 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import {
+  READ_ONLY,
+  ADDITIVE,
+  DESTRUCTIVE,
+  EXPORT_LIMIT_NOTE,
+  limitExport,
+  paginationParams,
+} from './_shared';
 import { FACT_KEY_PATTERN } from '@/types/facts';
 import { ValueType } from '@/types/enums';
 import { EXPORT_FORMATS } from '@/lib/export';
@@ -9,14 +16,17 @@ import { EXPORT_FORMATS } from '@/lib/export';
 /** Generated from the engine contract manifest. A literal here would drift. */
 const VALUE_TYPES = ValueType;
 
+/** The engine keeps isRequired on a definition but evaluates nothing with it. */
+const IS_REQUIRED_NOTE =
+  'isRequired is stored on the definition only; the engine does not read it.';
+
 export function registerFactTools(server: McpServer, callApi: CallApi): void {
   server.registerTool(
     'lexq_facts_list',
     {
       title: 'List Fact Definitions',
-      annotations: { readOnlyHint: true },
-      description:
-        'List all fact definitions (input variable schema). Shows key, type, required, and PII status. Always check this before creating rules.',
+      annotations: READ_ONLY,
+      description: `List all fact definitions (input variable schema): key, name, type, description, PII and system flags, and value domain. ${IS_REQUIRED_NOTE}`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
         size: z.number().int().min(1).max(100).default(20).describe('Page size'),
@@ -34,7 +44,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_create',
     {
       title: 'Create Fact Definition',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: `Register a new input variable. Key starts with a letter, then letters, numbers, and underscores (e.g. paymentAmount). Casing is not enforced. Types: ${VALUE_TYPES.join(', ')}.`,
       inputSchema: z.object({
         key: z
@@ -44,10 +54,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
         name: z.string().describe('Display name'),
         type: z.enum(VALUE_TYPES).describe('Value type'),
         description: z.string().optional().describe('Description'),
-        isRequired: z
-          .boolean()
-          .default(false)
-          .describe('Whether this fact is required for rule evaluation'),
+        isRequired: z.boolean().default(false).describe(IS_REQUIRED_NOTE),
         isPii: z
           .boolean()
           .default(false)
@@ -78,7 +85,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_update',
     {
       title: 'Update Fact Definition',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Update a fact definition. The key is immutable. The type can change only while no rule references the fact; if any does, the call fails with FD-007 and reports the count. Rules in deleted groups do not count. Only the fields you send are changed. System facts (isBlocked, blockReason) accept changes to name, description, PII, and the value domain; isRequired is ignored, and their type cannot change (FD-003).',
       inputSchema: z.object({
@@ -91,7 +98,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
           .describe(
             'Value type. Omit to leave it unchanged. Changing it fails with FD-007 while any rule outside a deleted group references the fact.',
           ),
-        isRequired: z.boolean().optional().describe('Required flag'),
+        isRequired: z.boolean().optional().describe(IS_REQUIRED_NOTE),
         isPii: z
           .boolean()
           .optional()
@@ -120,7 +127,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_delete',
     {
       title: 'Delete Fact Definition',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Delete a fact definition. System facts cannot be deleted. Neither can a fact that any rule references: that call fails with FD-006 and reports the count. Rules in deleted groups do not count. Remove the references first.',
       inputSchema: z.object({
@@ -134,7 +141,7 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_action_metadata',
     {
       title: 'Get Action Runtime Fact Metadata',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Retrieve runtime fact requirements per Action type. For each Action, shows which input facts must be present in the execution payload — e.g. MUTATE_FACT always requires its targetVar fact, plus refVar when one is specified. The factRequired flag describes the FACT, not the parameter: refVar is an optional parameter, but if you specify it the named fact must exist. A required fact absent at runtime throws — the engine never defaults to 0. These facts must be sent in the request (P-015 otherwise), even when an earlier action in the same rule writes them. SET_FACT requires no input fact: it is the only action whose targetVar the request does not have to send, and that targetVar must be a registered fact (ACT-032). Static data, safe to cache in-session.',
       inputSchema: z.object({}),
@@ -146,9 +153,9 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_unregistered',
     {
       title: 'List Unregistered Facts',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
-        "List facts referenced by a version's rules but not yet defined (read-only). Keys that rules only read do not block publish/deploy; a rule whose action targetVar is not a registered fact is rejected at save and publish with ACT-032. Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Register them with lexq_facts_create to enable type validation and the dry-run requirements analyzer.",
+        "List facts referenced by a version's rules but not yet defined (read-only). Keys that rules only read do not block publish/deploy; a rule whose action targetVar is not a registered fact is rejected at save and publish with ACT-032. Version-wide: covers every rule in the version. Each entry carries the inferred type, suggested name, and where it is referenced (condition/action). Registering one with lexq_facts_create before the version is published makes the engine check request values for it against its type (P-060) and any value domain (P-052).",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
@@ -162,17 +169,20 @@ export function registerFactTools(server: McpServer, callApi: CallApi): void {
     'lexq_facts_export',
     {
       title: 'Export Fact Catalog',
-      annotations: { readOnlyHint: true },
-      description:
-        'Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet; JSON matches the shape that batch create accepts, so it can be fed straight back in, which is why it leaves out the fields that endpoint does not take. Returns the file contents as text.',
+      annotations: READ_ONLY,
+      description: `Export the fact catalog. The two formats carry different things: CSV is the catalog as it stands, system facts included, for reading in a spreadsheet, without value domains; JSON lists each definition with only the fields a new definition takes (key, name, type, description, isRequired, isPii, valueDomain), without IDs. Returns the file contents as text. ${EXPORT_LIMIT_NOTE}`,
       inputSchema: z.object({
         format: z.enum(EXPORT_FORMATS).default('csv').describe('Export format'),
         keyword: z.string().optional().describe('Filter by key or name'),
       }),
     },
     async ({ format, keyword }) =>
-      callApi('GET', 'schema/facts/export', {
-        params: keyword ? { format, keyword } : { format },
-      }),
+      limitExport(
+        await callApi('GET', 'schema/facts/export', {
+          params: keyword ? { format, keyword } : { format },
+        }),
+        `lexq facts export --as ${format} --output <file>`,
+        'Pass keyword to export fewer facts.',
+      ),
   );
 }

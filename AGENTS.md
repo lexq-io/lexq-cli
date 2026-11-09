@@ -46,7 +46,7 @@ Detailed documentation lives in the `skills/` directory. **Read the relevant ski
 2. **Always dry-run before publishing.** Run `lexq analytics dry-run` to validate.
 3. **Never modify a non-DRAFT version.** Check version status first. Clone if needed.
 4. **Always check facts before creating rules.** Run `lexq facts list` to know available keys and types.
-5. **Use `--format json` for parsing.** This is the default. Don't change it.
+5. **Leave `--format` at its default, `json`, and parse the output.** A command that writes a file chooses the file's format with `--as`, not `--format`.
 6. **Copy full UUIDs from output.** Never guess or truncate IDs.
 7. **Memo is required for all deploy operations.** `publish`, `live`, `rollback`, `undeploy` — every one needs `--memo`.
 8. **Handle errors gracefully.** Check the error code and follow the action table in `lexq-shared/SKILL.md`.
@@ -71,7 +71,7 @@ lexq profile <groupId>
 lexq history list|get|stats
 lexq replay decision|start|list|get|cancel|export
 lexq provenance get|reveal-audits
-lexq logs list|get|action|bulk-action
+lexq logs list|get
 lexq webhook-subscriptions list|get|save|delete|test
 ```
 
@@ -175,8 +175,6 @@ The MCP toolset mirrors the CLI command inventory one-to-one.
 
 - CLI commands and MCP tools stay in lock-step — a new command lands with its MCP tool in the same PR, sharing
   the single api-client layer.
-- The hosted MCP server consumes this package from npm. Publish (`v*` tag) **before** redeploying it — CI cannot
-  catch that ordering.
 - Releasing is two steps, in this order. Raise `version` in package.json inside the pull request, so a reviewer
   sees the number beside the change that justifies it. After it merges, push the matching `v<version>` tag — that
   tag is what publishes. A tag that disagrees with package.json is rejected before anything reaches npm.

@@ -71,8 +71,9 @@ Protocol to manage policy groups, versions, rules, and facts, run simulations
 and replays, deploy versions, and read execution history.
 
 Approval happens in your MCP client, which decides which tool calls you confirm.
-The deploy, rollback, and undeploy tools are marked as destructive, so a client
-can ask you before running them.
+A tool is marked as destructive when it deletes, overwrites, or cancels
+something, changes live traffic, cannot be undone, or counts toward your plan's
+usage, so a client can ask you before running it.
 
 ### Claude.ai (cloud, no install)
 
@@ -214,7 +215,7 @@ lexq analytics dataset     upload | template
 lexq profile               <groupId> — per-rule latency profile
 lexq history               list | get | stats
 lexq replay                decision | start | list | get | cancel
-lexq logs                  list | get | action | bulk-action
+lexq logs                  list | get
 lexq provenance            get | reveal-audits
 lexq webhook-subscriptions list | get | save | delete | test
 ```
@@ -223,12 +224,14 @@ lexq webhook-subscriptions list | get | save | delete | test
 
 | Flag                     | Description                                |
 |--------------------------|--------------------------------------------|
-| `--format <json\|table>` | Output format (default: `json`)            |
+| `--format <json\|table>` | How results are printed (default: `json`)  |
 | `--api-key <key>`        | Override stored API key                    |
 | `--base-url <url>`       | Override API base URL                      |
 | `--dry-run`              | Preview the HTTP request without executing |
 | `--verbose`              | Show request/response details              |
 | `--no-color`             | Disable colored output                     |
+
+`--format` only changes how results are printed. A command that writes a file, such as `lexq facts export`, chooses the file's format with `--as csv` or `--as json`.
 
 ## Configuration
 

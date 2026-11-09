@@ -4,9 +4,10 @@
     {
       "annotations": {
         "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Upload a CSV or JSON file from this computer as a simulation dataset, up to 10 MB.\nThe server reads the file from disk, so its content never passes through the conversation.\nOnly the local server (lexq serve --mcp) has this tool.\n\nfile: the absolute path of a .csv or .json file. A leading ~/ stands for the home directory.\nA symbolic link is followed, and the file it points to must also end in .csv or .json.\n\nCSV: a header row of fact keys, then one row per record. JSON: an array of objects.\n\nReturns the stored path and a ready-to-use dataset block for lexq_simulation_start:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"S3_BUCKET\", \"path\": \"<returned path>\" }",
+      "description": "Upload a CSV or JSON file from this computer as a simulation dataset, up to 10 MB.\nThe server reads the file from disk, so its content never passes through the conversation.\nOnly the local server (lexq serve --mcp) has this tool.\n\nfile: the absolute path of a .csv or .json file. A leading ~/ stands for the home directory.\nA symbolic link is followed, and the file it points to must also end in .csv or .json.\n\nCSV: a header row of fact keys, then one row per record. A cell holding a JSON array, such as\n[\"gold\",\"vip\"], is read as a list; quote the cell, as CSV requires for a value with commas.\nJSON: an array of objects.\n\nReturns the stored path and a ready-to-use dataset block for lexq_simulation_start:\n  dataset: { \"type\": \"UPLOADED\", \"source\": \"UPLOADED_FILE\", \"path\": \"<returned path>\" }",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

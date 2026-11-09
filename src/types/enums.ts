@@ -67,7 +67,6 @@ export const ConflictResolutionStrategy = ['HIGHEST_PRIORITY'] as const;
 export type ConflictResolutionStrategy = (typeof ConflictResolutionStrategy)[number];
 
 // ── Deployment ──
-// PUBLISH removed — publishing is a qualification event, not a deployment (server enum dropped it).
 export const DeploymentType = ['DEPLOY', 'ROLLBACK', 'UNDEPLOY'] as const;
 export type DeploymentType = (typeof DeploymentType)[number];
 
@@ -113,6 +112,14 @@ export const ConditionUnresolvedReason = [
 ] as const;
 export type ConditionUnresolvedReason = (typeof ConditionUnresolvedReason)[number];
 
+// ── Decision Provenance ──
+export const LineageUnavailableReason = [
+  'COMPOSITE_EXECUTION',
+  'NOT_LIVE_VERSION',
+  'NOT_RECORDED',
+] as const;
+export type LineageUnavailableReason = (typeof LineageUnavailableReason)[number];
+
 // ── Simulation ──
 export const SimulationStatus = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'] as const;
 export type SimulationStatus = (typeof SimulationStatus)[number];
@@ -120,7 +127,7 @@ export type SimulationStatus = (typeof SimulationStatus)[number];
 export const SimulationDatasetType = ['HISTORICAL', 'UPLOADED', 'MANUAL'] as const;
 export type SimulationDatasetType = (typeof SimulationDatasetType)[number];
 
-export const SimulationDatasetSource = ['EXECUTION_LOGS', 'S3_BUCKET', 'REQUEST_BODY'] as const;
+export const SimulationDatasetSource = ['EXECUTION_LOGS', 'UPLOADED_FILE', 'REQUEST_BODY'] as const;
 export type SimulationDatasetSource = (typeof SimulationDatasetSource)[number];
 
 export const SimulationMetricType = ['COUNT', 'SUM', 'AVG'] as const;
@@ -143,9 +150,6 @@ export type Role = (typeof Role)[number];
 // ── Failure Log ──
 export const FailureStatus = ['PENDING', 'RESOLVED', 'IGNORED'] as const;
 export type FailureStatus = (typeof FailureStatus)[number];
-
-export const FailureAction = ['IGNORE', 'RESOLVE'] as const;
-export type FailureAction = (typeof FailureAction)[number];
 
 export const TaskType = ['PLATFORM_WEBHOOK', 'SCHEDULED_DEPLOYMENT'] as const;
 export type TaskType = (typeof TaskType)[number];

@@ -1,5 +1,6 @@
 import { apiRequestWithMeta, type ApiClientOptions } from '@/lib/api-client';
 import { loadConfig } from '@/lib/config';
+import { CONSOLE_URL } from '@/lib/console';
 import { stringifyJson } from '@/lib/lossless-json';
 import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
 import type { ResponseMeta } from '@/types/api';
@@ -14,8 +15,8 @@ export interface McpToolResult {
  * Function signature for making API calls.
  * Injected into tool registration functions for testability and reuse.
  *
- * - lexq-cli (stdio): uses createCallApiFromConfig() — reads ~/.lexq/config.json
- * - lexq-mcp (HTTP):  uses createApiCaller(apiKey) — Bearer token from request
+ * - lexq serve --mcp (stdio): createCallApiFromConfig() reads ~/.lexq/config.json.
+ * - A host serving these tools over HTTP passes its own CallApi.
  */
 export type CallApi = (
   method: string,
@@ -26,6 +27,45 @@ export type CallApi = (
     upload?: { content: string; filename: string; fieldName: string };
   },
 ) => Promise<McpToolResult>;
+
+/*
+ * Tool annotations: the three hints a client reads to decide whether to ask before a tool runs.
+ * Every tool sets all three to true or false. A hint left out takes the protocol default: a tool
+ * is open-world unless it says otherwise, and a tool that is not read-only is destructive unless
+ * it says otherwise. The Claude connector directory also checks each tool for the hint that
+ * applies.
+ *
+ * openWorldHint is false in all three: these tools work only inside the caller's LexQ
+ * organization. A tool that sends to an address the caller chooses sets it to true.
+ */
+
+/**
+ * Reads or computes and changes nothing. Dry runs and single-decision replays are reads even
+ * though they are POST requests: they save nothing and do not count toward the plan's usage.
+ */
+export const READ_ONLY = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  openWorldHint: false,
+} as const;
+
+/** Creates something new and leaves everything that already exists as it was. */
+export const ADDITIVE = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+} as const;
+
+/**
+ * Deletes, overwrites, or cancels something, changes live traffic, cannot be undone (publishing a
+ * version, sending a test webhook), or counts toward the plan's usage (simulations and window
+ * replays).
+ */
+export const DESTRUCTIVE = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  openWorldHint: false,
+} as const;
 
 /**
  * Where the stdio MCP server sends requests. The environment comes first, then
@@ -62,9 +102,11 @@ export function createCallApiFromConfig(): CallApi {
         form,
         params: opts?.params,
       });
-      const content: Array<{ type: 'text'; text: string }> = [
-        { type: 'text', text: stringifyJson(data, 2) ?? '' },
-      ];
+      // A file (an export or a dataset template) is the only response whose data is a string.
+      // It goes back as its text. Written as JSON, it would arrive as one quoted line with its
+      // line breaks and quotes escaped.
+      const text = typeof data === 'string' ? data : (stringifyJson(data, 2) ?? '');
+      const content: Array<{ type: 'text'; text: string }> = [{ type: 'text', text }];
       const warning = formatUnregisteredFactWarning(meta);
       if (warning) content.push({ type: 'text', text: warning });
       const domainWarning = formatValueDomainMismatchWarning(meta);
@@ -88,11 +130,45 @@ export function paginationParams(page?: number, size?: number): Record<string, s
 }
 
 /**
+ * The longest export a tool returns, in characters. claude.ai and Claude Desktop accept a tool
+ * result of up to about 150,000 characters.
+ */
+const MAX_EXPORT_CHARS = 100_000;
+
+const formatCount = (count: number): string => count.toLocaleString('en-US');
+
+/** Ends the description of each tool that returns an export. */
+export const EXPORT_LIMIT_NOTE = `An export longer than ${formatCount(MAX_EXPORT_CHARS)} characters is refused.`;
+
+/**
+ * Returns an export, or refuses one longer than MAX_EXPORT_CHARS. An export is a whole file, and a
+ * cut one reads as the whole thing, so it is refused rather than cut. `command` is the CLI command
+ * that downloads the same file. `narrower` says how to ask for less, where the tool can.
+ */
+export function limitExport(
+  result: McpToolResult,
+  command: string,
+  narrower?: string,
+): McpToolResult {
+  if (result.isError) return result;
+  const length = result.content.reduce((sum, block) => sum + block.text.length, 0);
+  if (length <= MAX_EXPORT_CHARS) return result;
+  const text = [
+    `The export is ${formatCount(length)} characters long, and this tool returns at most ${formatCount(MAX_EXPORT_CHARS)}.`,
+    narrower,
+    `To get the whole file, download it from the LexQ console (${CONSOLE_URL}) or with \`${command}\`.`,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return { content: [{ type: 'text', text }], isError: true };
+}
+
+/**
  * Builds a salient, actionable warning from a response's meta when it reports facts that
  * rules reference but the schema does not define. Returns null when there is nothing to warn.
  *
- * Shared by both CallApi implementations (CLI stdio here, lexq-mcp HTTP via @lexq/cli/mcp)
- * so the agent-facing text is identical on every surface. The backend only populates
+ * Shared by every CallApi (the stdio server here, and any host through @lexq/cli/mcp) so the
+ * agent-facing text is identical on every surface. The API only populates
  * meta.unregisteredFacts on rule create/update, so this only ever fires there.
  */
 export function formatUnregisteredFactWarning(meta: unknown): string | null {
@@ -108,8 +184,8 @@ export function formatUnregisteredFactWarning(meta: unknown): string | null {
   });
 
   return [
-    `⚠ The saved rule references ${facts.length} fact(s) not defined in the schema. The rule was saved — this does not block — but undefined facts skip type validation and the dry-run requirements analyzer.`,
+    `⚠ The saved rule references ${facts.length} fact(s) not defined in the schema. The rule was saved, but the engine does not check request values for these keys against a type or value domain, and lexq_requirements lists them with type UNKNOWN.`,
     ...lines,
-    `Register them now so the rule validates as intended, or call lexq_facts_unregistered to review the version's full list.`,
+    `Register them before the version is published to have those values checked, or call lexq_facts_unregistered to review the version's full list.`,
   ].join('\n');
 }

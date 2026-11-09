@@ -374,11 +374,12 @@ live but from a newer deployment. Start again from step 1.
 
 ## Recipe 7: Monitoring + Failure Triage
 
-**Goal:** Check for pending failures and clear the queue.
+**Goal:** Check for pending failures and find their cause.
 
-Failure logs are a dead-letter record for background tasks — platform event webhooks and scheduled
-deployments. There is no retry action: the engine does not re-execute a failed task on request.
-Fix the cause at the source (webhook endpoint, version state), then mark the log.
+Failure logs record platform event webhooks and scheduled deployments that failed. There is no
+retry action; fix the cause at the source (webhook endpoint, version state). The CLI can read
+failure logs but cannot resolve or ignore them: an organization admin does that in the console,
+under Management → Failure Logs (https://console.lexq.io/management/failure-logs).
 
 ```bash
 # 1. List pending failures
@@ -387,22 +388,16 @@ lexq logs list --status PENDING --page 0 --size 50
 # 2. Inspect one to see the original payload and error
 lexq logs get --id <logId>
 
-# 3. Mark as resolved after fixing the cause externally
-lexq logs bulk-action --ids "id1,id2,id3" --action RESOLVE
-
-# 4. Mark as intentionally skipped (won't appear in PENDING again)
-lexq logs bulk-action --ids "id4,id5" --action IGNORE
-
-# 5. Verify clean state
+# 3. After an admin resolves the logs in the console, check that none are still pending
 lexq logs list --status PENDING --page 0 --size 10
 ```
 
 Without `--start-date`, `logs list` covers 7 days back through today, in the organization time
-zone. An empty list in step 5 means there is no PENDING failure in that window, not that there is
-none at all. Add an earlier `--start-date` to steps 1 and 5 to see older ones.
+zone. An empty list in step 3 means there is no PENDING failure in that window, not that there is
+none at all. Add an earlier `--start-date` to steps 1 and 3 to see older ones.
 
-`RESOLVE` and `IGNORE` differ only in intent — both remove the log from PENDING. Use `RESOLVE`
-when the underlying problem was fixed, `IGNORE` when it does not need fixing.
+Resolving and ignoring differ only in intent — both remove the log from PENDING. An admin resolves
+a log when the underlying problem was fixed and ignores it when it does not need fixing.
 
 ---
 

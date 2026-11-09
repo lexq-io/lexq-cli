@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, paginationParams } from './_shared';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { STATS_DEFAULT_WINDOW_DAYS, STATS_MAX_WINDOW_DAYS } from '@/types/constants';
 import { ApiExecutionStatus } from '@/types/enums';
@@ -11,7 +11,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     'lexq_history_list',
     {
       title: 'List Execution History',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'List policy execution history. Shows trace ID, group, version, status, match result, and latency.',
       inputSchema: z.object({
@@ -41,7 +41,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     'lexq_history_get',
     {
       title: 'Get Execution Detail',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Get full execution detail including inputFacts, mutatedFacts, generatedVariables, executionTraces, and decisionTraces.',
       inputSchema: z.object({
@@ -55,7 +55,7 @@ export function registerHistoryTools(server: McpServer, callApi: CallApi): void 
     'lexq_history_stats',
     {
       title: 'Execution Statistics',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: `Get execution KPIs: total executions, success/failure counts, success rate, and average latency. Without dates the window is the last ${STATS_DEFAULT_WINDOW_DAYS} days through today, in the organization time zone. At most ${STATS_MAX_WINDOW_DAYS} days per call; a longer range is rejected with AN-039. startDate alone runs through today.`,
       inputSchema: z.object({
         groupId: z.string().uuid().optional().describe('Filter by policy group'),

@@ -1,8 +1,9 @@
 import { REPLAY_WINDOW_MAX_RECORDS } from '@/types/constants';
+import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
 import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest } from '@/lib/api-client';
-import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, fileFormat, runExport } from '@/lib/export';
 import type { PageResponse } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import type {
@@ -43,8 +44,10 @@ export function registerReplayCommands(program: Command): void {
       'after',
       dedent`
 
-        Free of charge (TPS throttle only). Returns decisionChanged, effect
-        changes, fired rules on both sides, and a determinism verdict.
+        Returns decisionChanged, effect changes, fired rules on both sides,
+        and a determinism verdict.
+
+        ${DRY_RUN_LIMIT_NOTE}
 
         Example:
           $ lexq replay decision --trace-id <tid> --version-id <vid>
@@ -205,8 +208,7 @@ export function registerReplayCommands(program: Command): void {
       'after',
       dedent`
 
-        Only COMPLETED jobs can be exported. A running job has no full result yet, and a
-        partial one reads as the whole thing on the receiving end.
+        Only COMPLETED jobs can be exported.
 
         The two formats carry different things. CSV holds the effect blast radius, whose
         columns are fixed. JSON holds the changed samples and action parameters, which
@@ -217,11 +219,11 @@ export function registerReplayCommands(program: Command): void {
           $ lexq replay export --id <jobId> --as json
       `,
     )
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       try {
         const globalOpts = program.opts();
 
-        await runExport(`replay/jobs/${opts.id}/export`, parseFormat(opts.as), {
+        await runExport(`replay/jobs/${opts.id}/export`, fileFormat(command), {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,

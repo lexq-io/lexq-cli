@@ -459,8 +459,8 @@ export function registerDeployCommands(program: Command): void {
       'after',
       dedent`
 
-        The version must be ACTIVE with a future effective start date; the system
-        deploys it automatically at that time (within one scheduler tick, ≤${SCHEDULE_TICK_MAX_MILLIS / 1000}s).
+        The version must be ACTIVE with a future effective start date; it is
+        deployed automatically within ${SCHEDULE_TICK_MAX_MILLIS / 1000} seconds after that time.
         That time is the version's effectiveFrom, set on the DRAFT before publishing;
         this command takes no time of its own.
         One pending schedule per group. Manual deploy/rollback/undeploy, starting

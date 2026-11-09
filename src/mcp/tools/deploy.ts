@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import dedent from 'dedent';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import { READ_ONLY, DESTRUCTIVE, paginationParams } from './_shared';
 import { MAX_SNAPSHOT_BYTES } from '@/types/constants';
 import { DeploymentScheduleStatus, DeploymentType } from '@/types/enums';
 import { END_DAY, START_DAY } from '@/lib/dates';
@@ -12,7 +12,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_publish',
     {
       title: 'Publish Version',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: DESTRUCTIVE,
       description: `Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts that rules only read do not block publishing; call lexq_facts_unregistered first to review them. Publishing fails if an action's targetVar is not a registered fact (ACT-032), if the version's compiled rules exceed ${MAX_SNAPSHOT_BYTES / 1024} KB, or if its effective end has already passed (P-058); move the end into the future with lexq_versions_update first.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -28,7 +28,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_live',
     {
       title: 'Deploy to Live',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Deploy an ACTIVE (published) version to live traffic. Takes effect immediately. Versions whose effective start date has not arrived are rejected (P-037) — use lexq_deploy_schedule for those. Versions whose effective end has passed are rejected (P-058). Undefined facts do not block deployment; use lexq_facts_unregistered to review what the version references but has not defined.',
       inputSchema: z.object({
@@ -47,7 +47,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_rollback',
     {
       title: 'Rollback Deployment',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: dedent`
         Roll the group back to the version that was live before the current one. Call lexq_groups_get first: currentVersionName is live now, previousVersionName is what a rollback restores, and a rollback is rejected while canRollback is false. A rollback needs a previous version that is still ACTIVE and whose effective end has not passed (P-058).
 
@@ -76,7 +76,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_undeploy',
     {
       title: 'Undeploy',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Remove the live version from traffic. The version stays ACTIVE but no longer serves requests.',
       inputSchema: z.object({
@@ -94,9 +94,9 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_schedule',
     {
       title: 'Schedule Deployment',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: DESTRUCTIVE,
       description:
-        "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. The snapshot hash is sealed at scheduling and re-verified at execution (fail-closed).",
+        "Schedule an ACTIVE version with a future effective start date to auto-deploy at that time (Scheduled Deployment). The time is the version's effectiveFrom, set on the DRAFT before publishing; this call takes no time of its own. One pending schedule per group; manual deploy/rollback/undeploy, starting an A/B test, or archiving the group cancels it. A scheduled deployment uses exactly the rules that were scheduled; if they do not match when it runs, it fails with HASH_MISMATCH and nothing is deployed.",
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z
@@ -116,7 +116,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_unschedule',
     {
       title: 'Cancel Scheduled Deployment',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description:
         'Cancel the pending scheduled deployment for a group. The version itself is not affected. Fails with P-039 if no pending schedule exists.',
       inputSchema: z.object({
@@ -130,7 +130,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_schedules',
     {
       title: 'List Scheduled Deployments',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: `List scheduled deployments across all groups (all statuses: ${DeploymentScheduleStatus.join(', ')}), newest first.`,
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
@@ -145,7 +145,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_history',
     {
       title: 'Deployment History',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'List deployment history across all groups.',
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
@@ -173,7 +173,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_detail',
     {
       title: 'Deployment Detail',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Get detailed info about a specific deployment including snapshot hash and integrity check.',
       inputSchema: z.object({
@@ -187,7 +187,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_overview',
     {
       title: 'Deployment Overview',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Show current deployment status of all groups — which version is live, last deployment type, and deployer. Each group also carries currentDeploymentId, previousVersionName (the version a rollback restores) and canRollback, as in lexq_groups_get.',
       inputSchema: z.object({}),
@@ -199,7 +199,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_deployable',
     {
       title: 'List Deployable Versions',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'List ACTIVE (published) versions that can be deployed for a group. Use this to find which versions are available before calling deploy live.',
       inputSchema: z.object({
@@ -213,7 +213,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     'lexq_deploy_diff',
     {
       title: 'Deployment Diff',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Compare rule snapshots between two versions. Shows added, removed, and modified rules. Useful for reviewing changes before deploying a new version.',
       inputSchema: z.object({

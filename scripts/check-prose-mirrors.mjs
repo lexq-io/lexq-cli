@@ -123,7 +123,7 @@ const PROSE_MIRRORS = [
   {
     constant: 'SCHEDULE_TICK_MAX_MILLIS',
     label: 'scheduled deployment delay bound',
-    pattern: /within one tick \(≤(\d+)s\)/g,
+    pattern: /goes live within (\d+) seconds after its/g,
     expected: (v) => String(v / 1000),
   },
 ];
@@ -147,8 +147,7 @@ const PROSE_MIRRORS = [
  * A shape-based scan cannot tell a status code from an environment variable, so it needs an
  * exception list that grows with the repo.
  */
-const NOT_PRODUCED_YET =
-  'the engine does not produce it yet: a version outside its effective dates leaves no trace';
+const NOT_PRODUCED_YET = 'not returned in decision traces yet';
 
 const ENUM_TABLES = [
   {

@@ -3,7 +3,7 @@
   "name": "io.lexq/lexq",
   "title": "LexQ",
   "description": "The Decision Operations Platform for engineering teams",
-  "version": "2.1.1",
+  "version": "3.0.4",
   "websiteUrl": "https://lexq.io",
   "icons": [
     {
@@ -20,14 +20,14 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://mcp.lexq.io/mcp"
+      "url": "https://mcp.lexq.io"
     }
   ],
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@lexq/cli",
-      "version": "2.1.1",
+      "version": "3.0.4",
       "runtimeHint": "npx",
       "runtimeArguments": [{ "type": "named", "name": "-y" }],
       "packageArguments": [

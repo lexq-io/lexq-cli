@@ -18,6 +18,7 @@ import { registerLogCommands } from './commands/logs';
 import { registerWebhookSubscriptionCommands } from './commands/webhook-subscriptions';
 import { registerServeCommand } from './commands/serve';
 import { registerDomainTemplateCommands } from '@/commands/domain-templates';
+import { OUTPUT_FORMATS, parseOutputFormat } from '@/lib/output';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -39,11 +40,16 @@ export function createCli(): Command {
       'Command-line interface for the LexQ Decision Operations Platform. Manage policies, run Impact Simulation, and deploy from your terminal.',
     )
     .version(getVersion(), '-V, --version')
-    .option('--format <format>', 'Output format: json or table', 'json')
+    .option(
+      '--format <format>',
+      `How results are printed: ${OUTPUT_FORMATS.join(' or ')}`,
+      parseOutputFormat,
+      'json',
+    )
     .option('--api-key <key>', 'Override stored API key')
     .option(
       '--base-url <url>',
-      'Override API base URL — must include the API prefix, e.g. http://localhost:8080/api/v1/partners',
+      'Override API base URL — must include the API prefix, e.g. https://api.lexq.io/api/v1/partners',
     )
     .option('--dry-run', 'Preview the HTTP request without executing')
     .option('--verbose', 'Show request/response details')

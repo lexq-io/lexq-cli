@@ -2,16 +2,34 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import dedent from 'dedent';
 import type { CallApi } from './_shared';
-import { paginationParams } from './_shared';
+import {
+  READ_ONLY,
+  ADDITIVE,
+  DESTRUCTIVE,
+  EXPORT_LIMIT_NOTE,
+  limitExport,
+  paginationParams,
+} from './_shared';
 import { parseJson, stringifyJson } from '@/lib/lossless-json';
 import { EXPORT_FORMATS } from '@/lib/export';
 import { END_DAY, START_DAY } from '@/lib/dates';
 import { DEFAULT_SIMULATION_RECORDS, MAX_SIMULATION_RECORDS } from '@/types/constants';
-import { SimulationMetricType, SimulationStatus } from '@/types/enums';
+import { DRY_RUN_LIMIT_NOTE } from '@/lib/dry-run-limit';
+import {
+  type SimulationDatasetSource,
+  SimulationMetricType,
+  SimulationStatus,
+} from '@/types/enums';
+
+/**
+ * The dataset source of an uploaded file. Typed against the generated enum, so a name the server
+ * stops using fails the type check instead of staying in the tool descriptions.
+ */
+export const UPLOADED_DATASET_SOURCE: SimulationDatasetSource = 'UPLOADED_FILE';
 
 /** The dataset block an upload tool appends, ready to paste into lexq_simulation_start. */
 export function datasetBlock(path: string): { type: 'text'; text: string } {
-  const dataset = { type: 'UPLOADED', source: 'S3_BUCKET', path };
+  const dataset = { type: 'UPLOADED', source: UPLOADED_DATASET_SOURCE, path };
   return {
     type: 'text',
     text: 'Ready-to-use dataset block for lexq_simulation_start:\n' + stringifyJson({ dataset }, 2),
@@ -25,9 +43,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dry_run',
     {
       title: 'Dry Run',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: dedent`
-        Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects.
+        Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. ${DRY_RUN_LIMIT_NOTE}
         
         Returns:
           inputFacts        — normalized input facts
@@ -36,8 +54,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
           executionTraces   — per-rule match status
           decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)
         
-        Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }
-        Always dry-run before publishing to validate rule behavior.`,
+        Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }`,
       inputSchema: z.object({
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"paymentAmount":100000}'),
@@ -61,9 +78,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dry_run_compare',
     {
       title: 'Dry Run Compare',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: dedent`
-        Compare dry run results between two versions using the same input facts. Useful for validating changes.
+        Compare dry run results between two versions using the same input facts. Useful for validating changes. ${DRY_RUN_LIMIT_NOTE}
         
         Returns:
           resultA / resultB — full DryRunResponse for each version
@@ -89,7 +106,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_requirements',
     {
       title: 'Analyze Requirements',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Analyze which input facts a version requires. Returns required keys, types, and an example request body.',
       inputSchema: z.object({
@@ -107,14 +124,18 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_start',
     {
       title: 'Start Simulation',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: DESTRUCTIVE,
       description: dedent`
         Start an Impact Simulation against historical, uploaded, or inline data.
+
+        Every record a simulation processes counts toward the plan's simulation usage, including
+        records processed before a cancel. When the plan's limit is reached, a new simulation
+        cannot start.
 
         dataset.type and dataset.source are BOTH required, and must be paired:
           HISTORICAL → source EXECUTION_LOGS, with dataset.from / dataset.to (yyyy-MM-dd, whole days
                        in the organization time zone, both inclusive)
-          UPLOADED   → source S3_BUCKET,      with dataset.path (the path returned by lexq_dataset_upload)
+          UPLOADED   → source ${UPLOADED_DATASET_SOURCE},  with dataset.path (the path returned by lexq_dataset_upload)
           MANUAL     → source REQUEST_BODY,   with dataset.manualData (array of fact records)
 
         options.maxRecords: number (max ${MAX_SIMULATION_RECORDS}). When omitted, HISTORICAL and UPLOADED run at
@@ -127,7 +148,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         Example (uploaded dataset):
         {
           "policyVersionId": "<uuid>",
-          "dataset": { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<path from lexq_dataset_upload>" },
+          "dataset": { "type": "UPLOADED", "source": "${UPLOADED_DATASET_SOURCE}", "path": "<path from lexq_dataset_upload>" },
           "options": { "baselinePolicyVersionId": "<uuid>", "includeRuleStats": true, "maxRecords": 10000 }
         }
 
@@ -152,7 +173,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_status',
     {
       title: 'Simulation Status',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'Get simulation status and results. Poll until status is COMPLETED or FAILED.',
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
@@ -165,7 +186,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_list',
     {
       title: 'List Simulations',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description: 'List simulation history with optional filters.',
       inputSchema: z.object({
         page: z.number().int().min(0).default(0).describe('Page number'),
@@ -188,7 +209,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_cancel',
     {
       title: 'Cancel Simulation',
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE,
       description: 'Cancel a running or pending simulation.',
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
@@ -201,17 +222,20 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_simulation_export',
     {
       title: 'Export Simulation',
-      annotations: { readOnlyHint: true },
-      description: 'Export simulation results as JSON or CSV. Returns the raw data.',
+      annotations: READ_ONLY,
+      description: `Export simulation results as JSON or CSV. Returns the raw data. ${EXPORT_LIMIT_NOTE}`,
       inputSchema: z.object({
         simulationId: z.string().uuid().describe('Simulation ID'),
         format: z.enum(EXPORT_FORMATS).default('json').describe('Export format'),
       }),
     },
     async ({ simulationId, format }) =>
-      callApi('GET', `analytics/simulations/${simulationId}/export`, {
-        params: { format },
-      }),
+      limitExport(
+        await callApi('GET', `analytics/simulations/${simulationId}/export`, {
+          params: { format },
+        }),
+        `lexq analytics simulation export --id ${simulationId} --as ${format} --output <file>`,
+      ),
   );
 
   // ── Dataset Upload ──
@@ -220,13 +244,13 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dataset_upload',
     {
       title: 'Upload Dataset',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: dedent`
         Upload inline CSV or JSON content as a simulation dataset.
-        The content is uploaded to S3 and a path is returned in the "path" field.
+        The content is stored as a dataset, and its path is returned in the "path" field.
 
         To use the returned path in lexq_simulation_start, set:
-          dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
+          dataset: { "type": "UPLOADED", "source": "${UPLOADED_DATASET_SOURCE}", "path": "<returned path>" }
 
         The content travels inside the tool call, so this suits small datasets, and the hosted server at
         mcp.lexq.io limits the size of a request. For a larger file, use lexq_dataset_upload_file on the
@@ -236,6 +260,9 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         userId,paymentAmount
         user_001,150000
         user_002,50000
+
+        In CSV, a cell holding a JSON array, such as ["gold","vip"], is read as a list; quote the cell,
+        as CSV requires for a value with commas.
 
         JSON example: [{"userId":"user_001","paymentAmount":150000}, {"userId":"user_002","paymentAmount":50000}]
       `,
@@ -277,7 +304,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
     'lexq_dataset_template',
     {
       title: 'Download Dataset Template',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         'Generate a sample CSV or JSON template based on the required facts of a version. Use this to understand the expected data format before uploading a dataset.',
       inputSchema: z.object({

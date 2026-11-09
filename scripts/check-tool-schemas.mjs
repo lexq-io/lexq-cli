@@ -22,7 +22,8 @@
  * The local server (`lexq serve --mcp`) serves those tools plus a few that read the machine
  * it runs on. No library entry exports those, which is what keeps them off the hosted
  * server, so they are listed from the built binary over stdio and recorded in a second
- * snapshot. The same run checks that the local server serves every shared tool unchanged.
+ * snapshot. The same run checks that the local server serves every shared tool unchanged and
+ * sends the instructions the library exports.
  *
  * Usage:  node scripts/check-tool-schemas.mjs [--update]
  * Exit:   0 = snapshot matches, 1 = it does not, 2 = the check could not run.
@@ -72,13 +73,18 @@ function canonical(value) {
   );
 }
 
-let McpServer, Client, InMemoryTransport, StdioClientTransport, registerAllTools;
+let McpServer,
+  Client,
+  InMemoryTransport,
+  StdioClientTransport,
+  registerAllTools,
+  SERVER_INSTRUCTIONS;
 try {
   ({ McpServer } = await import('@modelcontextprotocol/server'));
   ({ Client } = await import('@modelcontextprotocol/client'));
   ({ StdioClientTransport } = await import('@modelcontextprotocol/client/stdio'));
   ({ InMemoryTransport } = await import('@modelcontextprotocol/server'));
-  ({ registerAllTools } = await import(BUILT_ENTRY));
+  ({ registerAllTools, SERVER_INSTRUCTIONS } = await import(BUILT_ENTRY));
 } catch (error) {
   bail(`could not load the server or the built tools: ${error.message}`);
 }
@@ -121,12 +127,13 @@ if (tools.length === 0) {
 /* The binary a client runs, reached the way a client reaches it. Listing does not call the
    API, so no key or config is needed. */
 const localClient = new Client({ name: 'tool-schema-snapshot', version: '0.0.0' });
-let served;
+let served, servedInstructions;
 try {
   await localClient.connect(
     new StdioClientTransport({ command: process.execPath, args: [BUILT_CLI, 'serve', '--mcp'] }),
   );
   served = await listAll(localClient);
+  servedInstructions = localClient.getInstructions();
 } catch (error) {
   bail(`could not list the tools of \`lexq serve --mcp\`: ${error.message}`);
 } finally {
@@ -142,6 +149,19 @@ for (const [label, listed] of [
   if (duplicates.length > 0) {
     bail(`duplicate tool names in ${label}: ${[...new Set(duplicates)].join(', ')}`);
   }
+}
+
+/* The instructions arrive once per connection, not with the tool list, and a server built
+   without them still lists every tool. Compare what `lexq serve --mcp` sends with what the
+   library exports for other hosts to pass. */
+if (typeof SERVER_INSTRUCTIONS !== 'string' || SERVER_INSTRUCTIONS.trim() === '') {
+  console.error('✗ the built tools export no SERVER_INSTRUCTIONS');
+  process.exit(1);
+}
+if (servedInstructions !== SERVER_INSTRUCTIONS) {
+  console.error('✗ `lexq serve --mcp` does not send SERVER_INSTRUCTIONS as its instructions');
+  console.error(`  sent: ${JSON.stringify(servedInstructions ?? null)}`);
+  process.exit(1);
 }
 
 const shared = new Map(tools.map((tool) => [tool.name, JSON.stringify(canonical(tool))]));
@@ -161,29 +181,34 @@ if (drifted.length > 0) {
 }
 const localTools = served.filter((tool) => !shared.has(tool.name));
 
-/* Every tool has to say who it is and what it does to the caller's data. The Claude
-   Connectors Directory refuses a submission that is missing either, and the reason it
-   asks is the reason it matters here too: a client decides whether to confirm a call
-   from these, and `destructiveHint` defaults to true only when `readOnlyHint` is false,
-   so a write that adds nothing but is left unannotated reads as one that might delete.
+/* Every tool has to say who it is and what it does to the caller's data, with all three
+   hints set to true or false. A client decides whether to confirm a call from these, and
+   a hint left out takes the protocol default: a tool is open-world unless it says
+   otherwise, and a tool that is not read-only is destructive unless it says otherwise. A
+   tool that only reads or only adds would then look riskier than it is. The Claude
+   connector directory also checks each tool for the hint that applies. A tool marked both
+   read-only and destructive contradicts itself, so that fails as well.
 
    Checked at the wire rather than in the source: the annotation has to survive
    registration to mean anything, and a tool added to a new file would slip past a grep. */
+const HINTS = ['readOnlyHint', 'destructiveHint', 'openWorldHint'];
 const unannotated = [...tools, ...localTools].filter(
   (tool) =>
     !tool.title ||
     !tool.annotations ||
-    (tool.annotations.readOnlyHint !== true &&
-      typeof tool.annotations.destructiveHint !== 'boolean'),
+    HINTS.some((hint) => typeof tool.annotations[hint] !== 'boolean') ||
+    (tool.annotations.readOnlyHint && tool.annotations.destructiveHint),
 );
 if (unannotated.length > 0) {
   console.error(
-    `✗ ${unannotated.length} tool(s) missing a title or a read-only/destructive hint\n`,
+    `✗ ${unannotated.length} tool(s) missing a title or one of ${HINTS.join(', ')}, or marked both read-only and destructive\n`,
   );
   for (const tool of unannotated) {
     console.error(`  ${tool.name}  ${JSON.stringify(tool.annotations ?? null)}`);
   }
-  console.error('\n  Add `annotations` beside `title` in src/mcp.');
+  console.error(
+    '\n  Set `annotations` beside `title` to READ_ONLY, ADDITIVE, or DESTRUCTIVE from src/mcp/tools/_shared.ts.',
+  );
   process.exit(1);
 }
 

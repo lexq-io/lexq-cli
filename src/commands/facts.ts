@@ -2,7 +2,7 @@ import { type Command } from 'commander';
 import dedent from 'dedent';
 import { apiRequest, apiRequestWithMeta } from '@/lib/api-client';
 import { formatValueDomainMismatchWarning } from '@/lib/value-domain-warning';
-import { EXPORT_FORMATS, parseFormat, runExport } from '@/lib/export';
+import { EXPORT_FORMATS, fileFormat, runExport } from '@/lib/export';
 import type { PageResponse, UnregisteredFact } from '@/types/api';
 import { printJson, printTable, printError, type OutputFormat } from '@/lib/output';
 import { isLosslessNumber, parseJson } from '@/lib/lossless-json';
@@ -186,7 +186,7 @@ export function registerFactCommands(program: Command): void {
                       STRING types take --allowed-values. NUMBER types take all three.
                       BOOLEAN takes none — it has only two values to begin with.
                       For list types the value domain applies to each element.
-                      Leave them out for no value domain, which is how facts behaved before.
+                      Leave them out for no value domain.
       `,
     )
     .action(async (opts) => {
@@ -342,11 +342,11 @@ export function registerFactCommands(program: Command): void {
           $ lexq facts export --keyword user --as json
       `,
     )
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       try {
         const globalOpts = program.opts();
 
-        await runExport('schema/facts/export', parseFormat(opts.as), {
+        await runExport('schema/facts/export', fileFormat(command), {
           apiKey: globalOpts.apiKey,
           baseUrl: globalOpts.baseUrl,
           dryRun: globalOpts.dryRun,

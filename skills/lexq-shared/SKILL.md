@@ -35,7 +35,7 @@ lexq groups list --api-key lexq_us_override_key
 | Concept             | Description                                                                                                      | Analogy                |
 |---------------------|------------------------------------------------------------------------------------------------------------------|------------------------|
 | **Policy Group**    | A container for rule versions. Has a lifecycle status (ACTIVE / DISABLED / ARCHIVED).                            | Git repository         |
-| **Policy Version**  | A snapshot of rules within a group. Follows DRAFT → ACTIVE → ARCHIVED lifecycle.                                 | Git branch / commit    |
+| **Policy Version**  | A snapshot of rules within a group. DRAFT → ACTIVE → EXPIRED; ARCHIVED if deleted after it was published.        | Git branch / commit    |
 | **Policy Rule**     | A condition + actions pair within a version. Evaluated in priority order.                                        | if-then statement      |
 | **Fact Definition** | Input schema — declares available variables and their types (STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER). | Function parameter     |
 | **Deployment**      | Promotes an ACTIVE version to live traffic. Supports rollback and scheduled arming.                              | Production release     |
@@ -72,15 +72,18 @@ Every command accepts these flags:
 
 | Flag                     | Description                                | Default                               |
 |--------------------------|--------------------------------------------|---------------------------------------|
-| `--format <json\|table>` | Output format                              | `json`                                |
+| `--format <json\|table>` | How results are printed                    | `json`                                |
 | `--api-key <key>`        | Override stored API key                    | from config                           |
 | `--base-url <url>`       | Override API base URL                      | `https://api.lexq.io/api/v1/partners` |
 | `--dry-run`              | Preview the HTTP request without executing | off                                   |
 | `--verbose`              | Show request/response details              | off                                   |
 | `--no-color`             | Disable colored output                     | off                                   |
 
-**Agent best practice:** Always use `--format json` (the default). Parse JSON output programmatically. Use
+**Agent best practice:** Leave `--format` at its default, `json`, and parse the output programmatically. Use
 `--format table` only when displaying to humans.
+
+`--format` does not change a file. The commands that write one (`facts export`, `analytics simulation export`,
+`replay export`, `analytics dataset template`) choose its format with `--as csv` or `--as json`.
 
 ## Command Groups
 
@@ -99,13 +102,13 @@ Every command accepts these flags:
 | `history`               | `list`, `get`, `stats`                                                                                                     | Execution history               |
 | `replay`                | `decision`, `start`, `list`, `get`, `cancel`                                                                               | Decision replay                 |
 | `provenance`            | `get`, `reveal-audits`                                                                                                     | Decision provenance + PII audit |
-| `logs`                  | `list`, `get`, `action`, `bulk-action`                                                                                     | Failure log management          |
+| `logs`                  | `list`, `get`                                                                                                              | Failure logs (read-only)        |
 | `webhook-subscriptions` | `list`, `get`, `save`, `delete`, `test`                                                                                    | Platform event webhooks         |
 | `serve`                 | `--mcp`                                                                                                                    | MCP server over stdio           |
 
 ## Pagination
 
-All list endpoints return a `PageResponse`:
+All list endpoints return one page of results:
 
 ```json
 {

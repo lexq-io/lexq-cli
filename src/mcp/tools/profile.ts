@@ -10,16 +10,11 @@ import {
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import type { CallApi } from './_shared';
+import { READ_ONLY } from './_shared';
 import { PERCENTILE_MIN_N } from '@/lib/percentiles';
 import { ProfileCacheState } from '@/types/enums';
 
-/**
- * The relative-threshold rule, surfaced verbatim on every profile tool.
- *
- * A rule is slow relative to its neighbours, never against a fixed millisecond budget:
- * budgets go stale as traffic and hardware move, and a group whose rules are all slow
- * would report nothing under one.
- */
+/** The relative-threshold rule, surfaced verbatim on every profile tool. */
 const RELATIVE_THRESHOLD = `flagged = p50 ≥ ${SLOW_MULTIPLIER}× median of per-rule p50s within the group; absolute thresholds are intentionally not supported.`;
 
 function profileParams(opts: {
@@ -41,11 +36,11 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
     'lexq_profile_overview',
     {
       title: 'Group Latency Profile',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
-        'Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cache state (HIT = compiled ruleset cache hit, MISS = deep-load + compile), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. ' +
+        'Per-rule latency profile of a policy group over a time window: group TOTAL distribution split by cacheState (HIT = calls on a version already prepared for execution, MISS = calls that had to prepare the version first and run slower), a per-rule CONDITION/ACTION percentile table, and slow-rule flags. ' +
         RELATIVE_THRESHOLD +
-        ` Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 needs n ≥ ${PERCENTILE_MIN_N.p50}, p95 n ≥ ${PERCENTILE_MIN_N.p95}, p99 n ≥ ${PERCENTILE_MIN_N.p99} — display gate, separate from the n ≥ ${MIN_SAMPLES} judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than ${MIN_COHORT_SIZE} rules qualify. Rule detail comes from a deterministic ${PROFILE_SAMPLE_PERMILLE / 10}% sample of calls; TOTAL is recorded for every call. Defaults: last ${PROFILE_DEFAULT_WINDOW_HOURS}h, live version, cacheState HIT.`,
+        ` Every percentile is accompanied by its sample count n; a percentile is withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 needs n ≥ ${PERCENTILE_MIN_N.p50}, p95 n ≥ ${PERCENTILE_MIN_N.p95}, p99 n ≥ ${PERCENTILE_MIN_N.p99} — display gate, separate from the n ≥ ${MIN_SAMPLES} judgment gate). Baselines report INSUFFICIENT_COHORT when fewer than ${MIN_COHORT_SIZE} rules qualify. Rule detail comes from a ${PROFILE_SAMPLE_PERMILLE / 10}% sample of calls; TOTAL is recorded for every call. Defaults: last ${PROFILE_DEFAULT_WINDOW_HOURS}h, live version, cacheState HIT.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z
@@ -76,7 +71,7 @@ export function registerProfileTools(server: McpServer, callApi: CallApi): void 
     'lexq_profile_rule',
     {
       title: 'Rule Latency Detail',
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY,
       description:
         `Single-rule latency detail: merged phase × cacheState distributions plus a per-window time series (${LATENCY_WINDOW_MILLIS / 1000}s windows). Missing windows are genuine gaps — never interpolated. Series points carry each window's own values; percentiles in merged distributions are withheld (null) unless n×(1−q) ≥ ${TAIL_MIN_OBS} (p50 n ≥ ${PERCENTILE_MIN_N.p50}, p95 n ≥ ${PERCENTILE_MIN_N.p95}, p99 n ≥ ${PERCENTILE_MIN_N.p99}). ` +
         RELATIVE_THRESHOLD,

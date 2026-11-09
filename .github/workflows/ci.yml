@@ -72,6 +72,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Format
+        run: pnpm format:check
+
       - name: Build
         run: pnpm build
 
@@ -104,3 +107,9 @@ jobs:
 
       - name: Dataset upload
         run: node tests/dataset-upload.mjs
+
+      - name: Export limit
+        run: node tests/export-limit.mjs
+
+      - name: Output format and file format
+        run: node tests/format-options.mjs

@@ -7,8 +7,8 @@ import dedent from 'dedent';
 import { datasetContentType, uploadDataset } from '@/lib/dataset-upload';
 import { stringifyJson } from '@/lib/lossless-json';
 import { MAX_DATASET_SIZE } from '@/types/constants';
-import { localApiOptions, type McpToolResult } from './tools/_shared';
-import { datasetBlock } from './tools/analytics';
+import { ADDITIVE, localApiOptions, type McpToolResult } from './tools/_shared';
+import { datasetBlock, UPLOADED_DATASET_SOURCE } from './tools/analytics';
 
 const MAX_DATASET_MB = MAX_DATASET_SIZE / 1024 / 1024;
 
@@ -92,7 +92,7 @@ export function registerLocalTools(server: McpServer): void {
     'lexq_dataset_upload_file',
     {
       title: 'Upload Dataset File',
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: ADDITIVE,
       description: dedent`
         Upload a CSV or JSON file from this computer as a simulation dataset, up to ${MAX_DATASET_MB} MB.
         The server reads the file from disk, so its content never passes through the conversation.
@@ -101,10 +101,12 @@ export function registerLocalTools(server: McpServer): void {
         file: the absolute path of a .csv or .json file. A leading ~/ stands for the home directory.
         A symbolic link is followed, and the file it points to must also end in .csv or .json.
 
-        CSV: a header row of fact keys, then one row per record. JSON: an array of objects.
+        CSV: a header row of fact keys, then one row per record. A cell holding a JSON array, such as
+        ["gold","vip"], is read as a list; quote the cell, as CSV requires for a value with commas.
+        JSON: an array of objects.
 
         Returns the stored path and a ready-to-use dataset block for lexq_simulation_start:
-          dataset: { "type": "UPLOADED", "source": "S3_BUCKET", "path": "<returned path>" }
+          dataset: { "type": "UPLOADED", "source": "${UPLOADED_DATASET_SOURCE}", "path": "<returned path>" }
       `,
       inputSchema: z.object({
         file: z

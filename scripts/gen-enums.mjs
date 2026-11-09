@@ -50,38 +50,39 @@ const CHECK = process.argv.includes('--check');
  * gives us something to compare against. Before this list the numbers were hand-typed in
  * 12 places with nothing to catch a drift.
  *
- * Keys are the engine's `DeclaringClass.FIELD`. Only the field name is emitted, the same
- * way nested enum names are flattened — an engine class name is not something this public
- * repo needs to carry.
+ * Listed by field name, which is also the name emitted in constants.ts and the committed
+ * subset.
  */
 const CONSTANTS = [
-  'PolicyConstants.MAX_ROUNDING_SCALE',
-  'PolicyGroup.MIN_TRAFFIC_RATE',
-  'PolicyGroup.MAX_TRAFFIC_RATE',
-  'ReplayJobService.REPLAY_WINDOW_MAX_RECORDS',
-  'AnalyticsService.DEFAULT_SIMULATION_RECORDS',
-  'AnalyticsService.MAX_SIMULATION_RECORDS',
-  'AnalyticsService.MAX_DATASET_SIZE',
-  'DeterministicSampler.PROFILE_SAMPLE_PERMILLE',
-  'LatencyWindowFlusher.LATENCY_WINDOW_MILLIS',
-  'QuantileDisplayGate.TAIL_MIN_OBS',
-  'SlowRuleJudge.SLOW_MULTIPLIER',
-  'SlowRuleJudge.MIN_SAMPLES',
-  'SlowRuleJudge.MIN_COHORT_SIZE',
-  'PolicyProfileService.PROFILE_DEFAULT_WINDOW_HOURS',
-  'PolicyGroupService.MAX_GROUPS_PER_TENANT',
-  'PolicyVersionService.MAX_DRAFT_VERSIONS_PER_GROUP',
-  'PolicyRuleService.MAX_RULES_PER_VERSION',
-  'PolicyRuleService.MAX_CONDITIONS_PER_RULE',
-  'PolicyRuleService.MAX_CONDITION_DEPTH',
-  'RulesSnapshotWeigher.MAX_SNAPSHOT_BYTES',
-  'ExecutionHistoryService.STATS_DEFAULT_WINDOW_DAYS',
-  'ExecutionHistoryService.STATS_MAX_WINDOW_DAYS',
-  'FailureLogService.FAILURE_LOG_LOOKBACK_DAYS',
-  'ArchivedGroupPurgeService.PURGE_AFTER_DAYS',
-  'PolicyGroup.DESCRIPTION_MAX_LENGTH',
-  'PolicyVersion.COMMIT_MESSAGE_MAX_LENGTH',
-  'ScheduledDeploymentProcessor.SCHEDULE_TICK_MAX_MILLIS',
+  'MAX_ROUNDING_SCALE',
+  'MIN_TRAFFIC_RATE',
+  'MAX_TRAFFIC_RATE',
+  'REPLAY_WINDOW_MAX_RECORDS',
+  'DEFAULT_SIMULATION_RECORDS',
+  'MAX_SIMULATION_RECORDS',
+  'MAX_DATASET_SIZE',
+  'PROFILE_SAMPLE_PERMILLE',
+  'LATENCY_WINDOW_MILLIS',
+  'TAIL_MIN_OBS',
+  'SLOW_MULTIPLIER',
+  'MIN_SAMPLES',
+  'MIN_COHORT_SIZE',
+  'PROFILE_DEFAULT_WINDOW_HOURS',
+  'MAX_GROUPS_PER_TENANT',
+  'MAX_DRAFT_VERSIONS_PER_GROUP',
+  'MAX_RULES_PER_VERSION',
+  'MAX_CONDITIONS_PER_RULE',
+  'MAX_CONDITION_DEPTH',
+  'MAX_SNAPSHOT_BYTES',
+  'STATS_DEFAULT_WINDOW_DAYS',
+  'STATS_MAX_WINDOW_DAYS',
+  'FAILURE_LOG_LOOKBACK_DAYS',
+  'PURGE_AFTER_DAYS',
+  'DESCRIPTION_MAX_LENGTH',
+  'COMMIT_MESSAGE_MAX_LENGTH',
+  'SCHEDULE_TICK_MAX_MILLIS',
+  'MAX_DRY_RUN_EVALUATIONS_PER_MINUTE',
+  'MAX_DRY_RUN_EVALUATIONS_PER_DAY',
 ];
 
 /** Enums this CLI exposes, in output order. The manifest is wider; anything not listed stays out. */
@@ -106,6 +107,7 @@ const ORDER = [
   'DecisionStatus',
   'DecisionReasonCode',
   'ConditionUnresolvedReason',
+  'LineageUnavailableReason',
   'SimulationStatus',
   'SimulationDatasetType',
   'SimulationDatasetSource',
@@ -113,7 +115,6 @@ const ORDER = [
   'ExportFormat',
   'Role',
   'FailureStatus',
-  'FailureAction',
   'TaskType',
   'PlatformEventType',
   'WebhookPayloadFormat',
@@ -137,13 +138,11 @@ const NOTES = {
     'IN takes a scalar fact and a list value; HAS_* takes a list on both sides.',
   ],
   ConflictResolutionMode: ['── Conflict Resolution ──'],
-  DeploymentType: [
-    '── Deployment ──',
-    'PUBLISH removed — publishing is a qualification event, not a deployment (server enum dropped it).',
-  ],
+  DeploymentType: ['── Deployment ──'],
   ApiExecutionStatus: ['── Execution ──'],
   ProfileCacheState: ['── Latency Profile ──'],
   DecisionStatus: ['── Decision ──'],
+  LineageUnavailableReason: ['── Decision Provenance ──'],
   SimulationStatus: ['── Simulation ──'],
   Role: ['── Auth ──'],
   FailureStatus: ['── Failure Log ──'],
@@ -193,8 +192,8 @@ function readManifest(file, label) {
     byName.set(simple, def);
   }
 
-  // The full manifest keys constants as DeclaringClass.FIELD; the committed subset keys
-  // them by field name only. Accept both so one loader serves both files.
+  // The full manifest qualifies each constant key with a prefix; the committed subset uses
+  // the field name alone. Accept both so one loader serves both files.
   const constants = new Map();
   for (const [key, def] of Object.entries(raw.constants ?? {})) {
     const field = key.includes('.') ? key.split('.').pop() : key;
@@ -213,10 +212,10 @@ function renderSource(enums) {
   const missing = ORDER.filter((n) => !enums.has(n));
   if (missing.length) {
     fail(`${missing.length} enum(s) not in the manifest`, [
-      ...missing.map((n) => `${n} — gone from the engine, or graded INTERNAL`),
+      ...missing.map((n) => `${n}: not in the manifest`),
       '',
       'If the CLI no longer needs it, drop it from ORDER.',
-      'If it should be there, check the engine @Contract grade.',
+      'If it should be there, the engine has to add it to the contract manifest.',
     ]);
   }
   const dup = ORDER.filter((n, i) => ORDER.indexOf(n) !== i);
@@ -256,10 +255,10 @@ function renderConstants(constants) {
   const missing = CONSTANTS.filter((k) => !constants.has(fieldOf(k)));
   if (missing.length) {
     fail(`${missing.length} constant(s) not in the manifest`, [
-      ...missing.map((k) => `${k} — gone from the engine, or graded INTERNAL`),
+      ...missing.map((k) => `${k}: not in the manifest`),
       '',
       'If the CLI no longer needs it, drop it from CONSTANTS.',
-      'If it should be there, check the engine @Contract grade.',
+      'If it should be there, the engine has to add it to the contract manifest.',
     ]);
   }
   const chunks = [CONST_HEADER];
@@ -278,8 +277,7 @@ function renderSubset({ enums, constants }) {
     enums: {},
     constants: {},
   };
-  // Values only. The engine's contract grade is an internal classification the CLI
-  // does not consume, and this file is committed to a public repo.
+  // Values only. This file is committed to a public repo.
   for (const name of ORDER) {
     out.enums[name] = { values: enums.get(name).values };
   }

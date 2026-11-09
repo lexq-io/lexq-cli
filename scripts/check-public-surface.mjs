@@ -3,7 +3,7 @@
  * check-public-surface.mjs — everything here is installed and read by other people.
  *
  * The repository is readable in full, and `npm pack` ships `dist/`, `skills/`, `AGENTS.md`,
- * `CONTEXT.md`, `README.md`, `LICENSE` and `package.json` on top of that. Three things do
+ * `CONTEXT.md`, `README.md`, `LICENSE` and `package.json` on top of that. Four things do
  * not belong in a tracked file, because none of them gives a reader anything to act on:
  *
  *   1. A cross-reference that resolves nowhere. A section sign — § — with a number after
@@ -17,7 +17,11 @@
  *   3. Text outside the Latin alphabet. The text here is English, and a line in another
  *      writing system is unreadable to most of the people who receive it.
  *
- * The same three apply to commit messages. A squash merge writes the pull request body into
+ *   4. How the server is built: its storage and infrastructure, its class names, how it
+ *      counts toward a limit, or how long it caches something. A reader acts on the limit
+ *      and the error code, not on what produces them.
+ *
+ * The same four apply to commit messages. A squash merge writes the pull request body into
  * this repository's history, so a body that quotes what it removed puts it back. Pass
  * --commits <base> to scan the messages on a branch.
  *
@@ -52,7 +56,6 @@ const PUBLIC_LEXQ_NAMES = new Set([
   'lexq-cli', // this repository
   'lexq-examples', // the other public repository
   'lexq-io', // the organization that owns both
-  'lexq-mcp', // a package on npm, its repository field pointing here
   'lexq-manifest', // the contract file this repository carries
   'lexq-shared', // a skill shipped in the tarball, like the five below
   'lexq-recipes',
@@ -79,6 +82,15 @@ const NON_LATIN = /[\uAC00-\uD7A3]/;
 
 const LEXQ_NAME = /lexq-[a-z0-9]+/g;
 
+/* Generic infrastructure vocabulary, much wider than any one stack, so the list says nothing
+   about which of these the server uses. */
+const SERVER_STACK =
+  /\b(redis|valkey|memcached|hazelcast|postgres(?:ql)?|mysql|mariadb|aurora|dynamodb|mongodb|cassandra|cockroachdb|spanner|firestore|bigtable|cosmos ?db|kafka|rabbitmq|nats|sqs|sns|kinesis|pub\/sub|service bus|event hubs|s3|gcs|blob storage|cloudfront|cloudflare|fastly|akamai|alb|elb|nlb|nginx|envoy|haproxy|traefik|ecs|eks|gke|aks|ec2|fargate|cloud run|kubernetes|k8s|dead[- ]letter|dlq|fixed window|sliding window|token bucket|leaky bucket|presigned|scheduler tick)\b/i;
+
+/* A server-side class name: a capitalized identifier ending in a role suffix. */
+const SERVER_CLASS =
+  /\b[A-Z][A-Za-z]*(?:Service|Processor|Scheduler|Repository|Controller|Listener|Publisher|Worker|Guard)\b/;
+
 const RULES = [
   {
     id: 'section-reference',
@@ -97,6 +109,11 @@ const RULES = [
     what: 'text outside the Latin alphabet',
     hit: (line) => NON_LATIN.test(line),
   },
+  {
+    id: 'server-internals',
+    what: 'how the server is built (storage, infrastructure, class names, counting)',
+    hit: (line) => SERVER_STACK.test(line) || SERVER_CLASS.test(line),
+  },
 ];
 
 /* Deliberate exceptions. Each needs a reason, and the reason has to be about the reader. */
@@ -105,6 +122,26 @@ const ALLOW = [
     file: 'glama.json',
     rule: 'private-repo',
     why: 'the MCP registry manifest requires a maintainer handle, and it names a person, not a repository',
+  },
+  {
+    file: 'lexq-mcp/README.md',
+    rule: 'private-repo',
+    why: 'the npm placeholder that holds the lexq-mcp name, so the name is its content',
+  },
+  {
+    file: 'lexq-mcp/package.json',
+    rule: 'private-repo',
+    why: 'the npm placeholder that holds the lexq-mcp name, so the name is its content',
+  },
+  {
+    file: 'scripts/check-public-surface.mjs',
+    rule: 'server-internals',
+    why: 'the vocabulary the rule looks for has to be written down somewhere',
+  },
+  {
+    file: 'scripts/check-public-surface.mjs',
+    rule: 'private-repo',
+    why: 'it names the placeholder folders it exempts',
   },
 ];
 

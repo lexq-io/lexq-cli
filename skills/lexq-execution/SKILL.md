@@ -81,8 +81,7 @@ Use stats to monitor:
 
 ## 2. Failure Logs
 
-Failure logs are a dead-letter record for background tasks that failed after the request returned.
-Two task types exist:
+Failure logs record background tasks that failed. Two task types exist:
 
 | Task type              | What failed                                                      |
 |------------------------|------------------------------------------------------------------|
@@ -118,26 +117,15 @@ see it.
 lexq logs get --id <logId>
 ```
 
-Includes the original payload and error message. Use it to diagnose before marking the log.
+Includes the original payload and error message. Use it to diagnose the failure.
 
-### Mark a Log
+### Resolve or Ignore a Log
 
-There is no retry action — the engine does not re-execute a failed task on request. Fix the cause
-at the source (webhook endpoint, version state), then mark the log.
-
-```bash
-lexq logs action --id <logId> --action RESOLVE   # cause was fixed
-lexq logs action --id <logId> --action IGNORE    # does not need fixing
-```
-
-Both remove the log from `PENDING`; they differ only in recorded intent.
-
-### Bulk Operations
-
-```bash
-lexq logs bulk-action --ids "id1,id2,id3" --action RESOLVE
-lexq logs bulk-action --ids "id4,id5" --action IGNORE
-```
+The CLI can read failure logs but cannot resolve or ignore them. An organization admin does that in
+the console: Management → Failure Logs (https://console.lexq.io/management/failure-logs). Resolving
+and ignoring both remove the log from `PENDING`; they differ only in recorded intent. There is no
+retry action either: the engine does not re-execute a failed task on request. Fix the cause at the
+source (webhook endpoint, version state), then ask an admin to resolve the log.
 
 ## 3. Deployment Monitoring
 
@@ -182,12 +170,12 @@ lexq deploy schedules --format table
 lexq deploy unschedule --group-id <gid> --force
 ```
 
-One pending schedule per group. The scheduler deploys within one tick (≤60s) of the effective
-start. A manual deploy, rollback, undeploy, A/B test start, or group archive **cancels** the
-pending schedule — the cancellation reason is recorded in the schedule ledger.
+One pending schedule per group. A scheduled deployment goes live within 60 seconds after its
+effective start. A manual deploy, rollback, undeploy, A/B test start, or group archive **cancels**
+the pending schedule, and the schedule's `canceledReason` says which one.
 
-The snapshot hash is sealed at scheduling time. If the version changes before the effective start,
-the scheduled deploy fails with `HASH_MISMATCH` rather than deploying something unexpected.
+A scheduled deployment uses exactly the rules that were scheduled. If they do not match when it
+runs, it fails with `HASH_MISMATCH` and nothing is deployed.
 
 ## 4. Decision Provenance
 
@@ -237,9 +225,8 @@ lexq replay export --id <jobId> --as csv --output blast-radius.csv
 Replay reports whether the outcome is `DETERMINISTIC` or `REPLAY_MAY_DIFFER` — the latter when the
 original execution depended on values the replay cannot reproduce.
 
-Only a `COMPLETED` job can be exported; a running one has no full result yet, and a partial one reads
-as the whole thing on the receiving end. The two formats answer different questions — CSV carries the
-effect blast radius, whose columns are fixed, and JSON carries the changed samples and action
+Only a `COMPLETED` job can be exported. The two formats answer different questions — CSV carries
+the effect blast radius, whose columns are fixed, and JSON carries the changed samples and action
 parameters, which nest and whose keys differ per tenant.
 
 ## 6. Latency Profile
@@ -260,8 +247,9 @@ lexq profile <groupId> --version-id <vid> --cache MISS \
 `--from` / `--to` are ISO-8601 **instants** here (`2026-07-01T00:00:00Z`), unlike `replay start`
 which takes `yyyy-MM-dd` days in the organization time zone.
 
-`p50` / `p95` / `p99` are `null` when the sample is under 100 — the engine reports insufficient
-data rather than inventing a number. `n` is always present.
+`p50` / `p95` / `p99` are `null` until the sample is large enough to show them, and the engine
+never estimates a withheld one. `lexq profile --help` lists the thresholds, and `n` is always
+present. A rule whose sample is under 100 is never flagged.
 
 ## Agent Monitoring Workflow
 
@@ -278,9 +266,8 @@ lexq provenance get --trace-id <traceId>
 # 4. Check for system failures (covers 7 days back by default; add --start-date for older ones)
 lexq logs list --status PENDING --page 0 --size 10
 
-# 5. Inspect and mark
+# 5. Inspect a failure. Once the cause is fixed, an admin resolves it in the console
 lexq logs get --id <logId>
-lexq logs action --id <logId> --action RESOLVE
 
 # 6. Verify deployment integrity
 lexq deploy overview
