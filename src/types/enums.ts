@@ -112,6 +112,14 @@ export const ConditionUnresolvedReason = [
 ] as const;
 export type ConditionUnresolvedReason = (typeof ConditionUnresolvedReason)[number];
 
+// ── Decision Provenance ──
+export const LineageUnavailableReason = [
+  'COMPOSITE_EXECUTION',
+  'NOT_LIVE_VERSION',
+  'NOT_RECORDED',
+] as const;
+export type LineageUnavailableReason = (typeof LineageUnavailableReason)[number];
+
 // ── Simulation ──
 export const SimulationStatus = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELED'] as const;
 export type SimulationStatus = (typeof SimulationStatus)[number];

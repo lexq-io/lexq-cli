@@ -96,7 +96,7 @@ export function registerVersionTools(server: McpServer, callApi: CallApi): void 
       title: 'Delete Policy Version',
       annotations: DESTRUCTIVE,
       description:
-        'Delete a DRAFT, ACTIVE, or EXPIRED version. A version that is live, in an A/B test (P-017), or targeted by a pending scheduled deployment (P-043) cannot be deleted. A version that has been executed is kept as ARCHIVED instead of removed: it no longer appears in lexq_versions_list and cannot be deployed, executed, simulated, replayed, cloned, or used in a dry run (P-008). Deleting it again does nothing.',
+        'Delete a DRAFT, ACTIVE, or EXPIRED version. A version that is live, in an A/B test (P-017), or targeted by a pending scheduled deployment (P-043) cannot be deleted. Deleting a DRAFT removes it. Deleting a published (ACTIVE or EXPIRED) version keeps it as ARCHIVED instead: it no longer appears in lexq_versions_list and cannot be deployed, executed, simulated, replayed, cloned, or used in a dry run (P-008). lexq_versions_get still returns it by ID, and deleting it again does nothing.',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

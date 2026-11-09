@@ -35,7 +35,7 @@ lexq groups list --api-key lexq_us_override_key
 | Concept             | Description                                                                                                      | Analogy                |
 |---------------------|------------------------------------------------------------------------------------------------------------------|------------------------|
 | **Policy Group**    | A container for rule versions. Has a lifecycle status (ACTIVE / DISABLED / ARCHIVED).                            | Git repository         |
-| **Policy Version**  | A snapshot of rules within a group. DRAFT → ACTIVE → EXPIRED; ARCHIVED if deleted after it was executed.         | Git branch / commit    |
+| **Policy Version**  | A snapshot of rules within a group. DRAFT → ACTIVE → EXPIRED; ARCHIVED if deleted after it was published.        | Git branch / commit    |
 | **Policy Rule**     | A condition + actions pair within a version. Evaluated in priority order.                                        | if-then statement      |
 | **Fact Definition** | Input schema — declares available variables and their types (STRING, NUMBER, BOOLEAN, LIST_STRING, LIST_NUMBER). | Function parameter     |
 | **Deployment**      | Promotes an ACTIVE version to live traffic. Supports rollback and scheduled arming.                              | Production release     |

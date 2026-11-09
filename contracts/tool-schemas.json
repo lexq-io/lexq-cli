@@ -1546,7 +1546,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint.",
+      "description": "Get the lineage of a single decision: what was decided, deterministic why per rule, input facts (PII facts are masked as •••••• with maskedKeys listing them — values are revealable only in the console, audited), the authored/published/deployed responsibility chain, and the rule snapshot fingerprint. lineage.unavailableReason is null when all three layers (authored, published, deployed) are present. Otherwise it says why one or more layers are null: COMPOSITE_EXECUTION (a composite execution ran several groups in one request, so there is no single version or deployment and all three layers are null); NOT_LIVE_VERSION (the version that ran, such as an A/B test or fallback version, was not the live deployment's version at that moment, so deployed is null); NOT_RECORDED (a layer is null and the record does not say why, usually because the decision was recorded before LexQ began storing reasons).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -2282,7 +2282,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Delete a DRAFT, ACTIVE, or EXPIRED version. A version that is live, in an A/B test (P-017), or targeted by a pending scheduled deployment (P-043) cannot be deleted. A version that has been executed is kept as ARCHIVED instead of removed: it no longer appears in lexq_versions_list and cannot be deployed, executed, simulated, replayed, cloned, or used in a dry run (P-008). Deleting it again does nothing.",
+      "description": "Delete a DRAFT, ACTIVE, or EXPIRED version. A version that is live, in an A/B test (P-017), or targeted by a pending scheduled deployment (P-043) cannot be deleted. Deleting a DRAFT removes it. Deleting a published (ACTIVE or EXPIRED) version keeps it as ARCHIVED instead: it no longer appears in lexq_versions_list and cannot be deployed, executed, simulated, replayed, cloned, or used in a dry run (P-008). lexq_versions_get still returns it by ID, and deleting it again does nothing.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

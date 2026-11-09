@@ -90,6 +90,9 @@
         "MALFORMED_RULE"
       ]
     },
+    "LineageUnavailableReason": {
+      "values": ["COMPOSITE_EXECUTION", "NOT_LIVE_VERSION", "NOT_RECORDED"]
+    },
     "SimulationStatus": {
       "values": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELED"]
     },
