@@ -1,3 +1,8 @@
+---
+name: lexq-simulation
+description: Testing a LexQ policy version with the lexq CLI before it goes live, including fact requirements, dry runs, Dry Run Compare between two versions, and Impact Simulation on past executions or an uploaded dataset. Use before publishing or deploying a version, or when checking what a rule change would do.
+---
+
 # LexQ CLI — Simulation & Testing
 
 > **Prerequisite:** Read `lexq-shared/SKILL.md` first.

@@ -1,3 +1,8 @@
+---
+name: lexq-rules
+description: Writing LexQ policy rules with the lexq CLI, including condition syntax, the action types (MUTATE_FACT, SET_FACT, BLOCK), rule order, enabling and disabling rules, and mutex groups for rule-level conflict resolution. Use when creating, changing, or reordering the rules of a draft policy version, or when reviewing rules.
+---
+
 # LexQ CLI — Policy Rules
 
 > **Prerequisite:** Read `lexq-shared/SKILL.md` first.

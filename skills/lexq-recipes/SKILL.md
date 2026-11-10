@@ -1,3 +1,8 @@
+---
+name: lexq-recipes
+description: End-to-end lexq CLI workflows, ready to copy, for a tiered discount, fraud detection with transaction blocking, an A/B test of a rule change, a reward points program, an exclusive discount with a mutex group, a version rollback, failure triage, a policy migration, and flag-based segmentation. Use when running one of these workflows from start to finish.
+---
+
 # LexQ CLI — Recipes
 
 > **Prerequisite:** Read `lexq-shared/SKILL.md` first. Each recipe is a complete, copy-paste workflow.

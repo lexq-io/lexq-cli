@@ -174,6 +174,11 @@ keeps working.
 LexQ CLI ships with **AI Agent Skills**: structured documentation that tells
 agents *how* to use each tool.
 
+Each `SKILL.md` starts with `name` and `description` frontmatter in the
+[Agent Skills](https://agentskills.io/specification) format. An agent that loads
+skills reads those two fields at startup and opens a skill when a task matches
+its description.
+
 ```
 skills/
 ├── lexq-shared/SKILL.md       Core concepts, auth, workflow
@@ -183,7 +188,7 @@ skills/
 ├── lexq-execution/SKILL.md    History, stats, failure logs, provenance, replay, latency profile
 └── lexq-recipes/SKILL.md      End-to-end recipes
 
-.claude/CLAUDE.md              Claude Code project context
+CLAUDE.md                      Claude Code entry point, imports AGENTS.md
 AGENTS.md                      Universal agent guide (Cursor, Windsurf, Gemini CLI, Cline)
 CONTEXT.md                     Platform architecture & glossary
 ```
