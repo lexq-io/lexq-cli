@@ -83,6 +83,11 @@ const CONSTANTS = [
   'SCHEDULE_TICK_MAX_MILLIS',
   'MAX_DRY_RUN_EVALUATIONS_PER_MINUTE',
   'MAX_DRY_RUN_EVALUATIONS_PER_DAY',
+  'MAX_LIST_ELEMENTS',
+  'MAX_STRING_LENGTH',
+  'MAX_NUMBER_INTEGER_DIGITS',
+  'MAX_NUMBER_FRACTION_DIGITS',
+  'MAX_RESULT_SIGNIFICANT_DIGITS',
 ];
 
 /** Enums this CLI exposes, in output order. The manifest is wider; anything not listed stays out. */

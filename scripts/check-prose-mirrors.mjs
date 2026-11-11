@@ -126,6 +126,49 @@ const PROSE_MIRRORS = [
     pattern: /goes live within (\d+) seconds after its/g,
     expected: (v) => String(v / 1000),
   },
+  // These sentences wrap across lines, so the words are joined by \s+.
+  {
+    constant: 'MAX_LIST_ELEMENTS',
+    label: 'list value item limit',
+    pattern: /list\s+can\s+hold\s+up\s+to\s+([\d,]+)\s+items/g,
+    expected: (v) => v.toLocaleString('en-US'),
+  },
+  {
+    constant: 'MAX_STRING_LENGTH',
+    label: 'text value length limit',
+    pattern: /text\s+up\s+to\s+([\d,]+)\s+characters/g,
+    expected: (v) => v.toLocaleString('en-US'),
+  },
+  {
+    constant: 'MAX_NUMBER_INTEGER_DIGITS',
+    label: 'number value digits before the decimal point',
+    pattern: /number\s+up\s+to\s+(\d+)\s+digits\s+before/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'MAX_NUMBER_FRACTION_DIGITS',
+    label: 'number value digits after the decimal point',
+    pattern: /digits\s+before\s+and\s+(\d+)\s+after\s+the\s+decimal\s+point/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'MAX_RESULT_SIGNIFICANT_DIGITS',
+    label: 'calculated result significant digits',
+    pattern: /at\s+most\s+(\d+)\s+significant\s+digits/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'MAX_NUMBER_FRACTION_DIGITS',
+    label: 'calculated result digits after the decimal point',
+    pattern: /significant\s+digits\s+and\s+at\s+most\s+(\d+)\s+digits\s+after\s+the\s+decimal\s+point/g,
+    expected: (v) => String(v),
+  },
+  {
+    constant: 'MAX_NUMBER_INTEGER_DIGITS',
+    label: 'calculated result digits before the decimal point',
+    pattern: /more\s+than\s+(\d+)\s+digits\s+before\s+the\s+decimal\s+point/g,
+    expected: (v) => String(v),
+  },
 ];
 
 /**
