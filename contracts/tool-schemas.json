@@ -39,7 +39,7 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. The challenger must be a published version of the same group; a version from another group is rejected with P-016. The split is computed from context.trafficKey on each execution request; requests that omit it never reach the challenger and the test stays at 0%. Starting cancels the group's pending scheduled deployment. Starting while a test is already running replaces its challenger and traffic rate.",
+      "description": "Start an A/B test on a policy group. Requires a challenger version ID and traffic rate. The challenger must be a published version of the same group; a version from another group is rejected with P-016. The split is computed from contexts.trafficKey on each execution request; requests that omit it never reach the challenger and the test stays at 0%. An execution request that still sends a value under the old name context (now contexts) is rejected with C-001 (400). Starting cancels the group's pending scheduled deployment. Starting while a test is already running replaces its challenger and traffic rate.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
@@ -1202,7 +1202,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get full execution detail including inputFacts, mutatedFacts, generatedVariables, executionTraces, and decisionTraces.",
+      "description": "Get full execution detail including requestFacts, requestContexts, resultTraces, and decisionTraces.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {

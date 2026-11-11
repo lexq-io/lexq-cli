@@ -50,10 +50,10 @@ rule you expect never appears in `decisionTraces`, check the version's `effectiv
 ### Get Execution Detail
 
 ```bash
-lexq history get --id <executionId>
+lexq history get --id <traceId>
 ```
 
-Returns full detail including `inputFacts`, `executionTraces`, and `decisionTraces`.
+Returns full detail including `requestFacts`, `requestContexts`, `resultTraces`, and `decisionTraces`.
 
 ### Execution Statistics
 

@@ -58,17 +58,20 @@ Response includes:
       "paymentAmount": 0,
       "customerTier": ""
     },
-    "context": {}
+    "contexts": {
+      "reqTime": "2026-01-01T00:00:00Z"
+    }
   }
 }
 ```
 
 **Always run this before dry-run.** Copy `exampleRequest.facts` as your starting template and fill in real values.
 
-`exampleRequest.context` comes back empty, and it stays empty even when the group has an A/B test
-running. Live execution requests against such a group also need `context.trafficKey` or the test
-version receives no traffic — see the A/B testing section of the groups skill. Dry-run itself is
-unaffected: it always evaluates the version you name, so routing never applies here.
+`exampleRequest.contexts` does not include `trafficKey`, whether or not the group has an A/B test
+running. The `reqTime` in it is a sample value that the engine does not require. Live execution
+requests against a group with a running test still need `contexts.trafficKey`, or the test version
+receives no traffic. See the A/B testing section of the groups skill. Dry-run is unaffected,
+because it always evaluates the version you name and routing never applies.
 
 ## 2. Dry Run (Single Input)
 

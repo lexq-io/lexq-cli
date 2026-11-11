@@ -12,15 +12,12 @@ import type { LosslessNumber } from '@/lib/lossless-json';
 // ══════════════════════════════════════════
 
 export interface ExecutionTrace {
-  tenantId: string;
   policyGroupId: string;
   policyVersionId: string;
   ruleId: string;
   ruleName: string;
-  executedAt: string;
   matched: boolean;
   matchExpression: string;
-  inputFacts: Record<string, unknown>;
   generatedActions: ActionDefinition[];
 }
 
@@ -40,7 +37,7 @@ export interface DecisionTrace {
 
 export interface DryRunRequest {
   facts: Record<string, unknown>;
-  context?: Record<string, unknown>;
+  contexts?: Record<string, unknown>;
   includeDebugInfo: boolean;
 }
 
@@ -74,7 +71,7 @@ export interface RequirementsResponse {
   requiredFacts: FactRequirementDto[];
   exampleRequest: {
     facts: Record<string, unknown>;
-    context: Record<string, unknown>;
+    contexts: Record<string, unknown>;
   };
 }
 
@@ -237,7 +234,7 @@ export interface RuleStat {
 
 export interface DryRunCompareRequest {
   facts: Record<string, unknown>;
-  context?: Record<string, unknown>;
+  contexts?: Record<string, unknown>;
   versionIdA: string;
   versionIdB: string;
 }
