@@ -1,3 +1,8 @@
+---
+name: lexq-groups
+description: Creating, updating, disabling, reordering, and deleting LexQ policy groups with the lexq CLI, plus conflict resolution between groups and A/B tests between policy versions. Use when creating or changing a policy group, reordering groups, or running an A/B test.
+---
+
 # LexQ CLI — Policy Groups
 
 > **Prerequisite:** Read `lexq-shared/SKILL.md` first.

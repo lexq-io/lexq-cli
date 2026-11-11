@@ -1,3 +1,8 @@
+---
+name: lexq-shared
+description: Core concepts, authentication, the standard workflow from creating a policy group to deploying a version, global options, pagination, and error codes for the lexq CLI. Read this skill before any other LexQ skill and before running lexq commands.
+---
+
 # LexQ CLI — Shared Context
 
 > **Read this skill first.** All other LexQ skills assume you have read this document.
@@ -175,4 +180,4 @@ Prefixes you will encounter through the CLI:
 ## Skill Formatting
 
 Catalog-style skills (`lexq-recipes`) separate independent items with `---`. Narrative skills do
-not use it at all. Never mix both in one file.
+not use it outside the frontmatter. Never mix both in one file.

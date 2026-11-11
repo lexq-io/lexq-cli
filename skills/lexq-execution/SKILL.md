@@ -1,3 +1,8 @@
+---
+name: lexq-execution
+description: Monitoring LexQ policies in production with the lexq CLI, including execution history and stats, failure logs, deployment status and history, scheduled deployments, Decision Provenance, Decision Replay, and the per-rule latency profile. Use when investigating a production decision, a failure, or how a deployment behaves. Also use when scheduling a deployment or replaying past decisions.
+---
+
 # LexQ CLI — Execution & Monitoring
 
 > **Prerequisite:** Read `lexq-shared/SKILL.md` first.
