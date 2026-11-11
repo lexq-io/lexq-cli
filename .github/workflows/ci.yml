@@ -113,3 +113,6 @@ jobs:
 
       - name: Output format and file format
         run: node tests/format-options.mjs
+
+      - name: Dry run contexts
+        run: node tests/dry-run-contexts.mjs

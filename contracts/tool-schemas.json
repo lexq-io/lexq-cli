@@ -627,10 +627,14 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share two limits for each organization: 60 evaluations per minute and 1000 per UTC day; a compare counts as two. Past the per-minute limit, a call fails with 429 (C-007); wait a minute before trying again. Past the daily limit, a call fails with 429 (AN-041) until 00:00 UTC. A call refused by the per-minute limit does not count toward the daily limit.\n\nReturns:\n  inputFacts        — normalized input facts\n  mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)\n  generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)\n  executionTraces   — per-rule match status\n  decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)\n\nExample input: { \"facts\": { \"paymentAmount\": 100000, \"customerTier\": \"VIP\" } }",
+      "description": "Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share two limits for each organization: 60 evaluations per minute and 1000 per UTC day; a compare counts as two. Past the per-minute limit, a call fails with 429 (C-007); wait a minute before trying again. Past the daily limit, a call fails with 429 (AN-041) until 00:00 UTC. A call refused by the per-minute limit does not count toward the daily limit.\n\nReturns:\n  inputFacts        — normalized input facts\n  inputContexts     — the contexts object you sent ({} when you sent none)\n  mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)\n  generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)\n  executionTraces   — per-rule match status\n  decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)\n\nExample input: { \"facts\": { \"paymentAmount\": 100000, \"customerTier\": \"VIP\" } }",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
+          "contexts": {
+            "description": "JSON string of the contexts object your application sends with an execution request, e.g. {\"channel\":\"web\"}. A dry run evaluates only the version IDs you pass, so contexts.trafficKey never selects a version. Omit it to send no contexts.",
+            "type": "string"
+          },
           "facts": {
             "description": "JSON string of facts object, e.g. {\"paymentAmount\":100000}",
             "type": "string"
@@ -662,10 +666,14 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Compare dry run results between two versions using the same input facts. Useful for validating changes. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share two limits for each organization: 60 evaluations per minute and 1000 per UTC day; a compare counts as two. Past the per-minute limit, a call fails with 429 (C-007); wait a minute before trying again. Past the daily limit, a call fails with 429 (AN-041) until 00:00 UTC. A call refused by the per-minute limit does not count toward the daily limit.\n\nReturns:\n  resultA / resultB — full DryRunResponse for each version\n  diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})\n  diff.generatedDiff — changes in generatedVariables between A and B",
+      "description": "Compare dry run results between two versions using the same input facts and contexts. Useful for validating changes. Not billed and not counted toward the plan's usage. Dry runs, dry run compares, and single-decision replays share two limits for each organization: 60 evaluations per minute and 1000 per UTC day; a compare counts as two. Past the per-minute limit, a call fails with 429 (C-007); wait a minute before trying again. Past the daily limit, a call fails with 429 (AN-041) until 00:00 UTC. A call refused by the per-minute limit does not count toward the daily limit.\n\nReturns:\n  resultA / resultB — full DryRunResponse for each version\n  diff.mutatedDiff   — changes in mutatedFacts between A and B (key → {before, after})\n  diff.generatedDiff — changes in generatedVariables between A and B",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
+          "contexts": {
+            "description": "JSON string of the contexts object your application sends with an execution request, e.g. {\"channel\":\"web\"}. A dry run evaluates only the version IDs you pass, so contexts.trafficKey never selects a version. Omit it to send no contexts.",
+            "type": "string"
+          },
           "facts": {
             "description": "JSON string of facts object",
             "type": "string"

@@ -48,6 +48,7 @@
     "test:dataset-upload": "pnpm build && node tests/dataset-upload.mjs",
     "test:export-limit": "pnpm build && node tests/export-limit.mjs",
     "test:format-options": "pnpm build && node tests/format-options.mjs",
+    "test:dry-run-contexts": "pnpm build && node tests/dry-run-contexts.mjs",
     "prepublishOnly": "pnpm build",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.ts\"",

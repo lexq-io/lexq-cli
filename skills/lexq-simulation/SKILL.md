@@ -86,6 +86,8 @@ lexq analytics dry-run --version-id <vid> --json '{
 }'
 ```
 
+The request body can also carry `contexts` next to `facts`, as an execution request does.
+
 ### Options
 
 | Flag            | Description                                         | Default |
@@ -110,13 +112,15 @@ external to mock.
 {
   "result": "SUCCESS",
   "data": {
+    "versionNo": 3,
+    "latencyMs": 12,
     "inputFacts": {
       "paymentAmount": 150000,
       "customerTier": "VIP"
     },
+    "inputContexts": {},
     "mutatedFacts": {
-      "paymentAmount": 135000,
-      "customerTier": "VIP"
+      "paymentAmount": 135000
     },
     "generatedVariables": {
       "paymentAmount__delta": -15000
@@ -145,13 +149,12 @@ external to mock.
         "reasonCode": "FINAL_WINNER",
         "reasonDetail": "..."
       }
-    ],
-    "latencyMs": 12,
-    "versionNo": 3
+    ]
   }
 }
 ```
 
+- `inputContexts` — the `contexts` object sent with the request, or `{}` when none was sent
 - `mutatedFacts` — input facts changed by rule actions (e.g., `MUTATE_FACT` reduces `paymentAmount`)
 - `generatedVariables` — for every fact in `mutatedFacts`, a paired `{factName}__delta` key is auto-generated with the
   signed difference (negative = decrease, positive = increase)
