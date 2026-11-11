@@ -13,8 +13,8 @@
  *   matches fails the run, so a KEY pattern that stops matching makes the run fail rather than
  *   report OK.
  *
- *   No shipped text may match STALE. A request that puts a value in an old name is rejected
- *   with C-001 (400).
+ *   No shipped text may match STALE. A request that sends a field under an old name is
+ *   rejected with C-001 (400), even when its value is empty or null.
  *
  * REQUIRED is counted per file rather than tree-wide, so one surface that keeps the wording
  * cannot hide another that lost it.
@@ -38,9 +38,8 @@ const KEY = /contexts\.trafficKey/g;
 
 /**
  * Old names, in the forms this check matches: `context.trafficKey`, a `"context":` JSON key, and
- * the batch field `sharedContext`. The server rejects them with C-001 (400) when they carry a
- * value. It accepts one that is empty or null, but shipped text must not show an old name either
- * way.
+ * the batch field `sharedContext`. A request that sends any of them is rejected with C-001 (400),
+ * even when the field's value is empty or null.
  */
 const STALE = [/\bcontext\.trafficKey/, /"context"\s*:/, /\bsharedContext\b/];
 
@@ -103,7 +102,7 @@ for (const full of files) {
     staleFiles++;
     fail(`${rel} uses an old field name`, [
       ...hits,
-      'Use contexts, with the key at contexts.trafficKey. A value in an old name is rejected with C-001 (400).',
+      'Use contexts, with the key at contexts.trafficKey. A request that sends a field under an old name is rejected with C-001 (400), even when its value is empty or null.',
     ]);
   }
 }

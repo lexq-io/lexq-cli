@@ -191,7 +191,9 @@ Split traffic between the current live version and a test version.
 the traffic rate stays the same, a key value always reaches the same version for that group.
 
 Send it in `contexts`, not in `facts`. Routing never reads `facts`. `contexts` used to be called
-`context`, and a request that still sends a value in `context` is rejected with `C-001` (400).
+`context`, and a request that still sends `context` is rejected with `C-001` (400), even when its
+value is empty or `null`. A request that sends any other field it does not take is rejected the
+same way.
 
 ```json
 {
@@ -211,8 +213,9 @@ scatters one user across both versions and destroys the comparison.
 
 Batch and composite requests carry `contexts` at the top level of the body, as a single request
 does. A batch request has one `contexts` for all of its items, and every item runs on the same
-version. If any item puts a value in its own `context` or `contexts`, the whole request is
-rejected with `C-001` (400).
+version. An item takes only `facts`. If any item carries another field, such as `context` or
+`contexts`, the whole request is rejected with `C-001` (400), even when that field is empty or
+`null`.
 
 ### Start A/B Test
 

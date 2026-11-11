@@ -182,8 +182,8 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         'group is rejected with P-016. ' +
         'The split is computed from contexts.trafficKey on each execution request; requests that ' +
         'omit it never reach the challenger and the test stays at 0%. ' +
-        'An execution request that still sends a value under the old name context (now ' +
-        'contexts) is rejected with C-001 (400). ' +
+        'An execution request that still sends a field under the old name "context" (now ' +
+        '"contexts") is rejected with C-001 (400), even when its value is empty or null. ' +
         "Starting cancels the group's pending scheduled deployment. Starting while a test is " +
         'already running replaces its challenger and traffic rate.',
       inputSchema: z.object({
