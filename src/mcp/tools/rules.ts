@@ -1,8 +1,13 @@
 import {
   MAX_CONDITION_DEPTH,
   MAX_CONDITIONS_PER_RULE,
+  MAX_LIST_ELEMENTS,
+  MAX_NUMBER_FRACTION_DIGITS,
+  MAX_NUMBER_INTEGER_DIGITS,
+  MAX_RESULT_SIGNIFICANT_DIGITS,
   MAX_ROUNDING_SCALE,
   MAX_RULES_PER_VERSION,
+  MAX_STRING_LENGTH,
 } from '@/types/constants';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
@@ -66,10 +71,12 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         Create a rule in a DRAFT version. It goes last in priority order; lexq_rules_reorder changes the order.
 
         An action's targetVar must be a registered fact (ACT-032 otherwise). Keys a rule only reads (condition fields, refVar) may stay unregistered.
+        Actions must use facts in the data types they are registered with. MUTATE_FACT's targetVar must be a NUMBER fact, and so must its refVar if that key is registered (ACT-035 otherwise). SET_FACT's value must match the data type of its targetVar (ACT-036 otherwise). For example, "10" does not match a NUMBER fact. A null value matches any data type.
 
         Condition: { type: "SINGLE", field, operator, value, valueType } or { type: "GROUP", operator: ${oneOf(LogicalOperator)}, children: [...] }
         Value types: ${ValueType.join(', ')}
         Limits: ${MAX_CONDITIONS_PER_RULE} SINGLE conditions per rule (GROUP nodes do not count), ${MAX_CONDITION_DEPTH} levels of nesting below the root, ${MAX_RULES_PER_VERSION} rules per version.
+        Value limits: every value in a condition or an action has the same limits as a value in an execution call. A list holds up to ${MAX_LIST_ELEMENTS} items, text up to ${MAX_STRING_LENGTH} characters, and a number up to ${MAX_NUMBER_INTEGER_DIGITS} digits before and ${MAX_NUMBER_FRACTION_DIGITS} after the decimal point. Saving or publishing a rule with a value over a limit fails with P-064, and the message gives the value's path.
 
         Operators that work on each fact type:
         - STRING: EQUALS, NOT_EQUALS, CONTAINS (substring), IN, NOT_IN
@@ -89,8 +96,9 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
             MUL     targetVar *= operand    targetVar *= (operand/100 + 1)
             DIV     targetVar /= operand    invalid
           refVar is allowed only with PERCENTAGE and ASSIGN, ADD or SUB. DIV with AMOUNT needs a nonzero operand.
-          rounding: { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: ${oneOf(RoundingPolicy)} }. mode defaults to HALF_UP. Without rounding, the result keeps full precision.
-        - SET_FACT: { targetVar, value: string|number|boolean }. The request does not have to send targetVar.
+          rounding: { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: ${oneOf(RoundingPolicy)} }. mode defaults to HALF_UP. Without rounding, the result keeps at most ${MAX_RESULT_SIGNIFICANT_DIGITS} significant digits and at most ${MAX_NUMBER_FRACTION_DIGITS} digits after the decimal point, rounded half-even.
+          At execution, a result or {targetVar}__delta with more than ${MAX_NUMBER_INTEGER_DIGITS} digits before the decimal point fails the call with ACT-034. Send smaller values or change the calculation. See https://docs.lexq.io/guides/policy-rules#mutate_fact-%E2%80%94-with-rounding for organizations that use Fail-open.
+        - SET_FACT: { targetVar, value }, where value matches the data type of targetVar. The request does not have to send targetVar.
         - BLOCK: { reason? } sets isBlocked to true and blockReason to the reason, or "Policy Violation" without one. It does not stop later actions or rules; the caller enforces the block. Only BLOCK writes these two keys: a SET_FACT or MUTATE_FACT targeting either is rejected (ACT-033).
 
         Every condition is checked against the input facts before any action runs, so a condition never sees a value an action writes in the same request. The winning rules' actions then run in priority order, each on the values the actions before it left.
@@ -117,7 +125,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Rule',
       annotations: DESTRUCTIVE,
-      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root. Saving re-checks every action in the rule, including ones you did not change, and fails with ACT-032 if any action's targetVar is not a registered fact.`,
+      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root. Saving re-checks every action in the rule, including ones you did not change. Saving fails with P-064 if a value in the new condition tree or in any action is over the value limits that lexq_rules_create lists, with ACT-032 if an action's targetVar is not a registered fact, with ACT-035 if a MUTATE_FACT uses a registered fact that is not a NUMBER fact, and with ACT-036 if a SET_FACT value does not match the data type of its targetVar.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),

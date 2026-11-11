@@ -136,6 +136,13 @@ Do **not** use `CONTAINS` on a list fact — that idiom works in some rule engin
 | `LIST_STRING` | `["a","b"]`  | `["KR","US"]`    |
 | `LIST_NUMBER` | `[1,2]`      | `[10000, 20000]` |
 
+A value you write in a condition or an action has the same limits as a value in an execution call.
+A list can hold up to 1,000 items, text up to 4,096 characters, and a number up to 34 digits before
+and 34 after the decimal point. Saving or publishing a rule with a value over a limit fails with
+`P-064`, and the message gives the value's path. See
+[Value Limits](https://docs.lexq.io/api/execution#value-limits) for how characters and digits are
+counted.
+
 ### Nested Conditions Example
 
 `(customerTier = "VIP" AND paymentAmount >= 100000) OR region IN ["KR", "JP"]`:
@@ -198,7 +205,7 @@ Each rule can have multiple actions. Actions fire sequentially.
 | `method`    | always   | `PERCENTAGE` \| `AMOUNT` — dictates the unit of `operand`                     |
 | `operand`   | always   | The arithmetic operand. Percent when PERCENTAGE, absolute amount when AMOUNT. |
 | `refVar`    | optional | Base for percentage calculation. Omit to use `targetVar` itself.              |
-| `rounding`  | optional | `{ scale: 0..34, mode?: HALF_UP \| ... }`. Omit for lossless full precision.  |
+| `rounding`  | optional | `{ scale: 0..34, mode?: HALF_UP \| ... }`. Without it, the result keeps at most 34 significant digits and at most 34 digits after the decimal point, rounded half-even. |
 
 **operator × method matrix**
 
@@ -238,6 +245,11 @@ Use `refVar` when the base differs from the target:
 **Ranges are not constrained.** Negative operands and percentages above 100 are valid — refunds
 (`-5`), surcharges (`150`), risk scores, and game points all need them.
 
+At execution, a result or `{targetVar}__delta` with more than 34 digits before the decimal
+point fails the call with `ACT-034`. Send smaller values or change the calculation. For
+organizations that use Fail-open, see
+[MUTATE_FACT with rounding](https://docs.lexq.io/guides/policy-rules#mutate_fact-%E2%80%94-with-rounding).
+
 ### `SET_FACT` vs `MUTATE_FACT`
 
 Both actions write to `targetVar`, and it must be a **registered fact**. Saving or publishing a
@@ -245,10 +257,17 @@ rule whose `targetVar` is not registered fails with `ACT-032`; register it with
 `lexq facts create` first. Keys a rule only reads (condition fields, `refVar`) may stay
 unregistered.
 
-At execution, they differ in what the request must send. `SET_FACT` writes the value even when
-the request did not send the key. `MUTATE_FACT` requires the request to send the target (`P-015`
-otherwise), and the target's value must be a number when the action runs. "Write something the
-request didn't send" is `SET_FACT`'s job.
+Actions must also use facts in the data types they are registered with. The `targetVar` of
+`MUTATE_FACT` must be a `NUMBER` fact, and so must its `refVar` if that key is registered. If either
+is registered with another data type, saving or publishing the rule fails with `ACT-035`. If the
+`value` of `SET_FACT` does not match the data type of its `targetVar`, saving or publishing the rule
+fails with `ACT-036`. For example, `"10"` does not match a `NUMBER` fact. A `null` value matches any
+data type.
+
+At execution, `SET_FACT` and `MUTATE_FACT` differ in what the request must send. `SET_FACT` writes
+the value even when the request did not send the key. `MUTATE_FACT` requires the request to send the
+target (`P-015` otherwise), and the target's value must be a number when the action runs. "Write
+something the request didn't send" is `SET_FACT`'s job.
 
 ### `BLOCK` does not halt execution
 

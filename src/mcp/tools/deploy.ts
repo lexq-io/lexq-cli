@@ -13,7 +13,7 @@ export function registerDeployTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Publish Version',
       annotations: DESTRUCTIVE,
-      description: `Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts that rules only read do not block publishing; call lexq_facts_unregistered first to review them. Publishing fails if an action's targetVar is not a registered fact (ACT-032), if the version's compiled rules exceed ${MAX_SNAPSHOT_BYTES / 1024} KB, or if its effective end has already passed (P-058); move the end into the future with lexq_versions_update first.`,
+      description: `Publish a DRAFT version (DRAFT → ACTIVE). Locks the version from further edits. Must have at least one rule. Undefined facts that rules only read do not block publishing; call lexq_facts_unregistered first to review them. Publishing fails if an action's targetVar is not a registered fact (ACT-032), if a MUTATE_FACT uses a registered fact that is not a NUMBER fact (ACT-035), if a SET_FACT value does not match the data type of its targetVar (ACT-036), if a value in a rule is over a value limit (P-064), or if the version's rules exceed ${MAX_SNAPSHOT_BYTES / 1024} KB (P-053). Publishing also fails if the version's effective end has already passed (P-058); move the end into the future with lexq_versions_update first.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID to publish'),

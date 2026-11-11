@@ -86,8 +86,9 @@ GID=$(echo $GROUP | jq -r '.id')
 VERSION=$(lexq versions create --group-id $GID --json '{"commitMessage":"v1"}')
 VID=$(echo $VERSION | jq -r '.id')
 
-# 3. Register fact
+# 3. Register facts. The rule reads age and writes isAdult, and every key a rule writes must be registered.
 lexq facts create --key age --name "User Age" --type NUMBER
+lexq facts create --key isAdult --name "Is Adult" --type BOOLEAN
 
 # 4. Add rule
 lexq rules create --group-id $GID --version-id $VID --json '{
