@@ -36,6 +36,12 @@ export function datasetBlock(path: string): { type: 'text'; text: string } {
   };
 }
 
+/** The contexts argument of the two dry-run tools. */
+const CONTEXTS_ARG =
+  'JSON string of the contexts object your application sends with an execution request, e.g. ' +
+  '{"channel":"web"}. A dry run evaluates only the version IDs you pass, so contexts.trafficKey ' +
+  'never selects a version. Omit it to send no contexts.';
+
 export function registerAnalyticsTools(server: McpServer, callApi: CallApi): void {
   // ── Dry Run ──
 
@@ -49,6 +55,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         
         Returns:
           inputFacts        — normalized input facts
+          inputContexts     — the contexts object you sent ({} when you sent none)
           mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)
           generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)
           executionTraces   — per-rule match status
@@ -58,17 +65,18 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       inputSchema: z.object({
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"paymentAmount":100000}'),
+        contexts: z.string().optional().describe(CONTEXTS_ARG),
         includeDebugInfo: z
           .boolean()
           .default(true)
           .describe('Include execution and decision traces'),
       }),
     },
-    async ({ versionId, facts, includeDebugInfo }) => {
-      const parsedFacts: unknown = parseJson(facts);
-      return callApi('POST', `analytics/dry-run/versions/${versionId}`, {
-        body: { facts: parsedFacts, includeDebugInfo },
-      });
+    async ({ versionId, facts, contexts, includeDebugInfo }) => {
+      const body: Record<string, unknown> = { facts: parseJson(facts) };
+      if (contexts !== undefined) body.contexts = parseJson(contexts);
+      body.includeDebugInfo = includeDebugInfo;
+      return callApi('POST', `analytics/dry-run/versions/${versionId}`, { body });
     },
   );
 
@@ -80,7 +88,7 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
       title: 'Dry Run Compare',
       annotations: READ_ONLY,
       description: dedent`
-        Compare dry run results between two versions using the same input facts. Useful for validating changes. ${DRY_RUN_LIMIT_NOTE}
+        Compare dry run results between two versions using the same input facts and contexts. Useful for validating changes. ${DRY_RUN_LIMIT_NOTE}
         
         Returns:
           resultA / resultB — full DryRunResponse for each version
@@ -90,13 +98,13 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         versionIdA: z.string().uuid().describe('Baseline version ID'),
         versionIdB: z.string().uuid().describe('Candidate version ID'),
         facts: z.string().describe('JSON string of facts object'),
+        contexts: z.string().optional().describe(CONTEXTS_ARG),
       }),
     },
-    async ({ versionIdA, versionIdB, facts }) => {
-      const parsedFacts: unknown = parseJson(facts);
-      return callApi('POST', 'analytics/dry-run/compare', {
-        body: { versionIdA, versionIdB, facts: parsedFacts },
-      });
+    async ({ versionIdA, versionIdB, facts, contexts }) => {
+      const body: Record<string, unknown> = { versionIdA, versionIdB, facts: parseJson(facts) };
+      if (contexts !== undefined) body.contexts = parseJson(contexts);
+      return callApi('POST', 'analytics/dry-run/compare', { body });
     },
   );
 

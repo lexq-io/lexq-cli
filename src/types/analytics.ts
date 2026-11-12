@@ -42,13 +42,15 @@ export interface DryRunRequest {
 }
 
 export interface DryRunResponse {
+  versionNo: number;
+  latencyMs: number;
   inputFacts: Record<string, unknown>;
+  /** The contexts sent with the request, or an empty object when none was sent. */
+  inputContexts: Record<string, unknown>;
   mutatedFacts: Record<string, unknown>;
   generatedVariables: Record<string, unknown>;
   executionTraces: ExecutionTrace[];
   decisionTraces: DecisionTrace[];
-  latencyMs: number;
-  versionNo: number;
 }
 
 // ══════════════════════════════════════════
