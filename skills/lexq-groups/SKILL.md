@@ -187,15 +187,18 @@ Split traffic between the current live version and a test version.
 
 ### Traffic Identity Key
 
-**Every execution request has to carry `context.trafficKey`.** That value decides the split: the
-same key value always reaches the same version for that group.
+**Every execution request has to carry `contexts.trafficKey`.** That value decides the split. While
+the traffic rate stays the same, a key value always reaches the same version for that group.
 
-Send it in `context`, not in `facts`. Routing never reads `facts`.
+Send it in `contexts`, not in `facts`. Routing never reads `facts`. `contexts` used to be called
+`context`, and a request that still sends `context` is rejected with `C-001` (400), even when its
+value is empty or `null`. A request that sends any other field it does not take is rejected the
+same way.
 
 ```json
 {
   "facts": { "paymentAmount": 150000, "customerTier": "VIP" },
-  "context": { "trafficKey": "customer-8f3a21" }
+  "contexts": { "trafficKey": "customer-8f3a21" }
 }
 ```
 
@@ -204,11 +207,15 @@ reports as running and execution logs keep accumulating, so **the failure does n
 response**. This is the most common reason a test sits at 0%.
 
 Pick a value that is stable per experiment unit (a customer ID, a merchant ID, a session ID) and
-opaque — the whole `context` object is stored in execution history, so send a hash or a
-surrogate key rather than an email address. A value that changes every request, such as a request
-ID, scatters one user across both versions and destroys the comparison.
+opaque. The whole `contexts` object is stored in execution history, so send a hash or a surrogate
+key rather than an email address. A value that changes every request, such as a request ID,
+scatters one user across both versions and destroys the comparison.
 
-Batch calls read `sharedContext.trafficKey` instead, and the whole batch runs on one version.
+Batch and composite requests carry `contexts` at the top level of the body, as a single request
+does. A batch request has one `contexts` for all of its items, and every item runs on the same
+version. An item takes only `facts`. If any item carries another field, such as `context` or
+`contexts`, the whole request is rejected with `C-001` (400), even when that field is empty or
+`null`.
 
 ### Start A/B Test
 
@@ -243,7 +250,7 @@ This reverts all traffic to the main version. The test version remains ACTIVE bu
 ```
 1. Create two versions (v1 live, v2 DRAFT with changes)
 2. Publish v2: lexq deploy publish --group-id <gid> --version-id <v2id>
-3. Confirm your execution requests send context.trafficKey
+3. Confirm your execution requests send contexts.trafficKey
 4. Start A/B: lexq groups ab-test start --group-id <gid> --version-id <v2id> --traffic-rate 10
 5. Monitor: lexq history stats  (compare metrics)
 6. Adjust traffic gradually: 10% → 30% → 50%

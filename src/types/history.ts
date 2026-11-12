@@ -30,6 +30,7 @@ export interface ExecutionHistorySummary {
 export interface ExecutionHistoryDetail extends ExecutionHistorySummary {
   idempotencyKey: string | null;
   requestFacts: Record<string, unknown>;
+  requestContexts: Record<string, unknown> | null;
   requestFactsHash: string | null;
   resultTraces: ExecutionTrace[];
   decisionTraces: DecisionTrace[];

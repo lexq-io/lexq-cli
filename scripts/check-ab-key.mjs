@@ -2,19 +2,22 @@
 /**
  * check-ab-key.mjs — keeps the A/B traffic identity key stated where callers and agents read it.
  *
- * Why a gate and not just prose:
- *   A/B routing splits traffic by one value on the execution request, `context.trafficKey`, and
- *   omitting it is not an error. No request is assigned to the test version, the test still
- *   reports as running, and execution logs keep accumulating — nothing in the response indicates
- *   a problem. These skills and tool descriptions are where an agent learns the contract, and
- *   prose that nothing watches drifts back out on the next rewrite.
+ * A/B routing splits traffic by one value on the execution request, `contexts.trafficKey`.
+ * Omitting it is not an error. The response looks normal, the test still reports as running,
+ * and execution logs keep accumulating, but no request is ever assigned to the test version.
+ * The skills and tool descriptions in REQUIRED are where an agent learns the contract. Without
+ * this check, a later rewrite could drop the key from them and nothing would fail.
  *
  * What is checked:
- *   Each surface below must state `context.trafficKey`. Zero matches is a failure, not a pass —
- *   a gate that silently stops looking still prints OK.
+ *   Each surface in REQUIRED must state `contexts.trafficKey` at least once. A file with zero
+ *   matches fails the run, so a KEY pattern that stops matching makes the run fail rather than
+ *   report OK.
  *
- * Counted per file rather than tree-wide. One surface keeping the wording alive would otherwise
- * mask every other surface losing it.
+ *   No shipped text may match STALE. A request that sends a field under an old name is
+ *   rejected with C-001 (400), even when its value is empty or null.
+ *
+ * REQUIRED is counted per file rather than tree-wide, so one surface that keeps the wording
+ * cannot hide another that lost it.
  *
  * Usage:  node scripts/check-ab-key.mjs
  * Exit:   0 = ok, 1 = violation. Wired into CI.
@@ -31,7 +34,19 @@ const REQUIRED = [
   { file: 'src/mcp/tools/groups.ts', label: 'ab-test start tool description' },
 ];
 
-const KEY = /context\.trafficKey/g;
+const KEY = /contexts\.trafficKey/g;
+
+/**
+ * Old names, in the forms this check matches: `context.trafficKey`, a `"context":` JSON key, and
+ * the batch field `sharedContext`. A request that sends any of them is rejected with C-001 (400),
+ * even when the field's value is empty or null.
+ */
+const STALE = [/\bcontext\.trafficKey/, /"context"\s*:/, /\bsharedContext\b/];
+
+/** Everything this package ships as prose or tool text. */
+const SCAN_DIRS = ['skills', 'src'];
+const SCAN_FILES = ['CONTEXT.md', 'AGENTS.md', 'README.md'];
+const SCAN_EXT = new Set(['.md', '.ts']);
 
 let violations = 0;
 const fail = (msg, lines = []) => {
@@ -39,6 +54,16 @@ const fail = (msg, lines = []) => {
   for (const l of lines) console.error(`  ${l}`);
   violations++;
 };
+
+function walk(dir, acc = []) {
+  if (!fs.existsSync(dir)) return acc;
+  for (const name of fs.readdirSync(dir)) {
+    const full = path.join(dir, name);
+    if (fs.statSync(full).isDirectory()) walk(full, acc);
+    else if (SCAN_EXT.has(path.extname(full))) acc.push(full);
+  }
+  return acc;
+}
 
 for (const { file, label } of REQUIRED) {
   const full = path.join(ROOT, file);
@@ -48,13 +73,41 @@ for (const { file, label } of REQUIRED) {
   }
   const hits = (fs.readFileSync(full, 'utf8').match(KEY) || []).length;
   if (hits === 0) {
-    fail(`${label} never states context.trafficKey`, [
+    fail(`${label} never states contexts.trafficKey`, [
       'Without this key an A/B test routes 0% to the test version and reports no error.',
       `Restore the wording in ${file}, or drop the entry here if the surface is gone.`,
     ]);
   } else {
     console.log(`✓ ${label} — ${hits} mention(s)`);
   }
+}
+
+const files = [
+  ...SCAN_DIRS.flatMap((d) => walk(path.join(ROOT, d))),
+  ...SCAN_FILES.map((f) => path.join(ROOT, f)).filter((f) => fs.existsSync(f)),
+];
+if (files.length === 0) {
+  fail('found no files to scan for stale names', ['Update SCAN_DIRS if the tree moved.']);
+}
+let staleFiles = 0;
+for (const full of files) {
+  const rel = path.relative(ROOT, full);
+  const hits = fs
+    .readFileSync(full, 'utf8')
+    .split('\n')
+    .flatMap((line, i) =>
+      STALE.some((re) => re.test(line)) ? [`${rel}:${i + 1}: ${line.trim()}`] : [],
+    );
+  if (hits.length > 0) {
+    staleFiles++;
+    fail(`${rel} uses an old field name`, [
+      ...hits,
+      'Use contexts, with the key at contexts.trafficKey. A request that sends a field under an old name is rejected with C-001 (400), even when its value is empty or null.',
+    ]);
+  }
+}
+if (files.length > 0 && staleFiles === 0) {
+  console.log(`✓ no stale names in ${files.length} files`);
 }
 
 if (violations > 0) {
