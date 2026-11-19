@@ -102,6 +102,8 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
         - BLOCK: { reason? } sets isBlocked to true and blockReason to the reason, or "Policy Violation" without one. It does not stop later actions or rules; the caller enforces the block. Only BLOCK writes these two keys: a SET_FACT or MUTATE_FACT targeting either is rejected (ACT-033).
 
         Every condition is checked against the input facts before any action runs, so a condition never sees a value an action writes in the same request. The winning rules' actions then run in priority order, each on the values the actions before it left.
+
+        Rules that share a mutexGroup compete, and mutexMode and mutexLimit set how many of them win. With a mutexGroup, mutexMode defaults to EXCLUSIVE; without one, the mode is always NONE. A rule with a mutexGroup and mutexMode NONE is rejected (P-067).
       `,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
@@ -125,7 +127,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
     {
       title: 'Update Rule',
       annotations: DESTRUCTIVE,
-      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root. Saving re-checks every action in the rule, including ones you did not change. Saving fails with P-064 if a value in the new condition tree or in any action is over the value limits that lexq_rules_create lists, with ACT-032 if an action's targetVar is not a registered fact, with ACT-035 if a MUTATE_FACT uses a registered fact that is not a NUMBER fact, and with ACT-036 if a SET_FACT value does not match the data type of its targetVar.`,
+      description: `Update an existing rule in a DRAFT version. Only provided fields are changed. A new condition tree must stay within ${MAX_CONDITIONS_PER_RULE} conditions (SINGLE nodes) and ${MAX_CONDITION_DEPTH} levels of nesting below the root. Saving re-checks every action in the rule, including ones you did not change. Saving fails with P-064 if a value in the new condition tree or in any action is over the value limits that lexq_rules_create lists, with ACT-032 if an action's targetVar is not a registered fact, with ACT-035 if a MUTATE_FACT uses a registered fact that is not a NUMBER fact, and with ACT-036 if a SET_FACT value does not match the data type of its targetVar. Adding a mutexGroup to a rule without one also sets mutexMode to EXCLUSIVE unless the request sends mutexMode. Changing an existing mutexGroup to another key keeps the saved mutexMode. A request that changes the mutexGroup or mutexMode and leaves the rule with a mutexGroup and mutexMode NONE fails with P-067.`,
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         versionId: z.string().uuid().describe('Version ID'),
