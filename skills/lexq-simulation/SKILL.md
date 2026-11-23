@@ -125,6 +125,8 @@ external to mock.
   },
   "executionTraces": [
     {
+      "policyGroupId": "...",
+      "policyVersionId": "...",
       "ruleId": "...",
       "ruleName": "VIP 10% Discount",
       "matched": true,
@@ -133,7 +135,10 @@ external to mock.
         {
           "type": "MUTATE_FACT",
           "parameters": {
-            ...
+            "targetVar": "paymentAmount",
+            "method": "PERCENTAGE",
+            "operator": "SUB",
+            "operand": 10
           }
         }
       ]
@@ -143,9 +148,11 @@ external to mock.
     {
       "ruleId": "...",
       "ruleName": "VIP 10% Discount",
+      "policyGroupId": "...",
+      "policyVersionId": "...",
       "status": "SELECTED",
       "reasonCode": "FINAL_WINNER",
-      "reasonDetail": "..."
+      "reasonDetail": null
     }
   ]
 }
@@ -155,7 +162,9 @@ external to mock.
 - `mutatedFacts` — input facts changed by rule actions (e.g., `MUTATE_FACT` reduces `paymentAmount`)
 - `generatedVariables` — keys that rule actions added (such as a `SET_FACT` target the request did not send), plus
   `{targetVar}__delta` for each `MUTATE_FACT` target whose value changed. The delta is the final value minus the value
-  sent (negative = decrease, positive = increase). A fact changed only by `SET_FACT` or `BLOCK` gets no `__delta`.
+  sent. A fact changed only by `SET_FACT` or `BLOCK` gets no `__delta`.
+- `generatedActions` — the rule's actions as written, listed even for a rule with `matched: false`. They ran only when
+  the rule's `status` in `decisionTraces` is `SELECTED`.
 
 ### Reading Decision Traces
 
@@ -170,6 +179,9 @@ Each trace carries a `status` (what happened) and a `reasonCode` (why).
 
 `BLOCKED` is unrelated to the `BLOCK` action. A `BLOCK` action writes the `isBlocked` fact and its own rule stays
 `SELECTED`; `BLOCKED` means the rule was dropped by activation-group or mutex competition.
+
+In an organization that uses [Fail-open](https://docs.lexq.io/glossary#billing-and-infrastructure), an action that
+fails is skipped, and its rule stays `SELECTED`.
 
 ### Reading Reason Codes
 
