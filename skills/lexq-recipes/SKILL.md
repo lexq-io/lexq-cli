@@ -290,10 +290,10 @@ lexq analytics dry-run --version-id <vid> --debug --json '{
 }'
 ```
 
-`totalPoints` and `refVar: purchaseAmount` are two different facts — this is exactly what
-`refVar` exists for. Omitting it would compute `totalPoints += totalPoints × 0.1%`.
+`refVar: purchaseAmount` makes the rule add 0.1% of `purchaseAmount` to `totalPoints`. Without
+`refVar`, the rule would compute `totalPoints += totalPoints × 0.1%`.
 
-Read `totalPoints` and `totalPoints__delta` from `generatedVariables` in the response.
+In the response, the new `totalPoints` is in `mutatedFacts` and `totalPoints__delta` is in `generatedVariables`.
 
 ---
 
