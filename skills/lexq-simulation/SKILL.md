@@ -180,9 +180,6 @@ Each trace carries a `status` (what happened) and a `reasonCode` (why).
 `BLOCKED` is unrelated to the `BLOCK` action. A `BLOCK` action writes the `isBlocked` fact and its own rule stays
 `SELECTED`; `BLOCKED` means the rule was dropped by activation-group or mutex competition.
 
-In an organization that uses [Fail-open](https://docs.lexq.io/glossary#billing-and-infrastructure), an action that
-fails is skipped, and its rule stays `SELECTED`.
-
 ### Reading Reason Codes
 
 | Code                  | Meaning                                                  |
