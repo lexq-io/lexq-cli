@@ -97,7 +97,7 @@ export function registerRuleTools(server: McpServer, callApi: CallApi): void {
             DIV     targetVar /= operand    invalid
           refVar is allowed only with PERCENTAGE and ASSIGN, ADD or SUB. DIV with AMOUNT needs a nonzero operand.
           rounding: { scale: integer (0..${MAX_ROUNDING_SCALE}), mode?: ${oneOf(RoundingPolicy)} }. mode defaults to HALF_UP. Without rounding, the result keeps at most ${MAX_RESULT_SIGNIFICANT_DIGITS} significant digits and at most ${MAX_NUMBER_FRACTION_DIGITS} digits after the decimal point, rounded half-even.
-          At execution, a result or {targetVar}__delta with more than ${MAX_NUMBER_INTEGER_DIGITS} digits before the decimal point fails the call with ACT-034. Send smaller values or change the calculation. See https://docs.lexq.io/guides/policy-rules#mutate_fact-%E2%80%94-with-rounding for organizations that use Fail-open.
+          At execution, a result or {targetVar}__delta with more than ${MAX_NUMBER_INTEGER_DIGITS} digits before the decimal point fails the call with ACT-034. Send smaller values or change the calculation.
         - SET_FACT: { targetVar, value }, where value matches the data type of targetVar. The request does not have to send targetVar.
         - BLOCK: { reason? } sets isBlocked to true and blockReason to the reason, or "Policy Violation" without one. It does not stop later actions or rules; the caller enforces the block. Only BLOCK writes these two keys: a SET_FACT or MUTATE_FACT targeting either is rejected (ACT-033).
 
