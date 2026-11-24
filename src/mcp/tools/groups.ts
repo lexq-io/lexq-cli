@@ -55,7 +55,9 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         activationMode: z
           .enum(ConflictResolutionMode)
           .optional()
-          .describe('Conflict resolution mode'),
+          .describe(
+            'Conflict resolution mode. Defaults to EXCLUSIVE with an activationGroup, and is always NONE without one. A group with an activationGroup and mode NONE is rejected (P-066).',
+          ),
         activationStrategy: z
           .enum(ConflictResolutionStrategy)
           .optional()
@@ -66,7 +68,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
           .min(1)
           .optional()
           .describe(
-            'How many policy groups sharing this activationGroup may run (required when mode is MAX_N). Counts groups, not rules: every rule of a winning group runs.',
+            'How many policy groups sharing this activationGroup may run when mode is MAX_N; 2 when omitted. Counts groups, not rules: every rule of a winning group runs.',
           ),
         activationGroup: z
           .string()
@@ -95,7 +97,7 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
       title: 'Update Policy Group',
       annotations: DESTRUCTIVE,
       description:
-        'Update a policy group. Only provided fields are updated; omitted fields remain unchanged. A deleted group cannot be updated (409 P-059).',
+        'Update a policy group. Only provided fields are updated; omitted fields remain unchanged, except that activationMode becomes EXCLUSIVE when the request adds an activationGroup to a group without one and sends no activationMode. A deleted group cannot be updated (409 P-059).',
       inputSchema: z.object({
         groupId: z.string().uuid().describe('Policy group ID'),
         name: z.string().optional().describe('New name'),
@@ -116,7 +118,9 @@ export function registerGroupTools(server: McpServer, callApi: CallApi): void {
         activationMode: z
           .enum(ConflictResolutionMode)
           .optional()
-          .describe('Conflict resolution mode'),
+          .describe(
+            'Conflict resolution mode. Changing an existing activationGroup to another key keeps the saved mode. A request that changes activationGroup or activationMode and leaves the group with an activationGroup and mode NONE fails with P-066.',
+          ),
         activationStrategy: z
           .enum(ConflictResolutionStrategy)
           .optional()

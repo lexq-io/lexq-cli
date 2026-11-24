@@ -174,9 +174,11 @@ export function registerRuleCommands(program: Command): void {
 
         Mutex (optional — rule-level conflict resolution):
           mutexGroup       string    Logical grouping key (e.g., "best-discount")
-          mutexMode        string    ${ConflictResolutionMode.join(' | ')}  [default: NONE]
+          mutexMode        string    ${ConflictResolutionMode.join(' | ')}  [default: EXCLUSIVE with a mutexGroup; always NONE without one]
           mutexStrategy    string    HIGHEST_PRIORITY (currently the only value)
-          mutexLimit       number    Max rules to fire in MAX_N mode (required when MAX_N)
+          mutexLimit       number    Max rules to fire in MAX_N mode (optional; 2 when omitted on create)
+
+          A rule with a mutexGroup and mutexMode NONE is rejected (P-067).
 
         priority is auto-assigned (appended last). Use 'lexq rules reorder' to change order.
       `,
@@ -216,7 +218,10 @@ export function registerRuleCommands(program: Command): void {
       'after',
       dedent`
 
-        Same fields as create. Only DRAFT versions can be modified.
+        Same fields as create. Only provided fields are changed. Only DRAFT versions can be modified.
+        Adding a mutexGroup to a rule without one also sets mutexMode to EXCLUSIVE unless the request sends mutexMode.
+        Changing an existing mutexGroup to another key keeps the saved mutexMode. A request that changes the mutexGroup or mutexMode and
+        leaves the rule with a mutexGroup and mutexMode NONE fails with P-067.
 
         Example:
           $ lexq rules update --group-id <gid> --version-id <vid> --id <rid> --json '{

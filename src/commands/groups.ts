@@ -126,13 +126,14 @@ export function registerGroupCommands(program: Command): void {
           name                string    Group name (required, unique per tenant)
           description         string    Description (optional, max ${DESCRIPTION_MAX_LENGTH} chars)
           activationGroup     string    Execution Group — conflict-resolution cluster key (optional)
-          activationMode      string    ${ConflictResolutionMode.join(' | ')}  [default: NONE]
+          activationMode      string    ${ConflictResolutionMode.join(' | ')}  [default: EXCLUSIVE with an activationGroup; always NONE without one]
           activationStrategy  string    HIGHEST_PRIORITY  [default, and currently the only value]
-          executionLimit      number    Max rules to fire in MAX_N mode (optional)
+          executionLimit      number    Max groups (not rules) to run in MAX_N mode (optional; 2 when omitted on create)
           status              string    ACTIVE | DISABLED  [default: ACTIVE]
         
         priority is auto-assigned (appended last, tenant-wide). Use 'lexq groups reorder' to change order.
         Groups sharing an activationGroup must share the same activationMode / activationStrategy / executionLimit.
+        A group with an activationGroup and activationMode NONE is rejected (P-066).
       `,
     )
     .action(async (opts) => {
@@ -168,6 +169,9 @@ export function registerGroupCommands(program: Command): void {
 
         All fields are optional — only provided fields are updated. priority is not settable here — use 'lexq groups reorder'.
         A deleted group cannot be updated (409 P-059).
+        Adding an activationGroup to a group without one also sets activationMode to EXCLUSIVE unless the request sends
+        activationMode. Changing an existing activationGroup to another key keeps the saved activationMode. A request that changes
+        activationGroup or activationMode and leaves the group with an activationGroup and activationMode NONE fails with P-066.
       `,
     )
     .action(async (opts) => {
