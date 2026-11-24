@@ -406,9 +406,9 @@ Within a single version, rules can belong to a `mutexGroup` to limit how many fi
 
 | mutexMode   | Behavior                                                      |
 |-------------|---------------------------------------------------------------|
-| `NONE`      | All matching rules fire (default)                             |
-| `EXCLUSIVE` | Only one rule per mutex group fires                           |
-| `MAX_N`     | Up to `mutexLimit` rules fire. Omit it and the server sets 2. |
+| `NONE`      | All matching rules fire. Always the mode without a `mutexGroup`. |
+| `EXCLUSIVE` | Only one rule per mutex group fires. Default with a `mutexGroup`. |
+| `MAX_N`     | Up to `mutexLimit` rules fire. Omit it on create and the server sets 2. |
 
 ```bash
 lexq rules create --group-id <gid> --version-id <vid> --json '{
@@ -432,15 +432,16 @@ lexq rules create --group-id <gid> --version-id <vid> --json '{
 }'
 ```
 
-**Constraint:** All rules in the same `mutexGroup` must use identical `mutexMode` and `mutexStrategy`.
+**Constraint:** All rules in the same `mutexGroup` must use identical `mutexMode`, `mutexStrategy`, and `mutexLimit`.
 
 **`mutexGroup` is what turns mutex on.** Sending `mutexMode` without a `mutexGroup` is silently normalized to `NONE` —
-there is no group to be exclusive within. Conversely, setting a `mutexGroup` without a `mutexMode` defaults to
-`EXCLUSIVE`.
+there is no group to be exclusive within. Conversely, a rule created with a `mutexGroup` and no `mutexMode` gets
+`EXCLUSIVE`, and adding a `mutexGroup` to a rule without one also sets `mutexMode` to `EXCLUSIVE` unless you send it.
+Creating a rule with a `mutexGroup` and `mutexMode: NONE`, or changing the `mutexGroup` or `mutexMode` into that state,
+is rejected (`P-067`).
 
 `mutexStrategy` currently accepts only `HIGHEST_PRIORITY` — the rule with the lowest priority
-number in the group wins. `mutexMode: MAX_N` requires `mutexLimit`; omit it and the server
-sets 2.
+number in the group wins.
 
 ## Pre-Create Checklist
 

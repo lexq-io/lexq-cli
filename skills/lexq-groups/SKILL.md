@@ -77,11 +77,14 @@ with `lexq groups reorder`. Priorities are 1-based (1 is highest).
 
 | Field                | Default            | Description                                        |
 |----------------------|--------------------|----------------------------------------------------|
-| `activationMode`     | `NONE`             | Conflict resolution mode                           |
+| `activationMode`     | `EXCLUSIVE` with an `activationGroup`, always `NONE` without one | Conflict resolution mode |
 | `activationStrategy` | `HIGHEST_PRIORITY` | Strategy within the mode. Currently the only value |
-| `executionLimit`     | `null`             | Max rules that can fire                            |
+| `executionLimit`     | `2` with `MAX_N`; always `1` with `EXCLUSIVE` and `null` with `NONE` | Max groups (not rules) that run in `MAX_N` mode |
 | `activationGroup`    | `null`             | Logical group for cross-group conflict resolution  |
 | `status`             | `ACTIVE`           | Initial status                                     |
+
+Creating a group with an `activationGroup` and `activationMode: NONE`, or changing the `activationGroup` or
+`activationMode` into that state, is rejected (`P-066`).
 
 ### Update Group
 
@@ -92,7 +95,8 @@ lexq groups update --id <groupId> --json '{
 }'
 ```
 
-Only include fields you want to change. Omitted fields are not modified.
+Only include fields you want to change. Omitted fields are not modified, except that adding an `activationGroup` to a
+group without one also sets `activationMode` to `EXCLUSIVE` unless you send it.
 
 ### Reorder Groups
 
@@ -144,9 +148,9 @@ tables of `lexq deploy history`, `deploy schedules`, `history list`, and
 
 | Mode        | Behavior                                                           |
 |-------------|--------------------------------------------------------------------|
-| `NONE`      | All matching rules fire. No conflict resolution.                   |
-| `EXCLUSIVE` | Only one group wins within the activation group.                   |
-| `MAX_N`     | Up to `executionLimit` groups fire. Omit it and the server sets 2. |
+| `NONE`      | Every group runs. Always the mode without an `activationGroup`. |
+| `EXCLUSIVE` | Only one group wins within the activation group. Default with an `activationGroup`. |
+| `MAX_N`     | Up to `executionLimit` groups run. Omit it on create and the server sets 2. |
 
 ### Activation Strategy
 
@@ -155,7 +159,7 @@ tables of `lexq deploy history`, `deploy schedules`, `history list`, and
 | `HIGHEST_PRIORITY` | Lowest priority number wins (1 is highest). Currently the only strategy. |
 
 **Constraint:** All groups sharing the same `activationGroup` **must** use identical
-`activationMode` and `activationStrategy`. The API rejects mismatches with a `P-` error.
+`activationMode`, `activationStrategy`, and `executionLimit`. The API rejects mismatches with `P-011`.
 
 Groups are selected by the priority order you set, not by comparing action values.
 
