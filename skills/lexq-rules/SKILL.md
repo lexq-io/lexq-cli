@@ -246,9 +246,7 @@ Use `refVar` when the base differs from the target:
 (`-5`), surcharges (`150`), risk scores, and game points all need them.
 
 At execution, a result or `{targetVar}__delta` with more than 34 digits before the decimal
-point fails the call with `ACT-034`. Send smaller values or change the calculation. For
-organizations that use Fail-open, see
-[MUTATE_FACT with rounding](https://docs.lexq.io/guides/policy-rules#mutate_fact-%E2%80%94-with-rounding).
+point fails the call with `ACT-034`. Send smaller values or change the calculation.
 
 ### `SET_FACT` vs `MUTATE_FACT`
 
