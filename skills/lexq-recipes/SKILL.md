@@ -290,10 +290,11 @@ lexq analytics dry-run --version-id <vid> --debug --json '{
 }'
 ```
 
-`totalPoints` and `refVar: purchaseAmount` are two different facts — this is exactly what
-`refVar` exists for. Omitting it would compute `totalPoints += totalPoints × 0.1%`.
+`refVar: purchaseAmount` makes the rule add 0.1% of `purchaseAmount` to `totalPoints`. Without
+`refVar`, the rule would compute `totalPoints += totalPoints × 0.1%`.
 
-Read `totalPoints` and `totalPoints__delta` from `generatedVariables` in the response.
+In the response, the new `totalPoints` is in `mutatedFacts` and `totalPoints__delta` is in `generatedVariables`.
+Neither key appears when no rule changes `totalPoints`; the balance stays at the value you sent.
 
 ---
 
@@ -491,6 +492,6 @@ lexq analytics dry-run --version-id <vid> --debug --json '{
   `targetVar` is not a registered fact is rejected with `ACT-032`.
 - At execution, `SET_FACT` writes the key even when the request did not send it. `MUTATE_FACT`
   requires the request to send its target. That is the division of labor between them.
-- Flags appear in `generatedVariables` in the response. `SET_FACT` produces no `__delta` because
-  it is an assignment, not an arithmetic change.
+- Flags appear in `generatedVariables` in the response. `SET_FACT` produces no `__delta`. Only a
+  `MUTATE_FACT` target whose value changed gets one, including one set with `operator: ASSIGN`.
 - Segment on a `LIST_STRING` fact with `HAS_ANY` / `HAS_ALL` / `HAS_NONE`, not `CONTAINS`.

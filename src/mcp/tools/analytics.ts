@@ -54,14 +54,14 @@ export function registerAnalyticsTools(server: McpServer, callApi: CallApi): voi
         Execute a single dry run against a version. Tests how rules evaluate given input facts without side effects. ${DRY_RUN_LIMIT_NOTE}
         
         Returns:
-          inputFacts        — normalized input facts
+          inputFacts        — the facts object you sent
           inputContexts     — the contexts object you sent ({} when you sent none)
-          mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT mutates paymentAmount)
-          generatedVariables — system-generated values; every fact in mutatedFacts gets a paired {factName}__delta key (signed difference)
+          mutatedFacts      — input facts changed by rule actions (e.g. MUTATE_FACT reduces paymentAmount)
+          generatedVariables — keys that rule actions added (e.g. a SET_FACT target the request did not send), plus {targetVar}__delta for each MUTATE_FACT target whose value changed. The delta is the final value minus the value sent. A fact changed only by SET_FACT or BLOCK gets no __delta.
           executionTraces   — per-rule match status
           decisionTraces    — per-rule decision (SELECTED / NO_MATCH / BLOCKED / etc.)
         
-        Example input: { "facts": { "paymentAmount": 100000, "customerTier": "VIP" } }`,
+        Example facts: {"paymentAmount": 100000, "customerTier": "VIP"}`,
       inputSchema: z.object({
         versionId: z.string().uuid().describe('Policy version ID to test against'),
         facts: z.string().describe('JSON string of facts object, e.g. {"paymentAmount":100000}'),

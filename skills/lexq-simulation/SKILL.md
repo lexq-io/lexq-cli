@@ -110,54 +110,61 @@ external to mock.
 
 ```json
 {
-  "result": "SUCCESS",
-  "data": {
-    "versionNo": 3,
-    "latencyMs": 12,
-    "inputFacts": {
-      "paymentAmount": 150000,
-      "customerTier": "VIP"
-    },
-    "inputContexts": {},
-    "mutatedFacts": {
-      "paymentAmount": 135000
-    },
-    "generatedVariables": {
-      "paymentAmount__delta": -15000
-    },
-    "executionTraces": [
-      {
-        "ruleId": "...",
-        "ruleName": "VIP 10% Discount",
-        "matched": true,
-        "matchExpression": "(customerTier == 'VIP') && (paymentAmount >= 100000)",
-        "generatedActions": [
-          {
-            "type": "MUTATE_FACT",
-            "parameters": {
-              ...
-            }
+  "versionNo": 3,
+  "latencyMs": 12,
+  "inputFacts": {
+    "paymentAmount": 150000,
+    "customerTier": "VIP"
+  },
+  "inputContexts": {},
+  "mutatedFacts": {
+    "paymentAmount": 135000
+  },
+  "generatedVariables": {
+    "paymentAmount__delta": -15000
+  },
+  "executionTraces": [
+    {
+      "policyGroupId": "...",
+      "policyVersionId": "...",
+      "ruleId": "...",
+      "ruleName": "VIP 10% Discount",
+      "matched": true,
+      "matchExpression": "(customerTier == 'VIP') && (paymentAmount >= 100000)",
+      "generatedActions": [
+        {
+          "type": "MUTATE_FACT",
+          "parameters": {
+            "targetVar": "paymentAmount",
+            "method": "PERCENTAGE",
+            "operator": "SUB",
+            "operand": 10
           }
-        ]
-      }
-    ],
-    "decisionTraces": [
-      {
-        "ruleId": "...",
-        "ruleName": "VIP 10% Discount",
-        "status": "SELECTED",
-        "reasonCode": "FINAL_WINNER",
-        "reasonDetail": "..."
-      }
-    ]
-  }
+        }
+      ]
+    }
+  ],
+  "decisionTraces": [
+    {
+      "ruleId": "...",
+      "ruleName": "VIP 10% Discount",
+      "policyGroupId": "...",
+      "policyVersionId": "...",
+      "status": "SELECTED",
+      "reasonCode": "FINAL_WINNER",
+      "reasonDetail": null
+    }
+  ]
 }
 ```
 
 - `inputContexts` — the `contexts` object sent with the request, or `{}` when none was sent
 - `mutatedFacts` — input facts changed by rule actions (e.g., `MUTATE_FACT` reduces `paymentAmount`)
-- `generatedVariables` — for every fact in `mutatedFacts`, a paired `{factName}__delta` key is auto-generated with the
-  signed difference (negative = decrease, positive = increase)
+- `generatedVariables` — keys that rule actions added (such as a `SET_FACT` target the request did not send), plus
+  `{targetVar}__delta` for each `MUTATE_FACT` target whose value changed. The delta is the final value minus the value
+  sent. A fact changed only by `SET_FACT` or `BLOCK` gets no `__delta`.
+- `generatedActions` — the rule's actions as written, listed even for a rule with `matched: false`. They ran only when
+  the rule's `status` in `decisionTraces` is `SELECTED`.
 
 ### Reading Decision Traces
 
